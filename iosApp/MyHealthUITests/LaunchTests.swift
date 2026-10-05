@@ -213,10 +213,10 @@ final class LaunchTests: XCTestCase {
         // "Scan" is the last tab of a scrolling tab row.
         expect(app.staticTexts["Recents"].firstMatch, app, "42_add_food")
         let scanTab = app.descendants(matching: .any)["Scan"].firstMatch
-        var swipes = 0
-        while !(scanTab.exists && scanTab.isHittable) && swipes < 3 {
+        var tabSwipes = 0
+        while !(scanTab.exists && scanTab.isHittable) && tabSwipes < 3 {
             app.staticTexts["Favorites"].firstMatch.swipeLeft()
-            swipes += 1
+            tabSwipes += 1
         }
         expect(scanTab, app, "42b_scan_tab")
         scanTab.tap()
