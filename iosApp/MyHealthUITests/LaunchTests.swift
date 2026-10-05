@@ -247,7 +247,9 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(label(containing: "No camera", in: app).exists, "the no-camera state is not shown")
         pickTestPhoto(fromPhoto, until: app.staticTexts["Check the scan"], app, "44_photo_picker")
         expect(app.staticTexts["Check the scan"], app, "45_ocr_review", timeout: 5)
-        XCTAssertTrue(label(containing: "373", in: app).exists, "the energy value was not recognised")
+        // The recognised values sit in text fields, which expose them as `value`.
+        let energy = app.textViews.matching(NSPredicate(format: "value == '373'")).firstMatch
+        XCTAssertTrue(energy.exists, "the energy value was not recognised")
         app.swipeUp()
         capture(app, "46_ocr_review_values")
         app.buttons["Back"].firstMatch.tap()
