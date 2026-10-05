@@ -113,10 +113,10 @@ final class LaunchTests: XCTestCase {
 
     /// Answers HealthKit's permission sheet: "Turn On All", then "Allow".
     private func allowHealthAccess(_ app: XCUIApplication, _ name: String) {
-        let turnOnAll = app.descendants(matching: .any)["Turn On All"]
+        let turnOnAll = app.descendants(matching: .any)["Turn On All"].firstMatch
         expect(turnOnAll, app, name, timeout: 60)
         turnOnAll.tap()
-        let allow = app.descendants(matching: .any)["Allow"]
+        let allow = app.buttons["UIA.Health.Allow.Button"].firstMatch
         XCTAssertTrue(allow.waitForExistence(timeout: 10), "\(name): no Allow button")
         capture(app, "\(name)_all_on")
         allow.tap()
@@ -179,5 +179,114 @@ final class LaunchTests: XCTestCase {
         tab("Calendar", in: app).tap()
         sleep(3)
         capture(app, "32_calendar_after_sync")
+    }
+
+    /// Picks the photo at [index] in the system photo picker (newest first). CI adds the label
+    /// last, so it is the first photo, the barcode the second.
+    private func pickPhoto(_ index: Int, _ app: XCUIApplication, _ name: String) {
+        let photo = app.descendants(matching: .image).matching(NSPredicate(format: "label BEGINSWITH 'Photo'")).element(boundBy: index)
+        expect(photo, app, name, timeout: 30)
+        photo.tap()
+    }
+
+    /// P22.3: the simulator has no camera, so the scan screen offers "From photo"; Vision reads
+    /// the nutrition label test image into "Check the scan", and the barcode test image is looked
+    /// up on Open Food Facts.
+    func testScanFromPhoto() {
+        let app = XCUIApplication()
+        app.launch()
+        if app.staticTexts["Step 1 of 3: About you"].waitForExistence(timeout: 30) {
+            completeOnboarding(app)
+        }
+        expect(label(containing: "kcal left", in: app), app, "40_today", timeout: 60)
+        tab("Nutrition", in: app).tap()
+        let add = app.buttons["+ Add"].firstMatch
+        expect(add, app, "41_nutrition")
+        add.tap()
+        let scanTab = app.descendants(matching: .any)["Scan"].firstMatch
+        expect(scanTab, app, "42_add_food")
+        scanTab.tap()
+
+        let fromPhoto = app.buttons.matching(NSPredicate(format: "label CONTAINS 'From photo'")).firstMatch
+        expect(fromPhoto, app, "43_scan_no_camera")
+        XCTAssertTrue(label(containing: "No camera", in: app).exists, "the no-camera state is not shown")
+        fromPhoto.tap()
+        pickPhoto(0, app, "44_photo_picker")
+        expect(app.staticTexts["Check the scan"], app, "45_ocr_review", timeout: 60)
+        XCTAssertTrue(label(containing: "373", in: app).exists, "the energy value was not recognised")
+        app.swipeUp()
+        capture(app, "46_ocr_review_values")
+        app.buttons["Back"].firstMatch.tap()
+
+        // Barcode mode: the second photo carries an EAN-13.
+        let barcode = app.descendants(matching: .any)["Barcode"].firstMatch
+        expect(barcode, app, "47_scan_again")
+        barcode.tap()
+        fromPhoto.tap()
+        pickPhoto(1, app, "48_photo_picker_barcode")
+        let code = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", "3017620422003", "3017620422003")).firstMatch
+        expect(code, app, "49_barcode_result", timeout: 60)
+        app.swipeUp()
+        capture(app, "50_barcode_result_values")
+    }
+
+    /// An element of the system file picker whose label contains [text].
+    private func pickerItem(_ text: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
+    }
+
+    /// Opens [file] in the Files picker: straight from Recents, or via Browse › On My iPhone.
+    private func pickFile(_ file: String, _ app: XCUIApplication, _ name: String) {
+        let item = pickerItem(file, in: app)
+        if !item.waitForExistence(timeout: 10) {
+            capture(app, "\(name)_recents")
+            let browse = app.buttons["Browse"].firstMatch
+            if browse.exists { browse.tap() }
+            let onPhone = pickerItem("On My iPhone", in: app)
+            if onPhone.waitForExistence(timeout: 10) { onPhone.tap() }
+        }
+        expect(item, app, name, timeout: 20)
+        item.tap()
+    }
+
+    /// P22.2: a FIT file imported from Files, then a backup exported to Files and imported back.
+    /// CI puts `run_5k.fit` into Files › On My iPhone before the tests run.
+    func testUsesFilesForImportAndBackup() {
+        let app = XCUIApplication()
+        app.launch()
+        if app.staticTexts["Step 1 of 3: About you"].waitForExistence(timeout: 30) {
+            completeOnboarding(app)
+        }
+        expect(label(containing: "kcal left", in: app), app, "60_today", timeout: 60)
+
+        tab("More", in: app).tap()
+        openEntry("Import", in: app)
+        let choose = app.buttons["Choose file"].firstMatch
+        expect(choose, app, "61_import")
+        choose.tap()
+        pickFile("run_5k", app, "62_file_picker")
+        let imported = app.staticTexts.matching(
+            NSPredicate(format: "label == 'Import finished' OR label == 'Already imported'")).firstMatch
+        expect(imported, app, "63_fit_imported", timeout: 60)
+        app.buttons["Back"].firstMatch.tap()
+
+        openEntry("Backup", in: app)
+        let export = app.buttons["Export backup"].firstMatch
+        expect(export, app, "64_backup")
+        export.tap()
+        // The "save to Files" sheet: keep its proposed place and confirm.
+        let save = app.buttons.matching(NSPredicate(format: "label IN {'Save', 'Move', 'Done'}")).firstMatch
+        expect(save, app, "65_export_sheet", timeout: 30)
+        save.tap()
+        expect(app.staticTexts["Export finished"], app, "66_exported", timeout: 30)
+
+        let restore = app.buttons["Import backup"].firstMatch
+        if !restore.isHittable { app.swipeUp() }
+        restore.tap()
+        pickFile("myhealth-backup", app, "67_backup_picker")
+        expect(app.staticTexts["Import finished"], app, "68_backup_imported", timeout: 60)
+        app.swipeUp()
+        capture(app, "69_backup_imported_counts")
     }
 }

@@ -763,7 +763,7 @@
     <string name="settings_allow_destructive_migration_label">Allow destructive DB migration (debug builds only)</string>
     <string name="settings_orphan_cleanup_button">Remove orphaned import data</string>
     <string name="settings_orphan_cleanup_dialog_title">Remove orphaned import data?</string>
-    <string name="settings_orphan_cleanup_dialog_message">Removes activities imported from files before version 1.0.2 that can no longer be undone individually. Activities also known from Health Connect are kept.</string>
+    <string name="settings_orphan_cleanup_dialog_message">Removes activities imported from files before version 1.0.2 that can no longer be undone individually. Activities that also came from the health sync are kept.</string>
     <string name="settings_orphan_cleanup_result_format">Removed %1$d activities, %2$d kept</string>
     <string name="settings_orphan_cleanup_failed">Orphaned import data could not be removed.</string>
     <string name="settings_recompute_load_button">Recompute training load</string>
@@ -792,7 +792,7 @@
     <string name="import_action_undo">Undo import</string>
     <string name="import_history_row_menu_cd">More actions for %1$s</string>
     <string name="import_undo_dialog_title">Undo this import?</string>
-    <string name="import_undo_dialog_message_format">Removes the %1$d activities that only came from this file; activities also known from Health Connect are kept. %2$s can be imported again afterwards.</string>
+    <string name="import_undo_dialog_message_format">Removes the %1$d activities that only came from this file; activities that also came from the health sync are kept. %2$s can be imported again afterwards.</string>
     <string name="import_undo_result_format">Import undone · %1$d activities removed, %2$d kept</string>
     <string name="import_undo_failed">The import could not be undone.</string>
     <string name="import_kind_fit_file">FIT file</string>
@@ -957,6 +957,9 @@
     <string name="scan_permission_denied_message_allow">Scanning a label or a barcode needs the camera. Allow it to continue.</string>
     <string name="scan_open_settings_action">Open settings</string>
     <string name="scan_allow_camera_action">Allow camera</string>
+    <string name="scan_permission_denied_message_settings_ios">Scanning a label or a barcode needs the camera. Turn it on for MyHealth in Settings.</string>
+    <string name="scan_no_camera_title">No camera</string>
+    <string name="scan_no_camera_message">This device has no camera. Scan a label or a barcode from a photo instead.</string>
 
     <!-- ===== Menstrual cycle tracker (P11.3) ===== -->
     <!-- More screen entry (ui/more/MoreScreen.kt) — shown only while tracking is enabled -->

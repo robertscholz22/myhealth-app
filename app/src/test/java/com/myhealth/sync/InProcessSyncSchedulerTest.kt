@@ -294,4 +294,22 @@ class InProcessSyncSchedulerTest {
         settle()
         assertThat(healthRuns.last()).isEqualTo("reread:30")
     }
+
+    @Test
+    fun ips12_background_run_awaits_sync_and_both_recomputes() = runTest {
+        val s = scheduler(healthJobs)
+        assertThat(s.syncAndRecomputeNow()).isTrue()
+        assertThat(healthRuns).containsExactly("sync")
+        assertThat(targetRuns).isEqualTo(1)
+        assertThat(loadRuns).containsExactly(19_990L)
+
+        syncOutcome = Outcome.Err(AppError.HealthConnectUnavailable)
+        assertThat(s.syncAndRecomputeNow()).isFalse()
+        assertThat(s.observeState().first())
+            .isEqualTo(SyncWorkState.Failed("The health store is not available right now."))
+        // the recomputes still run for today
+        assertThat(loadRuns.last()).isEqualTo(20_000L)
+
+        assertThat(scheduler().syncAndRecomputeNow()).isTrue()
+    }
 }

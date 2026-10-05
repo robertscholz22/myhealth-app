@@ -22,6 +22,7 @@ import com.myhealth.data.time.SystemPlatformClock
 import com.myhealth.data.time.todayEpochDay
 import com.myhealth.domain.repository.SettingsRepository
 import com.myhealth.domain.util.Outcome
+import com.myhealth.platform.IosDocuments
 import com.myhealth.sync.HealthJobs
 import com.myhealth.sync.InProcessSyncScheduler
 import com.myhealth.sync.SyncScheduler
@@ -29,6 +30,8 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import okio.FileSystem
+import okio.Buffer
+import okio.Timeout
 import okio.Path
 import okio.Path.Companion.toPath
 import okio.Sink
@@ -159,10 +162,7 @@ private class AppleHealthIntegration(private val access: HealthKitAccess) : HcIn
     override val optionalDetailPermissions: Set<String> = emptySet()
 }
 
-/**
- * Documents by `file://` URL or plain path — what the share sheet and the Files app hand an app
- * once the document has been copied into its sandbox (P22 adds the pickers).
- */
+/** Documents by `file://` URL or plain path — always inside the sandbox on iOS (`IosDocuments`). */
 private class FileContentSource : ImportContentSource, BackupContentSource {
 
     private fun pathOf(uri: String): Path =
@@ -174,5 +174,19 @@ private class FileContentSource : ImportContentSource, BackupContentSource {
 
     override suspend fun openInput(uri: String): Source = FileSystem.SYSTEM.source(pathOf(uri))
 
-    override suspend fun openOutput(uri: String): Sink = FileSystem.SYSTEM.sink(pathOf(uri))
+    /** A backup written to the export folder is offered to "save to Files" once it is complete (P22.2). */
+    override suspend fun openOutput(uri: String): Sink {
+        val path = pathOf(uri)
+        val sink = FileSystem.SYSTEM.sink(path)
+        if (!IosDocuments.isExport(path.toString())) return sink
+        return object : Sink {
+            override fun write(source: Buffer, byteCount: Long) = sink.write(source, byteCount)
+            override fun flush() = sink.flush()
+            override fun timeout(): Timeout = sink.timeout()
+            override fun close() {
+                sink.close()
+                IosDocuments.presentExport(path.toString())
+            }
+        }
+    }
 }

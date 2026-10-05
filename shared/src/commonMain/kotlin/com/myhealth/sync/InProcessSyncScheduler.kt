@@ -3,6 +3,7 @@ package com.myhealth.sync
 import com.myhealth.domain.model.ImportKind
 import com.myhealth.domain.model.ImportProgress
 import com.myhealth.domain.repository.ActivityImporter
+import com.myhealth.domain.util.AppError
 import com.myhealth.domain.util.Outcome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -136,6 +137,38 @@ class InProcessSyncScheduler(
         throw e
     } catch (e: Exception) {
         SyncWorkState.Failed(e.message)
+    }
+
+    /**
+     * A background wake-up (iOS `BGAppRefreshTask` or HealthKit background delivery, P22.4): one
+     * health sync and both recomputes, all awaited, because the system may suspend the app as
+     * soon as the caller reports completion — the debounced requests would never run. `true` when
+     * everything succeeded. Without health jobs only the recomputes run.
+     */
+    suspend fun syncAndRecomputeNow(): Boolean {
+        var fromDay = today()
+        var ok = true
+        if (health != null) {
+            val outcome = try {
+                healthLock.withLock { withContext(work) { health.sync() } }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Outcome.Err(AppError.Unexpected(e))
+            }
+            syncState.value = when (val verdict = mapOutcome(outcome)) {
+                WorkerVerdict.Success -> SyncWorkState.Idle
+                WorkerVerdict.Retry -> SyncWorkState.Failed(HEALTH_UNAVAILABLE)
+                is WorkerVerdict.Failure -> SyncWorkState.Failed(verdict.reason)
+            }
+            ok = outcome is Outcome.Ok
+            fromDay = loadRecomputeDay(outcome, null, today())
+        }
+        return withContext(work) {
+            val targets = recomputeTargets()
+            val load = recomputeLoad(fromDay) is Outcome.Ok
+            ok && targets && load
+        }
     }
 
     override fun observeState(): Flow<SyncWorkState> = syncState

@@ -57,6 +57,20 @@ jobs:
           echo "SIM=$SIM" >> "$GITHUB_ENV"
           xcrun simctl boot "$SIM" || true
           xcrun simctl list devices | grep "$SIM"
+          # Test photos for "Scan from photo" (P22.3); the label is added last, so it comes first.
+          xcrun simctl addmedia "$SIM" docs/testassets/barcode_3017620422003.png
+          sleep 2
+          xcrun simctl addmedia "$SIM" docs/testassets/label_haferflocken_de.png
+          # A FIT file in Files › On My iPhone for the import test (P22.2).
+          LOCAL=$(xcrun simctl get_app_container "$SIM" com.apple.DocumentsApp groups \
+            | grep FileProvider.LocalStorage | cut -f2)
+          if [ -n "$LOCAL" ]; then
+            mkdir -p "$LOCAL/File Provider Storage"
+            cp docs/testassets/run_5k.fit "$LOCAL/File Provider Storage/"
+            ls -la "$LOCAL/File Provider Storage"
+          else
+            echo "no Files local storage container"
+          fi
 
       - name: Build and run the UI tests
         run: |
