@@ -35,3 +35,4 @@ docs/private/
 iosApp/*.xcodeproj/
 iosApp/build/
 iosApp/MyHealth/Info.plist
+iosApp/MyHealth/MyHealth.entitlements

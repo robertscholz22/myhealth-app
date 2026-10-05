@@ -3,6 +3,7 @@ package com.myhealth.sync
 import com.myhealth.domain.model.ImportKind
 import com.myhealth.domain.model.ImportProgress
 import com.myhealth.domain.repository.ActivityImporter
+import com.myhealth.domain.util.AppError
 import com.myhealth.domain.util.Outcome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -14,15 +15,27 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
 /**
+ * The health-store work of `HealthSyncWorker` (P22): incremental sync, a backfill from a day, and
+ * the re-read of recent sessions' detail streams. Each returns the service's [Outcome].
+ */
+class HealthJobs(
+    val sync: suspend () -> Outcome<*>,
+    val backfill: suspend (fromDay: Long) -> Outcome<*>,
+    val reread: suspend (days: Long) -> Outcome<*>,
+)
+
+/**
  * [SyncScheduler] without a platform job service (P21): the work runs in [scope] while the app
- * process lives. Used by the iOS shell until P22 adds `BGTaskScheduler` and HealthKit; the
- * Health Connect calls are therefore no-ops that stay [SyncWorkState.Idle].
+ * process lives (the iOS shell; P22.4 adds `BGTaskScheduler` on top). Without [health] the
+ * health-store calls are no-ops that stay [SyncWorkState.Idle].
  *
  * The request semantics follow `WorkManagerSyncScheduler`:
  * - target recompute: debounced by [targetDebounce]; a new request restarts the wait (`REPLACE`).
@@ -31,6 +44,10 @@ import kotlin.time.Duration.Companion.seconds
  *   is never cancelled by a later, shorter one (BUG-14, `APPEND_OR_REPLACE`).
  * - import: one slot; a new import cancels the running one (`REPLACE`).
  * - the daily schedules run once now and then every [dailyPeriod] while the process lives.
+ * - health sync: "sync now" is ignored while one runs (`KEEP`), a backfill replaces a running
+ *   backfill (`REPLACE`), the periodic sync runs now and then every interval; all health work is
+ *   serialised by one lock. A successful run requests the target recompute and a load recompute
+ *   from the earliest touched day, exactly like `HealthSyncWorker`.
  *
  * Requests may come from any thread; all bookkeeping runs on [serial] (one thread at a time), the
  * work itself on [work].
@@ -41,6 +58,7 @@ class InProcessSyncScheduler(
     private val recomputeLoad: suspend (fromDay: Long) -> Outcome<Unit>,
     private val recomputeTargets: suspend () -> Boolean,
     private val today: () -> Long,
+    private val health: HealthJobs? = null,
     private val targetDebounce: Duration = 30.seconds,
     private val loadDebounce: Duration = 10.seconds,
     private val dailyPeriod: Duration = 24.hours,
@@ -48,21 +66,114 @@ class InProcessSyncScheduler(
     private val work: CoroutineDispatcher = Dispatchers.Default,
 ) : SyncScheduler {
 
-    private val idle = MutableStateFlow<SyncWorkState>(SyncWorkState.Idle)
+    // ---- health store (P22) ------------------------------------------------------------------
 
-    // ---- Health Connect / HealthKit: P22 ------------------------------------------------
+    private val syncState = MutableStateFlow<SyncWorkState>(SyncWorkState.Idle)
+    private val backfillState = MutableStateFlow<SyncWorkState>(SyncWorkState.Idle)
+    private val healthLock = Mutex()
+    private var syncJob: Job? = null
+    private var backfillJob: Job? = null
+    private var rereadJob: Job? = null
+    private var periodicJob: Job? = null
 
-    override fun schedulePeriodic(intervalHours: Int) = Unit
+    override fun schedulePeriodic(intervalHours: Int) {
+        val jobs = health ?: return
+        scope.launch(serial) {
+            periodicJob?.cancel()
+            periodicJob = scope.launch(serial) {
+                while (true) {
+                    launchSync(jobs)
+                    delay(intervalHours.coerceAtLeast(1).hours)
+                }
+            }
+        }
+    }
 
-    override fun syncNow() = Unit
+    override fun syncNow() {
+        val jobs = health ?: return
+        scope.launch(serial) { launchSync(jobs) }
+    }
 
-    override fun backfill(fromDay: Long) = Unit
+    private fun launchSync(jobs: HealthJobs) {
+        if (syncJob?.isActive == true) return
+        syncState.value = SyncWorkState.Running
+        syncJob = scope.launch(serial) {
+            syncState.value = runHealth(fromDay = null) { jobs.sync() }
+        }
+    }
 
-    override fun rereadExerciseDetail(days: Long) = Unit
+    override fun backfill(fromDay: Long) {
+        val jobs = health ?: return
+        scope.launch(serial) {
+            backfillJob?.cancel()
+            backfillState.value = SyncWorkState.Running
+            backfillJob = scope.launch(serial) {
+                backfillState.value = runHealth(fromDay = fromDay) { jobs.backfill(fromDay) }
+            }
+        }
+    }
 
-    override fun observeState(): Flow<SyncWorkState> = idle
+    override fun rereadExerciseDetail(days: Long) {
+        val jobs = health ?: return
+        scope.launch(serial) {
+            rereadJob?.cancel()
+            rereadJob = scope.launch(serial) { runHealth(fromDay = today() - days) { jobs.reread(days) } }
+        }
+    }
 
-    override fun observeBackfillState(): Flow<SyncWorkState> = idle
+    /** One health run under the lock, with `HealthSyncWorker`'s verdict and follow-ups. */
+    private suspend fun runHealth(fromDay: Long?, block: suspend () -> Outcome<*>): SyncWorkState = try {
+        val outcome = healthLock.withLock { withContext(work) { block() } }
+        when (val verdict = mapOutcome(outcome)) {
+            WorkerVerdict.Success -> {
+                requestTargetRecompute()
+                requestLoadRecompute(loadRecomputeDay(outcome, fromDay, today()))
+                SyncWorkState.Idle
+            }
+            WorkerVerdict.Retry -> SyncWorkState.Failed(HEALTH_UNAVAILABLE)
+            is WorkerVerdict.Failure -> SyncWorkState.Failed(verdict.reason)
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        SyncWorkState.Failed(e.message)
+    }
+
+    /**
+     * A background wake-up (iOS `BGAppRefreshTask` or HealthKit background delivery, P22.4): one
+     * health sync and both recomputes, all awaited, because the system may suspend the app as
+     * soon as the caller reports completion — the debounced requests would never run. `true` when
+     * everything succeeded. Without health jobs only the recomputes run.
+     */
+    suspend fun syncAndRecomputeNow(): Boolean {
+        var fromDay = today()
+        var ok = true
+        if (health != null) {
+            val outcome = try {
+                healthLock.withLock { withContext(work) { health.sync() } }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Outcome.Err(AppError.Unexpected(e))
+            }
+            syncState.value = when (val verdict = mapOutcome(outcome)) {
+                WorkerVerdict.Success -> SyncWorkState.Idle
+                WorkerVerdict.Retry -> SyncWorkState.Failed(HEALTH_UNAVAILABLE)
+                is WorkerVerdict.Failure -> SyncWorkState.Failed(verdict.reason)
+            }
+            ok = outcome is Outcome.Ok
+            fromDay = loadRecomputeDay(outcome, null, today())
+        }
+        return withContext(work) {
+            val targets = recomputeTargets()
+            val load = recomputeLoad(fromDay) is Outcome.Ok
+            ok && targets && load
+        }
+    }
+
+    override fun observeState(): Flow<SyncWorkState> = syncState
+
+    override fun observeBackfillState(): Flow<SyncWorkState> = backfillState
 
     // ---- nutrition targets ----------------------------------------------------------------
 
@@ -222,5 +333,9 @@ class InProcessSyncScheduler(
             importJob?.cancel()
             importState.value = ImportWorkState()
         }
+    }
+
+    private companion object {
+        const val HEALTH_UNAVAILABLE = "The health store is not available right now."
     }
 }

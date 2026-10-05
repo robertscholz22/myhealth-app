@@ -83,3 +83,7 @@ actual suspend fun loadHalfSizeImage(path: String): ImageBitmap? = withContext(D
         BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = 2 })
     }.getOrNull()?.asImageBitmap()
 }
+
+actual val platformHealth: com.myhealth.di.HealthPlatform = com.myhealth.di.HealthPlatform.HEALTH_CONNECT
+
+actual val platformHasBackKey: Boolean = true

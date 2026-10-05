@@ -1,5 +1,7 @@
 package com.myhealth.ui.settings
 
+import com.myhealth.di.HealthPlatform
+
 
 import com.myhealth.di.HcStatus
 import com.myhealth.domain.repository.SyncKeys
@@ -28,6 +30,8 @@ data class IntegrationsUiState(
     val backfillStartDay: Long = 0L,
     val backfillCompleteDay: Long? = null,
     val isBackfillRunning: Boolean = false,
+    /** Health Connect lists per-permission rows; Apple Health only knows "asked" (P22.1). */
+    val platform: HealthPlatform = HealthPlatform.HEALTH_CONNECT,
 )
 
 /**

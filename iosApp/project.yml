@@ -20,6 +20,9 @@ targets:
     type: application
     platform: iOS
     sources: [MyHealth]
+    dependencies:
+      # The static Kotlin framework calls these; a static library does not pull them in itself.
+      - sdk: HealthKit.framework
     info:
       path: MyHealth/Info.plist
       properties:
@@ -31,6 +34,34 @@ targets:
         # Compose renders at 120 Hz on ProMotion iPhones only with this key.
         CADisableMinimumFrameDurationOnPhone: true
         ITSAppUsesNonExemptEncryption: false
+        # Apple Health (P22.1). The app only reads; the update string covers the Debug-only test
+        # seeder, which writes sample data into the simulator's Health store.
+        NSHealthShareUsageDescription: MyHealth reads your workouts, heart rate, steps, energy, sleep, weight and body fat from Apple Health to show your training history, estimate training load and recovery, and set daily nutrition targets. Your data stays on this iPhone.
+        NSHealthUpdateUsageDescription: MyHealth never writes to Apple Health. Only test builds write sample data to check the sync.
+        NSCameraUsageDescription: MyHealth uses the camera to read nutrition labels and product barcodes. Pictures stay on this iPhone.
+        # "Open in MyHealth" for FIT, CSV, Garmin ZIP exports and backups (P22.2). Files are copied
+        # into the app's Inbox, not edited in place.
+        LSSupportsOpeningDocumentsInPlace: false
+        # Background refresh (P22.4); the identifier matches IosBackground.REFRESH_TASK.
+        UIBackgroundModes: [fetch]
+        BGTaskSchedulerPermittedIdentifiers: [io.github.robertscholz22.myhealth.refresh]
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Activity file
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [com.garmin.fit, public.comma-separated-values-text, public.zip-archive, public.json]
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.garmin.fit
+            UTTypeDescription: Garmin FIT activity
+            UTTypeConformsTo: [public.data]
+            UTTypeTagSpecification:
+              public.filename-extension: [fit]
+    entitlements:
+      path: MyHealth/MyHealth.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        com.apple.developer.healthkit.background-delivery: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.robertscholz22.myhealth

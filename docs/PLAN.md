@@ -3064,6 +3064,38 @@ A second user (iPhone, Garmin watch → Garmin Connect iOS → Apple Health) get
 - **CI** `.github/workflows/ios.yml` on `macos-26` with the newest Xcode 26 (CMP 1.11 links iOS 26 SDK classes; Xcode 16.4 failed with `UIViewLayoutRegion` undefined): XcodeGen → `xcodebuild test` on an iPhone simulator → artifact `ios-results` (screenshots + accessibility tree per step, xcodebuild log, app log, crash reports). ≈ 21 min, 18 of them Kotlin/Native. Runs on pushes to `main` and `ios/**`; `tools/ios.sh` dispatches a run and downloads the results into `build/ios/<run>/`.
 - **UI test** `LaunchTests.testOnboardingToTodayAndRelaunch`: fresh install → onboarding (name, date picker in text mode, height/weight, keyboard closed by a tap outside) → Today with the computed nutrition target → Calendar/Training/More → relaunch skips onboarding (profile, settings and target persisted).
 
+### P22 — iOS platform layer (design, 2026-10-05)
+
+Order of work (each step green on Linux — JVM tests + `compileIosMainKotlinMetadata` — and in the simulator CI before the next):
+
+- **P22.1 Apple Health read + sync.** `HealthKitReader : HcReader` in `iosMain` (Kotlin/Native HealthKit, type-checked on Linux), so `HcSyncService`, `HcBackfill`, `HcMapper`, dedupe/merge and TRIMP stay common:
+  - Workouts (`HKWorkout`) → `HcExercise`: activity type mapped to the Health Connect exercise ints (`HealthKitTypes.exerciseType`), `UUID` as `externalId`, source bundle id as `packageName`, totals (distance, energy), and the workout window's heart rate, running/cycling speed, running/cycling power, cycling cadence samples.
+  - Daily summaries via `HKStatisticsCollectionQuery` per local day (HealthKit's own cross-source de-duplication): steps, active + basal energy (total = sum), walking/running distance, flights; resting HR, SpO₂ (fraction → %), respiratory rate, VO₂ max as daily averages. HealthKit's HRV is SDNN, not RMSSD → left empty.
+  - Sleep: HealthKit has stage samples, no sessions → samples of one source with gaps ≤ 60 min form one `HcSleep` (stable id `hk-sleep:<source>:<start>`); core → light, deep, REM, awake, unspecified → sleeping; `inBed` only counts when a source has no stage samples.
+  - Weight and body fat → `HcBody`.
+  - Changes: the token is a JSON map of per-type `HKQueryAnchor`s (secure-coded, base64). `getChanges` runs `HKAnchoredObjectQuery` per type, bounded to the last 30 days; added workouts are read with their series, added daily/sleep/body samples become `DailyPoint`/re-read nights/`HcBody`, deleted UUIDs become deletions (sleep deletions are not matched: HealthKit deletes samples, the app stores nights).
+  - Permissions: HealthKit never reveals whether *read* access was granted. `HcIntegration.platform = APPLE_HEALTH`; the Integrations screen shows an iOS variant (connect button, hint that Health lists the choices under Settings › Health › Data Access & Devices) instead of per-permission rows; "granted" means "the request sheet was completed once".
+  - Scheduler: `InProcessSyncScheduler` gets the health jobs (sync, backfill, re-read) with the Android worker's follow-ups (target recompute, load recompute from the earliest touched day); sync on app start/foreground and periodically while running.
+  - **HealthKit seeder** (debug binaries only, launch argument `-seedHealthKit`): writes a deterministic 45-day data set (runs with HR/speed, a soccer and a strength session per week, steps, energy, resting HR, sleep stages, weight) into the simulator's Health store for the UI test.
+- **P22.2 Files.** `UIDocumentPickerViewController` for import (FIT/CSV/ZIP) and backup restore (copied into the sandbox), export via the document picker in export mode; files opened from Files/share sheet ("Open in MyHealth", `CFBundleDocumentTypes`) land in `pendingImportUri` like Android's `ACTION_VIEW`.
+- **P22.3 Camera and photos.** Barcode + label OCR: AVFoundation preview in a `UIKitView`, Vision `VNDetectBarcodesRequest` / `VNRecognizeTextRequest` feeding the existing `OcrLineMapper`; "From photo" via `PHPickerViewController`. The simulator has no camera → tested through the photo path with images added by `simctl addmedia`.
+- **P22.4 Background.** `BGAppRefreshTask` (daily target/load recompute + health sync) and HealthKit background delivery for workouts.
+- **P22.5 Small actuals.** Reduced motion (`UIAccessibilityIsReduceMotionEnabled`), half-size image loading, opening the app's Settings page.
+
+**As built (branch `ios/p22`):**
+- Apple Health: `HealthKitReader`, `HealthKitAccess`, `HealthKitSeeder` in `iosMain/data/applehealth`; pure mapping (workout types, sleep nights, daily totals, anchor token) in `commonMain/data/applehealth/AppleHealthMapping.kt` with JVM tests `ah01…ah05`. Sleep nights are assembled per source with a 3 h gap and keyed `applehealth-sleep:<night>`. `InProcessSyncScheduler` got `HealthJobs` (`ips09…ips11`). Sync runs only after the permission sheet was answered.
+- Files: `platform/IosDocuments.kt`. Opened documents are copied into `Caches/Inbox`; a backup is written to `Caches/Export` and handed to the "save to Files" picker when its sink closes. "Open in MyHealth" for `.fit/.csv/.zip/.json` (`CFBundleDocumentTypes`) sets `pendingImportUri`.
+- Scanner: `platform/IosCamera.kt` (AVFoundation session: preview, photo output, EAN/UPC metadata output), `platform/IosVision.kt` (Vision text → `OcrLineMapper` in upright pixel coordinates, so name and value observations come back in row order as on Android — `ocr20`; barcode from a photo, falling back through the detector revisions and a white-margin copy because the default detector finds nothing in the simulator), `platform/IosPhotos.kt` (PHPicker), `ui/camera/IosScanViewModel` + `IosScanScreen` on the now common `ScanUiState`. On a device without a camera (simulator) no permission is asked and only "From photo" is offered.
+- Background: `platform/IosBackground.kt`. A `BGAppRefreshTask` (`io.github.robertscholz22.myhealth.refresh`, earliest every 6 h) and HealthKit observer queries with hourly background delivery for workouts and sleep both run `InProcessSyncScheduler.syncAndRecomputeNow()`: sync, target and load recompute, all awaited (`ips12`).
+- Logging: Kotlin/Native passes a `String` to a C variadic as a C string, so `NSLog` takes `%s`; `%@` crashed (`PlatformLog.ios.kt`).
+- Navigation: an iPhone has no back key, so the More screens without their own top bar get a `BackBar` on iOS (`platformHasBackKey`). Android is unchanged.
+- Simulator UI tests (`iosApp/MyHealthUITests/LaunchTests.swift`):
+  - onboarding;
+  - Apple Health seed → connect → sync → activities, load, calendar;
+  - scan from photo (label OCR, barcode + Open Food Facts);
+  - FIT import from Files and a backup export/import round trip.
+  CI adds the test photos (`simctl addmedia`) and puts `run_5k.fit` into Files › On My iPhone.
+
 ## 6. Verification strategy
 
 ### 6.1 After every task (the lead runs this)

@@ -1,5 +1,6 @@
 package com.myhealth.ui.common
 
+import com.myhealth.di.HealthPlatform
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -19,7 +20,9 @@ import com.myhealth.ui.theme.MyHealthTheme
 /** Short label for one [ActivitySource], shown on [SourceBadge]. */
 @Composable
 fun ActivitySource.label(): String = when (this) {
-    ActivitySource.HEALTH_CONNECT -> stringResource(Res.string.source_health_connect)
+    ActivitySource.HEALTH_CONNECT -> stringResource(
+        if (platformHealth == HealthPlatform.APPLE_HEALTH) Res.string.source_apple_health else Res.string.source_health_connect,
+    )
     ActivitySource.FIT_IMPORT -> stringResource(Res.string.source_fit_import)
     ActivitySource.CSV_IMPORT -> stringResource(Res.string.source_csv_import)
     ActivitySource.GARMIN_API -> stringResource(Res.string.source_garmin_api)

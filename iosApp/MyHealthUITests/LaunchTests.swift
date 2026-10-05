@@ -39,13 +39,8 @@ final class LaunchTests: XCTestCase {
         app.textViews.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
     }
 
-    /// Fresh install → onboarding → Today, the main tabs, and a relaunch that skips onboarding
-    /// (profile, settings and the nutrition target persisted in the iOS database and DataStore).
-    func testOnboardingToTodayAndRelaunch() {
-        let app = XCUIApplication()
-        app.launch()
-        expect(app.staticTexts["Step 1 of 3: About you"], app, "01_onboarding", timeout: 90)
-
+    /// The three onboarding steps with fixed answers, ending on Today.
+    private func completeOnboarding(_ app: XCUIApplication) {
         field("Name", in: app).tap()
         app.typeText("Alex")
         // The birth date field opens a date picker; switch it to text input.
@@ -76,6 +71,15 @@ final class LaunchTests: XCTestCase {
 
         expect(app.staticTexts["Step 3 of 3: Preferences"], app, "08_step3")
         app.buttons["Finish"].tap()
+    }
+
+    /// Fresh install → onboarding → Today, the main tabs, and a relaunch that skips onboarding
+    /// (profile, settings and the nutrition target persisted in the iOS database and DataStore).
+    func testOnboardingToTodayAndRelaunch() {
+        let app = XCUIApplication()
+        app.launch()
+        expect(app.staticTexts["Step 1 of 3: About you"], app, "01_onboarding", timeout: 90)
+        completeOnboarding(app)
 
         expect(label(containing: "kcal left", in: app), app, "09_today", timeout: 60)
         for tab in ["Calendar", "Training", "More"] {
@@ -90,5 +94,246 @@ final class LaunchTests: XCTestCase {
         app.launch()
         expect(label(containing: "kcal left", in: app), app, "11_relaunch_today", timeout: 60)
         XCTAssertFalse(app.staticTexts["Step 1 of 3: About you"].exists, "onboarding shown again after relaunch")
+    }
+
+    private func tab(_ name: String, in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+    }
+
+    /// Taps a More-screen entry, scrolling down to it when needed.
+    private func openEntry(_ name: String, in app: XCUIApplication, until opened: XCUIElement? = nil) {
+        let entry = app.staticTexts[name]
+        _ = entry.waitForExistence(timeout: 5)
+        // More may still be scrolled from the last visit: look downwards first, then upwards.
+        var swipes = 0
+        while !(entry.exists && entry.isHittable) && swipes < 12 {
+            if swipes < 6 { app.swipeUp() } else { app.swipeDown() }
+            swipes += 1
+        }
+        // A tap during the pop transition is swallowed: settle first, and tap once more if the
+        // screen did not open.
+        sleep(1)
+        entry.tap()
+        if let opened = opened, !opened.waitForExistence(timeout: 10), entry.exists, entry.isHittable {
+            entry.tap()
+        }
+    }
+
+    /// Answers HealthKit's permission sheet: "Turn On All", then "Allow".
+    private func allowHealthAccess(_ app: XCUIApplication, _ name: String) {
+        let turnOnAll = app.descendants(matching: .any)["Turn On All"].firstMatch
+        expect(turnOnAll, app, name, timeout: 60)
+        turnOnAll.tap()
+        let allow = app.buttons["UIA.Health.Allow.Button"].firstMatch
+        XCTAssertTrue(allow.waitForExistence(timeout: 10), "\(name): no Allow button")
+        capture(app, "\(name)_all_on")
+        allow.tap()
+    }
+
+    /// P22.1: the seeder fills Apple Health, the Integrations screen connects it, the shared sync
+    /// pulls workouts, daily totals, sleep and weight into the app.
+    func testSyncAppleHealth() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-seedHealthKit"]
+        app.launch()
+        allowHealthAccess(app, "20_seeder_sheet")
+        if app.staticTexts["Step 1 of 3: About you"].waitForExistence(timeout: 30) {
+            completeOnboarding(app)
+        }
+        expect(label(containing: "kcal left", in: app), app, "21_today_before_sync", timeout: 60)
+
+        tab("More", in: app).tap()
+        openEntry("Integrations", in: app)
+        let connect = app.buttons["Connect Apple Health"]
+        expect(connect, app, "22_integrations")
+        XCTAssertTrue(label(containing: "not connected to Apple Health yet", in: app).exists)
+        connect.tap()
+        allowHealthAccess(app, "23_read_sheet")
+        expect(label(containing: "Access to Apple Health has been requested", in: app), app, "24_connected")
+
+        // Connecting starts a sync; every channel then shows its time instead of "Never synced".
+        for channel in ["Workouts", "Daily activity", "Sleep", "Body measurements"] {
+            let done = app.staticTexts.matching(
+                NSPredicate(format: "label BEGINSWITH %@ AND NOT (label CONTAINS 'Never')", "\(channel): ")).firstMatch
+            XCTAssertTrue(done.waitForExistence(timeout: 180), "\(channel) did not sync")
+        }
+        XCTAssertFalse(label(containing: "Last error", in: app).exists, "a sync channel reported an error")
+        capture(app, "25_synced")
+        app.swipeUp()
+        capture(app, "26_synced_backfill")
+
+        app.buttons["Back"].tap()
+        let runRow = label(containing: "Run Outdoor", in: app)
+        openEntry("Activities", in: app, until: runRow)
+        expect(runRow, app, "27_activities", timeout: 30)
+        // The sport filter chips only list sports that have sessions.
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'Soccer'")).firstMatch.exists,
+                      "no soccer session synced")
+        XCTAssertTrue(label(containing: "Apple Health", in: app).exists, "source badge does not say Apple Health")
+        label(containing: "Run Outdoor", in: app).tap()
+        sleep(3)
+        capture(app, "28_activity_detail")
+        app.swipeUp()
+        sleep(1)
+        capture(app, "29_activity_detail_hr")
+        app.buttons["Back"].tap()
+        app.buttons["Back"].tap()
+
+        openEntry("Load & Recovery", in: app)
+        sleep(5)
+        capture(app, "30_load_recovery")
+        app.buttons["Back"].tap()
+
+        tab("Today", in: app).tap()
+        sleep(3)
+        capture(app, "31_today_after_sync")
+        tab("Calendar", in: app).tap()
+        sleep(3)
+        capture(app, "32_calendar_after_sync")
+    }
+
+    private func photoTiles(_ app: XCUIApplication) -> XCUIElementQuery {
+        app.descendants(matching: .image).matching(NSPredicate(format: "label BEGINSWITH 'Photo'"))
+    }
+
+    /// Picks the photo at [index] in the system photo picker once its grid has settled. The
+    /// tiles report as not hittable, so the tap goes to their centre.
+    private func pickPhoto(_ index: Int, _ app: XCUIApplication, _ name: String) {
+        let photo = photoTiles(app).element(boundBy: index)
+        expect(photo, app, name, timeout: 30)
+        sleep(3)
+        photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
+
+    /// The two test photos are the newest in the library, but they were added within the same
+    /// minute, so their order is not fixed: tries the first and the second tile until [done]
+    /// appears. "From photo" is only tapped while the picker is closed.
+    private func pickTestPhoto(_ fromPhoto: XCUIElement, until done: XCUIElement, _ app: XCUIApplication, _ name: String) {
+        for index in 0..<2 {
+            if !photoTiles(app).firstMatch.exists { fromPhoto.tap() }
+            pickPhoto(index, app, "\(name)_\(index)")
+            if done.waitForExistence(timeout: 45) { return }
+            capture(app, "\(name)_\(index)_miss")
+            let retry = app.buttons["Retry"].firstMatch
+            if retry.exists { retry.tap() }
+        }
+    }
+
+    /// P22.3: the simulator has no camera, so the scan screen offers "From photo"; Vision reads
+    /// the nutrition label test image into "Check the scan", and the barcode test image is looked
+    /// up on Open Food Facts.
+    func testScanFromPhoto() {
+        let app = XCUIApplication()
+        app.launch()
+        if app.staticTexts["Step 1 of 3: About you"].waitForExistence(timeout: 30) {
+            completeOnboarding(app)
+        }
+        expect(label(containing: "kcal left", in: app), app, "40_today", timeout: 60)
+        tab("Nutrition", in: app).tap()
+        // The meal slots sit below the target and water cards.
+        let add = app.buttons["+ Add"].firstMatch
+        var swipes = 0
+        while !(add.exists && add.isHittable) && swipes < 4 {
+            app.swipeUp()
+            swipes += 1
+        }
+        expect(add, app, "41_nutrition")
+        add.tap()
+        // "Scan" is the last tab of a scrolling tab row.
+        expect(app.staticTexts["Recents"].firstMatch, app, "42_add_food")
+        let scanTab = app.descendants(matching: .any)["Scan"].firstMatch
+        var tabSwipes = 0
+        while !(scanTab.exists && scanTab.isHittable) && tabSwipes < 3 {
+            app.staticTexts["Favorites"].firstMatch.swipeLeft()
+            tabSwipes += 1
+        }
+        expect(scanTab, app, "42b_scan_tab")
+        scanTab.tap()
+
+        let fromPhoto = app.buttons.matching(NSPredicate(format: "label CONTAINS 'From photo'")).firstMatch
+        expect(fromPhoto, app, "43_scan_no_camera")
+        XCTAssertTrue(label(containing: "No camera", in: app).exists, "the no-camera state is not shown")
+        pickTestPhoto(fromPhoto, until: app.staticTexts["Check the scan"], app, "44_photo_picker")
+        expect(app.staticTexts["Check the scan"], app, "45_ocr_review", timeout: 5)
+        // The recognised values sit in text fields, which expose them as `value`.
+        let energy = app.textViews.matching(NSPredicate(format: "value == '373'")).firstMatch
+        XCTAssertTrue(energy.exists, "the energy value was not recognised")
+        // Salt sits after its values in Vision's output; it must not take "100%" from the
+        // ingredients line.
+        let salt = app.textViews.matching(NSPredicate(format: "value == '0.02'")).firstMatch
+        XCTAssertTrue(salt.exists, "salt was not read from its own row")
+        app.swipeUp()
+        capture(app, "46_ocr_review_values")
+        app.buttons["Back"].firstMatch.tap()
+
+        // Barcode mode: the second photo carries an EAN-13.
+        let barcode = app.descendants(matching: .any)["Barcode"].firstMatch
+        expect(barcode, app, "47_scan_again")
+        barcode.tap()
+        let code = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", "3017620422003", "3017620422003")).firstMatch
+        pickTestPhoto(fromPhoto, until: code, app, "48_photo_picker_barcode")
+        expect(code, app, "49_barcode_result", timeout: 5)
+        app.swipeUp()
+        capture(app, "50_barcode_result_values")
+    }
+
+    /// An element of the system file picker whose label contains [text].
+    private func pickerItem(_ text: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
+    }
+
+    /// Opens [file] in the Files picker: straight from Recents, or via Browse › On My iPhone.
+    private func pickFile(_ file: String, _ app: XCUIApplication, _ name: String) {
+        let item = pickerItem(file, in: app)
+        if !item.waitForExistence(timeout: 10) {
+            capture(app, "\(name)_recents")
+            let browse = app.buttons["Browse"].firstMatch
+            if browse.exists { browse.tap() }
+            let onPhone = pickerItem("On My iPhone", in: app)
+            if onPhone.waitForExistence(timeout: 10) { onPhone.tap() }
+        }
+        expect(item, app, name, timeout: 20)
+        item.tap()
+    }
+
+    /// P22.2: a FIT file imported from Files, then a backup exported to Files and imported back.
+    /// CI puts `run_5k.fit` into Files › On My iPhone before the tests run.
+    func testUsesFilesForImportAndBackup() {
+        let app = XCUIApplication()
+        app.launch()
+        if app.staticTexts["Step 1 of 3: About you"].waitForExistence(timeout: 30) {
+            completeOnboarding(app)
+        }
+        expect(label(containing: "kcal left", in: app), app, "60_today", timeout: 60)
+
+        tab("More", in: app).tap()
+        openEntry("Import", in: app)
+        let choose = app.buttons["Choose file"].firstMatch
+        expect(choose, app, "61_import")
+        choose.tap()
+        pickFile("run_5k", app, "62_file_picker")
+        let imported = app.staticTexts.matching(
+            NSPredicate(format: "label == 'Import finished' OR label == 'Already imported'")).firstMatch
+        expect(imported, app, "63_fit_imported", timeout: 60)
+        app.buttons["Back"].firstMatch.tap()
+
+        openEntry("Backup", in: app)
+        let export = app.buttons["Export backup"].firstMatch
+        expect(export, app, "64_backup")
+        export.tap()
+        // The "save to Files" sheet: keep its proposed place and confirm.
+        let save = app.buttons.matching(NSPredicate(format: "label IN {'Save', 'Move', 'Done'}")).firstMatch
+        expect(save, app, "65_export_sheet", timeout: 30)
+        save.tap()
+        expect(app.staticTexts["Export finished"], app, "66_exported", timeout: 30)
+
+        let restore = app.buttons["Import backup"].firstMatch
+        if !restore.isHittable { app.swipeUp() }
+        restore.tap()
+        pickFile("myhealth-backup", app, "67_backup_picker")
+        expect(app.staticTexts["Import finished"], app, "68_backup_imported", timeout: 60)
+        app.swipeUp()
+        capture(app, "69_backup_imported_counts")
     }
 }

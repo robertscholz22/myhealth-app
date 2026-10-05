@@ -72,6 +72,7 @@ class IntegrationsViewModel(
             backfillStartDay = startDay,
             backfillCompleteDay = syncStates.firstOrNull { it.key == SyncKeys.HC_EXERCISE }?.backfillCompleteDay,
             isBackfillRunning = backfillState == SyncWorkState.Running,
+            platform = hc.platform,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), IntegrationsUiState())
 

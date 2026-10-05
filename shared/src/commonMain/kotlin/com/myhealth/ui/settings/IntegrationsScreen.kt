@@ -1,5 +1,7 @@
 package com.myhealth.ui.settings
 
+import com.myhealth.di.HealthPlatform
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -77,18 +79,29 @@ private fun IntegrationsContent(
         contentPadding = PaddingValues(SCREEN_PADDING),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item { StatusSection(state.status, onOpenPlayStore) }
+        val isApple = state.platform == HealthPlatform.APPLE_HEALTH
+        item { if (isApple) AppleStatusSection(state.status) else StatusSection(state.status, onOpenPlayStore) }
         if (state.status == HcStatus.AVAILABLE) {
             item {
-                PermissionsSection(
-                    permissions = state.permissions,
-                    onGrantPermissions = onGrantPermissions,
-                    onOpenHcSettings = onOpenHcSettings,
-                )
+                if (isApple) {
+                    AppleAccessSection(
+                        connected = state.permissions.any { it.granted },
+                        onConnect = onGrantPermissions,
+                    )
+                } else {
+                    PermissionsSection(
+                        permissions = state.permissions,
+                        onGrantPermissions = onGrantPermissions,
+                        onOpenHcSettings = onOpenHcSettings,
+                    )
+                }
             }
             item { SyncSection(state.isSyncing, state.syncChannels, onSyncNow) }
             item {
                 BackfillSection(
+                    hint = stringResource(
+                        if (isApple) Res.string.integrations_apple_backfill_hint else Res.string.integrations_backfill_requires_history,
+                    ),
                     startDay = state.backfillStartDay,
                     completeDay = state.backfillCompleteDay,
                     isRunning = state.isBackfillRunning,
@@ -123,6 +136,47 @@ private fun StatusSection(status: HcStatus, onOpenPlayStore: () -> Unit) {
                 Button(onClick = onOpenPlayStore) { Text(stringResource(Res.string.integrations_action_install_play_store)) }
             }
         }
+    }
+}
+
+@Composable
+private fun AppleStatusSection(status: HcStatus) {
+    SectionCard(title = stringResource(Res.string.integrations_apple_health_title)) {
+        Text(
+            stringResource(
+                if (status == HcStatus.AVAILABLE) Res.string.integrations_status_available else Res.string.integrations_apple_status_unavailable,
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}
+
+/**
+ * Apple Health hides which read types were allowed, so there are no per-type rows: one connect
+ * button (the system sheet) and where to review the choices (P22.1).
+ */
+@Composable
+private fun AppleAccessSection(connected: Boolean, onConnect: () -> Unit) {
+    SectionCard(title = stringResource(Res.string.integrations_apple_access_title)) {
+        Text(stringResource(Res.string.integrations_apple_access_explainer), style = MaterialTheme.typography.bodyMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (connected) {
+                Icon(
+                    Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    tint = Color(0xFF2E7D32),
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Text(
+                stringResource(
+                    if (connected) Res.string.integrations_apple_access_answered else Res.string.integrations_apple_access_not_yet,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        Button(onClick = onConnect) { Text(stringResource(Res.string.integrations_apple_action_connect)) }
+        Text(stringResource(Res.string.integrations_apple_access_review), style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -202,6 +256,7 @@ private fun SyncChannelLine(channel: SyncChannelRow) {
 
 @Composable
 private fun BackfillSection(
+    hint: String,
     startDay: Long,
     completeDay: Long?,
     isRunning: Boolean,
@@ -209,10 +264,7 @@ private fun BackfillSection(
     onStartBackfill: () -> Unit,
 ) {
     SectionCard(title = stringResource(Res.string.integrations_backfill_title)) {
-        Text(
-            stringResource(Res.string.integrations_backfill_requires_history),
-            style = MaterialTheme.typography.bodySmall,
-        )
+        Text(hint, style = MaterialTheme.typography.bodySmall)
         DatePickerField(
             label = stringResource(Res.string.integrations_backfill_from_label),
             value = LocalDate.fromEpochDays(startDay),
@@ -288,6 +340,27 @@ private fun IntegrationsContentUnavailablePreview() {
     MyHealthTheme(dynamicColor = false) {
         IntegrationsContent(
             state = IntegrationsUiState(status = HcStatus.UNAVAILABLE),
+            onGrantPermissions = {},
+            onOpenPlayStore = {},
+            onOpenHcSettings = {},
+            onSyncNow = {},
+            onBackfillStartDayChange = {},
+            onStartBackfill = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Apple Health")
+@Composable
+private fun IntegrationsContentApplePreview() {
+    MyHealthTheme(dynamicColor = false) {
+        IntegrationsContent(
+            state = IntegrationsUiState(
+                status = HcStatus.AVAILABLE,
+                platform = HealthPlatform.APPLE_HEALTH,
+                permissions = listOf(PermissionRow("HKWorkoutTypeIdentifier", "Workouts", granted = true)),
+                backfillStartDay = LocalDate(2025, 9, 12).toEpochDays(),
+            ),
             onGrantPermissions = {},
             onOpenPlayStore = {},
             onOpenHcSettings = {},
