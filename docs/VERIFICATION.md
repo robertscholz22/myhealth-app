@@ -701,3 +701,31 @@ iOS: `macos-26` runner, Xcode 26, iPhone simulator (iOS 26), debug build of the 
 | Android: launch on the `CoreGraph`-based `AppGraph` → onboarding → Today "0 / 2230 kcal"; start-up `LoadRecomputeWorker` SUCCESS; no FATAL | PASS | logcat (HC sync "permission denied" is expected after the instrumented run reset the app) |
 
 - NOTE-27: iOS still has no HealthKit, camera scanner, document pickers or background tasks — the Health status shows "unavailable", "Sync now" does nothing and the scanner is a placeholder (P22).
+
+## Session 26 — 2026-10-05 (P22: iOS platform layer on the simulator via GitHub Actions; Android regression on the emulator)
+iOS: `macos-26` runner, Xcode 26, iPhone simulator (iOS 26), debug build, fresh install per run. Health data comes from the debug `HealthKitSeeder` (the same synthetic 45-day fixture set as `tools/hc-seeder`); the scan photos are the repo test assets (`docs/testassets/label_haferflocken_de.png`, `barcode_3017620422003.png`) added with `simctl addmedia`; `run_5k.fit` is placed in Files › On My iPhone. All four XCUITests green in run 37338210943.
+
+| Step | Result | Evidence |
+|---|---|---|
+| Seeder writes the fixture set → Integrations → "Connect Apple Health" → permission sheet "Turn On All" → Allow | PASS | `p22_ios_01_integrations.png` |
+| Sync: workouts, daily activity, sleep, body measurements all report a sync time; "Backfill history" runs | PASS | `p22_ios_02_synced.png` |
+| Activities: seeded runs/soccer listed with duration, distance, avg HR, TRIMP and the Apple Health badge; Soccer chip present | PASS | `p22_ios_03_activities.png` |
+| Run detail: 9.45 km, 52 min, avg pace 5:28 /km, HR curve from HR samples, load 98.8 (HR samples) | PASS | `p22_ios_04_activity_detail_hr.png` |
+| Load & Recovery from the synced history: ATL 38, CTL 50, ACWR 0.75, chart over 28 days | PASS | `p22_ios_05_load_recovery.png` |
+| Today after sync: recovery 75/100, "Last synced", nutrition targets | PASS | `p22_ios_06_today_after_sync.png` |
+| iOS More screens had no way back (no back key on iPhone) | **FOUND → fixed**: `BackBar` with a back arrow on iOS only | all `p22_ios_*` More screens |
+| Scan without a camera: "No camera" state, only "From photo" offered, no permission prompt | PASS | `p22_ios_07_scan_no_camera.png` |
+| Label photo → Vision OCR: first run "No nutrition table was recognised" (Vision's default compute device fails in the simulator) | **FOUND → fixed**: CPU-only requests in the simulator, errors logged | run 37319020786 |
+| Label OCR review: salt read as 100 (from "100% Vollkorn-Hafer"), saturated fat empty — Vision returns names and values as separate lines and they were sorted by top only | **FOUND → fixed**: lines go through the shared `OcrLineMapper` row order; JVM test `ocr20` on the recorded lines; re-run: 373 kcal, 1560 kJ, fat 7.0, sat. fat 1.2, carbs 58.7, sugar 1.1, fiber 10.0, protein 13.5, salt 0.02 | `p22_ios_08_ocr_review_values.png` |
+| App crashed after OCR when logging the lines (`NSLog("%@", kotlinString)`; Kotlin/Native passes a C string) | **FOUND → fixed**: `%s` everywhere, including `PlatformLog.ios.kt` (every iOS warning would have crashed) | crash report `EXC_BAD_ACCESS` at an ASCII address |
+| Barcode photo: Vision's default detector (and revisions 4, 3) found nothing in the simulator | **FOUND → fixed**: fallback through the detector revisions (revision 2 finds it) and a white-margin copy | app log |
+| Barcode 3017620422003 → Open Food Facts → "New ingredient" Nutella with the barcode filled in | PASS | `p22_ios_09_barcode_result.png` |
+| Import → Choose file → Files › On My iPhone › `run_5k.fit` → "1 parsed · 1 saved · 0 duplicates · 0 errors" | PASS | `p22_ios_10_fit_imported.png` |
+| Backup → Export → saved to On My iPhone: 185 rows over 12 tables | PASS | `p22_ios_11_exported.png` |
+| Backup → Import the exported file (merge): 185 rows in the file, 0 merged (nothing new) | PASS | `p22_ios_12_backup_imported_counts.png` |
+| Android: `bash tools/verify.sh` | PASS | 1111 unit tests (+`ips12`, `ocr20`), lint clean, release APK 13.9 MB |
+| Android: `bash tools/connected.sh emulator-5554` | PASS | 26/26 (More screens unchanged: `BackBar` shows only the content where the platform has a back key) |
+| Android: debug build launched on the emulator → onboarding; no FATAL | PASS | logcat |
+
+- NOTE-28: `BGAppRefreshTask` and HealthKit background delivery are wired (`IosBackground`, `ips12` covers the awaited sync + recompute) but iOS decides when they fire; the simulator run cannot show them. To be checked on a real iPhone in P23 (new Garmin run appears without opening the app).
+- NOTE-29: the live camera (preview, barcode metadata output, capture, torch) needs a device; the simulator covers the photo path, which shares the Vision and parser code.
