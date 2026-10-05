@@ -103,9 +103,10 @@ final class LaunchTests: XCTestCase {
     /// Taps a More-screen entry, scrolling down to it when needed.
     private func openEntry(_ name: String, in app: XCUIApplication) {
         let entry = app.staticTexts[name]
+        // More may still be scrolled from the last visit: look downwards first, then upwards.
         var swipes = 0
-        while !(entry.exists && entry.isHittable) && swipes < 6 {
-            app.swipeUp()
+        while !(entry.exists && entry.isHittable) && swipes < 12 {
+            if swipes < 6 { app.swipeUp() } else { app.swipeDown() }
             swipes += 1
         }
         entry.tap()
@@ -209,8 +210,15 @@ final class LaunchTests: XCTestCase {
         }
         expect(add, app, "41_nutrition")
         add.tap()
+        // "Scan" is the last tab of a scrolling tab row.
+        expect(app.staticTexts["Recents"].firstMatch, app, "42_add_food")
         let scanTab = app.descendants(matching: .any)["Scan"].firstMatch
-        expect(scanTab, app, "42_add_food")
+        var swipes = 0
+        while !(scanTab.exists && scanTab.isHittable) && swipes < 3 {
+            app.staticTexts["Favorites"].firstMatch.swipeLeft()
+            swipes += 1
+        }
+        expect(scanTab, app, "42b_scan_tab")
         scanTab.tap()
 
         let fromPhoto = app.buttons.matching(NSPredicate(format: "label CONTAINS 'From photo'")).firstMatch
