@@ -66,3 +66,5 @@ actual suspend fun loadHalfSizeImage(path: String): ImageBitmap? = withContext(D
 }
 
 actual val platformHealth: com.myhealth.di.HealthPlatform = com.myhealth.di.HealthPlatform.APPLE_HEALTH
+
+actual val platformHasBackKey: Boolean = false

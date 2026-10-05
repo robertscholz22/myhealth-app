@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.myhealth.resources.*
+import com.myhealth.ui.common.BackBar
 import com.myhealth.ui.common.LocalPlatformUi
 import com.myhealth.ui.common.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -207,7 +208,9 @@ fun MyHealthNavHost(
 
                     // ---- activities ---------------------------------------------------------
                     composable<ActivitiesRoute> {
-                        ActivitiesScreen(onOpenDetail = { id -> navController.navigate(ActivityDetailRoute(id)) })
+                        BackBar(Res.string.more_entry_activities, onBack = { navController.popBackStack() }) {
+                            ActivitiesScreen(onOpenDetail = { id -> navController.navigate(ActivityDetailRoute(id)) })
+                        }
                     }
                     composable<ActivityDetailRoute> { entry ->
                         val route = entry.toRoute<ActivityDetailRoute>()
@@ -236,10 +239,12 @@ fun MyHealthNavHost(
                         )
                     }
                     composable<IngredientsRoute> {
-                        IngredientsScreen(
-                            onOpenIngredient = { id -> navController.navigate(IngredientEditRoute(id = id)) },
-                            onNewIngredient = { navController.navigate(IngredientEditRoute()) },
-                        )
+                        BackBar(Res.string.more_entry_ingredients, onBack = { navController.popBackStack() }) {
+                            IngredientsScreen(
+                                onOpenIngredient = { id -> navController.navigate(IngredientEditRoute(id = id)) },
+                                onNewIngredient = { navController.navigate(IngredientEditRoute()) },
+                            )
+                        }
                     }
                     composable<IngredientEditRoute> { entry ->
                         val route = entry.toRoute<IngredientEditRoute>()
@@ -287,10 +292,12 @@ fun MyHealthNavHost(
                     }
 
                     // ---- body / load / goals -------------------------------------------------
-                    composable<BodyRoute> { BodyScreen() }
-                    composable<LoadRoute> { LoadScreen() }
+                    composable<BodyRoute> { BackBar(Res.string.body_title, onBack = { navController.popBackStack() }) { BodyScreen() } }
+                    composable<LoadRoute> { BackBar(Res.string.more_entry_load_recovery, onBack = { navController.popBackStack() }) { LoadScreen() } }
                     composable<RunningPrsRoute> {
-                        RunningPrsScreen(onOpenActivity = { id -> navController.navigate(ActivityDetailRoute(id)) })
+                        BackBar(Res.string.more_entry_running_prs, onBack = { navController.popBackStack() }) {
+                            RunningPrsScreen(onOpenActivity = { id -> navController.navigate(ActivityDetailRoute(id)) })
+                        }
                     }
                     composable<BikeRoute> {
                         BikeScreen(
@@ -333,12 +340,14 @@ fun MyHealthNavHost(
                     }
 
                     // ---- system ---------------------------------------------------------------
-                    composable<SettingsRoute> { SettingsScreen() }
-                    composable<IntegrationsRoute> { IntegrationsScreen() }
-                    composable<ImportRoute> { ImportScreen() }
-                    composable<BackupRoute> { BackupScreen() }
+                    composable<SettingsRoute> { BackBar(Res.string.settings_title, onBack = { navController.popBackStack() }) { SettingsScreen() } }
+                    composable<IntegrationsRoute> { BackBar(Res.string.more_entry_integrations, onBack = { navController.popBackStack() }) { IntegrationsScreen() } }
+                    composable<ImportRoute> { BackBar(Res.string.more_entry_import, onBack = { navController.popBackStack() }) { ImportScreen() } }
+                    composable<BackupRoute> { BackBar(Res.string.more_entry_backup, onBack = { navController.popBackStack() }) { BackupScreen() } }
                     composable<GarminDirectRoute> {
-                        PlaceholderScreen(title = stringResource(Res.string.nav_garmin_direct_title))
+                        BackBar(Res.string.nav_garmin_direct_title, onBack = { navController.popBackStack() }) {
+                            PlaceholderScreen(title = stringResource(Res.string.nav_garmin_direct_title))
+                        }
                     }
                 }
             }

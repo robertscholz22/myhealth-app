@@ -32,6 +32,9 @@ val LocalPlatformUi = staticCompositionLocalOf<PlatformUi> { error("PlatformUi m
 /** The health store this platform syncs with (P22): names it in the UI. */
 expect val platformHealth: com.myhealth.di.HealthPlatform
 
+/** `true` where the system offers a back key or gesture for every screen (Android). */
+expect val platformHasBackKey: Boolean
+
 /**
  * Remembers a document picker (PLAN P7.6, P8.4). Calling the result opens it for [mimeTypes];
  * [onResult] receives the picked document's platform reference (a `content://` URI on Android) or

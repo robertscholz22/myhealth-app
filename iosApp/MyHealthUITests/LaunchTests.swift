@@ -200,7 +200,13 @@ final class LaunchTests: XCTestCase {
         }
         expect(label(containing: "kcal left", in: app), app, "40_today", timeout: 60)
         tab("Nutrition", in: app).tap()
+        // The meal slots sit below the target and water cards.
         let add = app.buttons["+ Add"].firstMatch
+        var swipes = 0
+        while !(add.exists && add.isHittable) && swipes < 4 {
+            app.swipeUp()
+            swipes += 1
+        }
         expect(add, app, "41_nutrition")
         add.tap()
         let scanTab = app.descendants(matching: .any)["Scan"].firstMatch
