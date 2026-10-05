@@ -258,6 +258,10 @@ final class LaunchTests: XCTestCase {
         // The recognised values sit in text fields, which expose them as `value`.
         let energy = app.textViews.matching(NSPredicate(format: "value == '373'")).firstMatch
         XCTAssertTrue(energy.exists, "the energy value was not recognised")
+        // Salt sits after its values in Vision's output; it must not take "100%" from the
+        // ingredients line.
+        let salt = app.textViews.matching(NSPredicate(format: "value == '0.02'")).firstMatch
+        XCTAssertTrue(salt.exists, "salt was not read from its own row")
         app.swipeUp()
         capture(app, "46_ocr_review_values")
         app.buttons["Back"].firstMatch.tap()

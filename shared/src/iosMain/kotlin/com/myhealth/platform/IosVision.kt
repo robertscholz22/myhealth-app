@@ -1,5 +1,6 @@
 package com.myhealth.platform
 
+import com.myhealth.data.ocr.OcrLineMapper
 import com.myhealth.domain.engine.label.OcrLine
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
@@ -24,6 +25,7 @@ import platform.Foundation.NSUUID
 import platform.Foundation.writeToFile
 import platform.UIKit.UIGraphicsImageRenderer
 import platform.UIKit.UIGraphicsImageRendererFormat
+import platform.UIKit.UIColor
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
 import platform.Vision.VNBarcodeObservation
@@ -31,6 +33,10 @@ import platform.Vision.VNBarcodeSymbologyEAN13
 import platform.Vision.VNBarcodeSymbologyEAN8
 import platform.Vision.VNBarcodeSymbologyUPCE
 import platform.Vision.VNDetectBarcodesRequest
+import platform.Vision.VNDetectBarcodesRequestRevision1
+import platform.Vision.VNDetectBarcodesRequestRevision2
+import platform.Vision.VNDetectBarcodesRequestRevision3
+import platform.Vision.VNDetectBarcodesRequestRevision4
 import platform.Vision.VNImageRequestHandler
 import platform.Vision.VNRecognizeTextRequest
 import platform.Vision.VNRecognizedText
@@ -62,7 +68,7 @@ object IosVision {
         return if (data.writeToFile(path, atomically = true)) path else null
     }
 
-    /** Recognised lines of an upright [image], top-left origin, in pixels. */
+    /** Recognised lines of an upright [image] in reading order, top-left origin, in pixels. */
     suspend fun recognizeText(image: UIImage): List<OcrLine> = withContext(Dispatchers.IO) {
         val cgImage = image.CGImage ?: return@withContext emptyList()
         val width = CGImageGetWidth(cgImage).toDouble()
@@ -73,30 +79,68 @@ object IosVision {
             usesLanguageCorrection = false
         }
         perform(cgImage, request)
-        request.results().orEmpty().filterIsInstance<VNRecognizedTextObservation>().mapNotNull { observation ->
-            val text = (observation.topCandidates(1u).firstOrNull() as? VNRecognizedText)?.string ?: return@mapNotNull null
+        val raw = request.results().orEmpty().filterIsInstance<VNRecognizedTextObservation>().map { observation ->
+            val text = (observation.topCandidates(1u).firstOrNull() as? VNRecognizedText)?.string.orEmpty()
             // Vision's boxes are normalised with the origin bottom-left.
-            observation.boundingBox.useContents {
-                OcrLine(
-                    text = text,
+            val bounds = observation.boundingBox.useContents {
+                OcrLineMapper.Bounds(
                     left = (origin.x * width).roundToInt(),
                     top = ((1.0 - origin.y - size.height) * height).roundToInt(),
                     right = ((origin.x + size.width) * width).roundToInt(),
                     bottom = ((1.0 - origin.y) * height).roundToInt(),
                 )
             }
-        }.sortedWith(compareBy({ it.top }, { it.left }))
+            OcrLineMapper.RawLine(text, bounds)
+        }
+        // Vision returns a label's name and each value column as separate observations; the
+        // shared mapper puts them back in reading order, row by row, as on Android.
+        OcrLineMapper.map(raw)
     }
 
-    /** The first product code (EAN-13, EAN-8, UPC-E) on [image], or `null`. */
+    /**
+     * The first product code (EAN-13, EAN-8, UPC-E) on [image], or `null`. Vision's default
+     * detector does not find every code (it returns nothing in the simulator, and a photo cropped
+     * tight to the bars has no quiet zone), so it falls back to the older detector revisions and
+     * then to a copy with a white margin.
+     */
     suspend fun detectBarcode(image: UIImage): String? = withContext(Dispatchers.IO) {
-        val cgImage = image.CGImage ?: return@withContext null
+        listOf(image, withMargin(image)).firstNotNullOfOrNull { candidate ->
+            val cgImage = candidate.CGImage ?: return@firstNotNullOfOrNull null
+            BARCODE_REVISIONS.firstNotNullOfOrNull { revision -> detectBarcode(cgImage, revision) }
+        }
+    }
+
+    private fun detectBarcode(image: CGImageRef, revision: ULong?): String? {
         val request = VNDetectBarcodesRequest(completionHandler = null).apply {
+            if (revision != null) this.revision = revision
             symbologies = listOf(VNBarcodeSymbologyEAN13, VNBarcodeSymbologyEAN8, VNBarcodeSymbologyUPCE)
         }
-        perform(cgImage, request)
-        request.results().orEmpty().filterIsInstance<VNBarcodeObservation>().firstNotNullOfOrNull { it.payloadStringValue }
+        perform(image, request)
+        val observations = request.results().orEmpty().filterIsInstance<VNBarcodeObservation>()
+        if (isSimulator) NSLog("IosVision: barcode revision %s found %ld", revision?.toString() ?: "default", observations.size.toLong())
+        return observations.firstNotNullOfOrNull { it.payloadStringValue }
     }
+
+    /** [image] on a white canvas a fifth larger on every side. */
+    private fun withMargin(image: UIImage): UIImage {
+        val (width, height) = image.size.useContents { width to height }
+        val margin = maxOf(width, height) / 5
+        val format = UIGraphicsImageRendererFormat.defaultFormat().apply { scale = 1.0 }
+        return UIGraphicsImageRenderer(CGSizeMake(width + 2 * margin, height + 2 * margin), format).imageWithActions { context ->
+            UIColor.whiteColor.setFill()
+            context?.fillRect(CGRectMake(0.0, 0.0, width + 2 * margin, height + 2 * margin))
+            image.drawInRect(CGRectMake(margin, margin, width, height))
+        }
+    }
+
+    /** `null` is the SDK's default revision; the others are tried newest first. */
+    private val BARCODE_REVISIONS: List<ULong?> = listOf(
+        null,
+        VNDetectBarcodesRequestRevision4,
+        VNDetectBarcodesRequestRevision3,
+        VNDetectBarcodesRequestRevision2,
+        VNDetectBarcodesRequestRevision1,
+    ).map { it?.toULong() }
 
     /**
      * Runs [request] on [image]. The simulator has no Neural Engine and Vision's default device

@@ -1,6 +1,7 @@
 package com.myhealth.domain.engine.label
 
 import com.google.common.truth.Truth.assertThat
+import com.myhealth.data.ocr.OcrLineMapper
 import com.myhealth.domain.model.EngineWarningCode
 import com.myhealth.domain.model.MeasureBasis
 import com.myhealth.domain.model.NutritionFactsDraft
@@ -264,6 +265,29 @@ class NutritionLabelParserTest {
 
         assertThat(result).isInstanceOf(LabelParseResult.Success::class.java)
         assertThat(elapsedMillis).isLessThan(200.0)
+    }
+
+    @Test
+    fun ocr20_vision_split_columns_in_row_order() {
+        // iOS Vision returns the nutrient name and each column's value as separate lines, read
+        // here from the simulator run of the test label. Sorted by top alone, "Salz" came after
+        // its own values and took "100%" from the ingredients line, and the wrapped
+        // "davon gesättigte / Fettsäuren" lost its value; the shared row order fixes both.
+        val raw = loadOcrFixture("de_vision_split_lines").map {
+            OcrLineMapper.RawLine(it.text, OcrLineMapper.Bounds(it.left, it.top, it.right, it.bottom))
+        }
+        val draft = draftOf(OcrLineMapper.map(raw))
+
+        assertThat(draft.basis).isEqualTo(MeasureBasis.PER_100G)
+        assertThat(draft.energyKcal.value).isEqualTo(373.0)
+        assertThat(draft.energyKj.value).isEqualTo(1560.0)
+        assertThat(draft.fatG.value).isEqualTo(7.0)
+        assertThat(draft.satFatG.value).isEqualTo(1.2)
+        assertThat(draft.carbsG.value).isEqualTo(58.7)
+        assertThat(draft.sugarG.value).isEqualTo(1.1)
+        assertThat(draft.fiberG.value).isEqualTo(10.0)
+        assertThat(draft.proteinG.value).isEqualTo(13.5)
+        assertThat(draft.saltG.value).isEqualTo(0.02)
     }
 
     private fun draftOf(fixture: String): NutritionFactsDraft = draftOf(loadOcrFixture(fixture))
