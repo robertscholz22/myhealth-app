@@ -8,6 +8,8 @@ import com.myhealth.domain.model.ImportRecord
 import com.myhealth.domain.repository.ActivityImporter
 import com.myhealth.domain.util.AppError
 import com.myhealth.domain.util.Outcome
+import com.myhealth.data.healthconnect.BackfillResult
+import com.myhealth.data.healthconnect.SyncSummary
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +34,28 @@ class InProcessSyncSchedulerTest {
     private var loadGate: CompletableDeferred<Unit>? = null
     private var importer: ActivityImporter = importerOf(flow { })
 
-    private fun TestScope.scheduler(): InProcessSyncScheduler {
+    private val healthRuns = mutableListOf<String>()
+    private var healthGate: CompletableDeferred<Unit>? = null
+    private var syncOutcome: Outcome<*> = Outcome.Ok(SyncSummary(minAffectedDay = 19_990L))
+
+    private val healthJobs = HealthJobs(
+        sync = {
+            healthRuns += "sync"
+            healthGate?.await()
+            syncOutcome
+        },
+        backfill = { from ->
+            healthRuns += "backfill:$from"
+            healthGate?.await()
+            Outcome.Ok(BackfillResult(finished = true))
+        },
+        reread = { days ->
+            healthRuns += "reread:$days"
+            Outcome.Ok(SyncSummary())
+        },
+    )
+
+    private fun TestScope.scheduler(health: HealthJobs? = null): InProcessSyncScheduler {
         val dispatcher = StandardTestDispatcher(testScheduler)
         return InProcessSyncScheduler(
             scope = backgroundScope,
@@ -47,6 +70,7 @@ class InProcessSyncSchedulerTest {
                 targetsSucceed
             },
             today = { 20_000L },
+            health = health,
             serial = dispatcher,
             work = dispatcher,
         )
@@ -199,7 +223,7 @@ class InProcessSyncSchedulerTest {
     }
 
     @Test
-    fun ips08_health_calls_are_inert_until_p22() = runTest {
+    fun ips08_health_calls_are_inert_without_health_jobs() = runTest {
         val s = scheduler()
         s.schedulePeriodic(6)
         s.syncNow()
@@ -208,5 +232,66 @@ class InProcessSyncSchedulerTest {
         settle()
         assertThat(s.observeState().first()).isEqualTo(SyncWorkState.Idle)
         assertThat(s.observeBackfillState().first()).isEqualTo(SyncWorkState.Idle)
+    }
+
+    @Test
+    fun ips09_sync_now_keeps_a_running_sync_and_triggers_the_recomputes() = runTest {
+        val gate = CompletableDeferred<Unit>().also { healthGate = it }
+        val s = scheduler(healthJobs)
+        s.syncNow()
+        runCurrent()
+        s.syncNow()
+        runCurrent()
+        assertThat(healthRuns).containsExactly("sync")
+        assertThat(s.observeState().first()).isEqualTo(SyncWorkState.Running)
+        gate.complete(Unit)
+        settle()
+        assertThat(s.observeState().first()).isEqualTo(SyncWorkState.Idle)
+        assertThat(targetRuns).isEqualTo(1)
+        assertThat(loadRuns).containsExactly(19_990L)
+    }
+
+    @Test
+    fun ips10_failures_are_reported_and_unavailable_is_named() = runTest {
+        val s = scheduler(healthJobs)
+        syncOutcome = Outcome.Err(AppError.HealthConnectUnavailable)
+        s.syncNow()
+        settle()
+        assertThat(s.observeState().first())
+            .isEqualTo(SyncWorkState.Failed("The health store is not available right now."))
+        syncOutcome = Outcome.Err(AppError.HealthConnectPermissionDenied)
+        s.syncNow()
+        settle()
+        assertThat(s.observeState().first()).isInstanceOf(SyncWorkState.Failed::class.java)
+        assertThat(targetRuns).isEqualTo(0)
+        assertThat(loadRuns).isEmpty()
+    }
+
+    @Test
+    fun ips11_periodic_sync_runs_now_and_every_interval_and_backfill_replaces() = runTest {
+        val s = scheduler(healthJobs)
+        s.schedulePeriodic(6)
+        runCurrent()
+        assertThat(healthRuns).containsExactly("sync")
+        advanceTimeBy(6.hours + 1.seconds)
+        runCurrent()
+        assertThat(healthRuns).containsExactly("sync", "sync")
+
+        healthRuns.clear()
+        val gate = CompletableDeferred<Unit>().also { healthGate = it }
+        s.backfill(19_000)
+        runCurrent()
+        s.backfill(18_500)
+        runCurrent()
+        gate.complete(Unit)
+        settle()
+        assertThat(healthRuns).containsExactly("backfill:19000", "backfill:18500").inOrder()
+        assertThat(s.observeBackfillState().first()).isEqualTo(SyncWorkState.Idle)
+        // the backfill re-derives the load from its start day
+        assertThat(loadRuns).contains(18_500L)
+
+        s.rereadExerciseDetail(30)
+        settle()
+        assertThat(healthRuns.last()).isEqualTo("reread:30")
     }
 }

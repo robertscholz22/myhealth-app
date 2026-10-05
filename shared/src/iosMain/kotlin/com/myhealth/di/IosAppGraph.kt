@@ -5,9 +5,15 @@ import androidx.room.Room
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.myhealth.data.applehealth.HealthKitAccess
+import com.myhealth.data.applehealth.HealthKitReader
 import com.myhealth.data.backup.BackupContentSource
 import com.myhealth.data.db.MyHealthDatabase
 import com.myhealth.data.db.migration.Migrations
+import com.myhealth.data.healthconnect.HcBackfill
+import com.myhealth.data.healthconnect.HcSyncService
+import com.myhealth.data.healthconnect.HealthConnectMapper
+import com.myhealth.data.healthconnect.SyncSummary
 import com.myhealth.data.prefs.DataStoreSettingsRepository
 import com.myhealth.data.repository.ImportContentSource
 import com.myhealth.data.repository.TransactionRunner
@@ -15,6 +21,8 @@ import com.myhealth.data.time.PlatformClock
 import com.myhealth.data.time.SystemPlatformClock
 import com.myhealth.data.time.todayEpochDay
 import com.myhealth.domain.repository.SettingsRepository
+import com.myhealth.domain.util.Outcome
+import com.myhealth.sync.HealthJobs
 import com.myhealth.sync.InProcessSyncScheduler
 import com.myhealth.sync.SyncScheduler
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -34,8 +42,8 @@ import platform.Foundation.NSUserDomainMask
 /**
  * The iOS dependency container (P21): [CoreGraph] plus what the iOS shell opens itself — the
  * database and settings file in the app's Documents directory (bundled SQLite, so the schema and
- * migrations are exactly Android's), `file://` document access, and the in-process scheduler.
- * HealthKit, background tasks, the camera and the document pickers follow in P22.
+ * migrations are exactly Android's), `file://` document access, Apple Health behind the shared
+ * Health Connect sync (P22.1) and the in-process scheduler.
  */
 class IosAppGraph : CoreGraph() {
 
@@ -72,7 +80,46 @@ class IosAppGraph : CoreGraph() {
         )
     }
 
-    override val hcIntegration: HcIntegration = HealthKitPending
+    // ---- Apple Health (P22.1) ---------------------------------------------------------------
+
+    val healthKit: HealthKitAccess by lazy { HealthKitAccess() }
+
+    override val hcIntegration: HcIntegration by lazy { AppleHealthIntegration(healthKit) }
+
+    /** The shared Health Connect sync over the HealthKit reader; `null` where Health is missing (iPad). */
+    val healthSync: HcSyncService? by lazy {
+        if (!healthKit.isAvailable) return@lazy null
+        HcSyncService(
+            reader = HealthKitReader(healthKit.store, clock),
+            mapper = HealthConnectMapper(),
+            activityRepo = activityRepo,
+            healthRepo = healthRepo,
+            bodyRepo = bodyRepo,
+            syncStateRepo = syncStateRepo,
+            clock = clock,
+        )
+    }
+
+    /** HealthKit has no 30-day history limit, so the backfill needs no extra permission. */
+    private val healthBackfill: HcBackfill? by lazy {
+        healthSync?.let { HcBackfill(sync = it, syncStateRepo = syncStateRepo, historyGranted = { true }, clock = clock) }
+    }
+
+    /**
+     * Before the permission sheet was answered nothing is read: an anchor taken without access
+     * would later replay the whole history.
+     */
+    private val healthJobs = HealthJobs(
+        sync = { whenConnected { it.syncIncremental() } },
+        backfill = { fromDay -> whenConnected { healthBackfill!!.run(fromDay) } },
+        reread = { days -> whenConnected { it.rereadExerciseDetail(days) } },
+    )
+
+    private suspend fun whenConnected(block: suspend (HcSyncService) -> Outcome<*>): Outcome<*> {
+        val sync = healthSync ?: return Outcome.Ok(SyncSummary())
+        if (!healthKit.wasAnswered()) return Outcome.Ok(SyncSummary())
+        return block(sync)
+    }
 
     override val syncScheduler: SyncScheduler by lazy {
         InProcessSyncScheduler(
@@ -81,6 +128,7 @@ class IosAppGraph : CoreGraph() {
             recomputeLoad = { fromDay -> loadRecomputeService.recompute(fromDay) },
             recomputeTargets = { targetRecomputeService.recompute().failure == null },
             today = { clock.todayEpochDay() },
+            health = healthJobs,
         )
     }
 
@@ -102,11 +150,12 @@ private fun documentsPath(fileName: String): String {
     return requireNotNull(documents?.path) { "No Documents directory" } + "/" + fileName
 }
 
-/** Health access is not wired yet (HealthKit, P22): the Integrations screen shows "unavailable". */
-private object HealthKitPending : HcIntegration {
-    override fun status(): HcStatus = HcStatus.UNAVAILABLE
-    override suspend fun granted(): Set<String> = emptySet()
-    override val allPermissions: Set<String> = emptySet()
+/** The Integrations screen's view of Apple Health (P22.1). */
+private class AppleHealthIntegration(private val access: HealthKitAccess) : HcIntegration {
+    override val platform: HealthPlatform = HealthPlatform.APPLE_HEALTH
+    override fun status(): HcStatus = if (access.isAvailable) HcStatus.AVAILABLE else HcStatus.UNAVAILABLE
+    override suspend fun granted(): Set<String> = if (access.wasAnswered()) allPermissions else emptySet()
+    override val allPermissions: Set<String> get() = access.readIdentifiers
     override val optionalDetailPermissions: Set<String> = emptySet()
 }
 

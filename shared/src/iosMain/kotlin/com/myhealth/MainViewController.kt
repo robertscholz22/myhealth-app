@@ -36,7 +36,7 @@ fun MainViewController(): UIViewController {
     val graph = IosAppGraph.instance
     return ComposeUIViewController {
         val settings by graph.settings.settings.collectAsState(initial = AppSettings())
-        val platform = remember { IosPlatformUi() }
+        val platform = remember { IosPlatformUi(graph) }
         CompositionLocalProvider(LocalAppGraph provides graph, LocalPlatformUi provides platform) {
             MyHealthTheme(
                 darkTheme = isDarkTheme(settings.themeMode),
@@ -54,4 +54,13 @@ fun MainViewController(): UIViewController {
             }
         }
     }
+}
+
+/**
+ * Called by the Swift app whenever it becomes active (P22.1): Apple Health has no background
+ * worker of its own here, so every return to the app pulls the latest data.
+ */
+@Suppress("unused") // Called from Swift.
+fun onAppBecameActive() {
+    IosAppGraph.instance.syncScheduler.syncNow()
 }

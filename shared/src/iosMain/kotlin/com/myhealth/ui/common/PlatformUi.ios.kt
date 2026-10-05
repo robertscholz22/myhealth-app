@@ -26,3 +26,5 @@ actual fun isReducedMotionEnabled(): Boolean = false
 actual fun dynamicColorScheme(darkTheme: Boolean): ColorScheme? = null
 
 actual suspend fun loadHalfSizeImage(path: String): ImageBitmap? = null
+
+actual val platformHealth: com.myhealth.di.HealthPlatform = com.myhealth.di.HealthPlatform.APPLE_HEALTH

@@ -79,6 +79,7 @@
     <string name="chart_common_no_data">No data for this range yet.</string>
     <!-- SourceBadge (ui/common/SourceBadge.kt) -->
     <string name="source_health_connect">Health Connect</string>
+    <string name="source_apple_health">Apple Health</string>
     <string name="source_fit_import">FIT</string>
     <string name="source_csv_import">CSV</string>
     <string name="source_garmin_api">Garmin</string>
@@ -343,6 +344,7 @@
     <string name="activities_filter_all">All</string>
     <string name="activities_empty_title">No activities yet</string>
     <string name="activities_empty_message">Sync with Health Connect, or import a FIT/CSV file, to see activities here.</string>
+    <string name="activities_empty_message_apple">Sync with Apple Health, or import a FIT/CSV file, to see activities here.</string>
     <string name="activities_empty_action">Sync now</string>
     <string name="activities_sync_failed">Sync failed: %1$s</string>
     <!-- Activity detail chart cards (ui/activities/ActivityChartCards.kt) -->
@@ -689,6 +691,16 @@
     <string name="integrations_action_start_backfill">Start backfill</string>
     <string name="integrations_backfill_progress_format">Backfilled back to %1$s</string>
     <string name="integrations_backfill_none_yet">No backfill has run yet.</string>
+    <!-- Integrations screen, Apple Health variant (P22.1) -->
+    <string name="integrations_apple_health_title">Apple Health</string>
+    <string name="integrations_apple_status_unavailable">Apple Health is not available on this device.</string>
+    <string name="integrations_apple_access_title">Access</string>
+    <string name="integrations_apple_access_explainer">MyHealth reads workouts, heart rate, speed, power, cadence, steps, distance, energy, floors, resting heart rate, blood oxygen, respiratory rate, VO2 max, sleep, weight and body fat from Apple Health. It never writes anything back.</string>
+    <string name="integrations_apple_access_review">Apple Health does not tell apps which data you allowed. To review or change it, open Settings › Health › Data Access &amp; Devices › MyHealth.</string>
+    <string name="integrations_apple_access_answered">Access to Apple Health has been requested.</string>
+    <string name="integrations_apple_access_not_yet">MyHealth is not connected to Apple Health yet.</string>
+    <string name="integrations_apple_action_connect">Connect Apple Health</string>
+    <string name="integrations_apple_backfill_hint">Reads your Apple Health history back to the chosen day.</string>
     <!-- Backup screen (ui/settings/BackupScreen.kt, BackupViewModel.kt) -->
     <string name="backup_section_export_title">Export</string>
     <string name="backup_export_description">Writes every table to a JSON file you choose. Settings and any stored credentials are never included.</string>

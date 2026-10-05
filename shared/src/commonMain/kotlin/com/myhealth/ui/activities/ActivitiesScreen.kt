@@ -23,7 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.myhealth.resources.*
+import com.myhealth.di.HealthPlatform
 import com.myhealth.ui.common.mathRound
+import com.myhealth.ui.common.platformHealth
 import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -92,7 +94,13 @@ private fun ActivitiesContent(
                 state.isLoading -> LoadingBox(modifier = Modifier.fillMaxSize())
                 state.isEmpty -> EmptyState(
                     title = stringResource(Res.string.activities_empty_title),
-                    message = stringResource(Res.string.activities_empty_message),
+                    message = stringResource(
+                        if (platformHealth == HealthPlatform.APPLE_HEALTH) {
+                            Res.string.activities_empty_message_apple
+                        } else {
+                            Res.string.activities_empty_message
+                        },
+                    ),
                     actionLabel = stringResource(Res.string.activities_empty_action),
                     onAction = onSyncNow,
                     icon = Icons.AutoMirrored.Filled.DirectionsRun,

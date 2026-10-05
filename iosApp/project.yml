@@ -20,6 +20,9 @@ targets:
     type: application
     platform: iOS
     sources: [MyHealth]
+    dependencies:
+      # The static Kotlin framework calls these; a static library does not pull them in itself.
+      - sdk: HealthKit.framework
     info:
       path: MyHealth/Info.plist
       properties:
@@ -31,6 +34,16 @@ targets:
         # Compose renders at 120 Hz on ProMotion iPhones only with this key.
         CADisableMinimumFrameDurationOnPhone: true
         ITSAppUsesNonExemptEncryption: false
+        # Apple Health (P22.1). The app only reads; the update string covers the Debug-only test
+        # seeder, which writes sample data into the simulator's Health store.
+        NSHealthShareUsageDescription: MyHealth reads your workouts, heart rate, steps, energy, sleep, weight and body fat from Apple Health to show your training history, estimate training load and recovery, and set daily nutrition targets. Your data stays on this iPhone.
+        NSHealthUpdateUsageDescription: MyHealth never writes to Apple Health. Only test builds write sample data to check the sync.
+    entitlements:
+      path: MyHealth/MyHealth.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        com.apple.developer.healthkit.background-delivery: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.robertscholz22.myhealth
