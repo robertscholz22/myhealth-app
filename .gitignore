@@ -30,3 +30,8 @@ export.zip
 export.xml
 docs/screenshots/phone*.png
 docs/private/
+
+# iOS (P21): the Xcode project is generated from iosApp/project.yml
+iosApp/*.xcodeproj/
+iosApp/build/
+iosApp/MyHealth/Info.plist

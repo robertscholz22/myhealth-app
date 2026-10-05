@@ -32,3 +32,11 @@ fun minuteOfDay(atMillis: Long, zone: TimeZone): Int {
 
 /** The device clock in the device's zone. */
 expect fun systemClock(): PlatformClock
+
+/** The clock as a `kotlin.time.Clock` for the domain engines (millisecond precision, as on Android). */
+fun PlatformClock.toKotlinClock(): kotlin.time.Clock {
+    val source = this
+    return object : kotlin.time.Clock {
+        override fun now(): kotlin.time.Instant = kotlin.time.Instant.fromEpochMilliseconds(source.millis())
+    }
+}

@@ -1,0 +1,89 @@
+# iOS build and simulator UI test (P21). Runs on GitHub's macOS runners — the project has no Mac.
+# Screenshots, the accessibility trees, the xcodebuild log and the app's log are uploaded as the
+# `ios-results` artifact; `tools/ios.sh` triggers a run and downloads it.
+name: iOS
+
+on:
+  push:
+    branches: [main, "ios/**"]
+    paths-ignore: ["docs/**", "**/*.md"]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    # Compose Multiplatform 1.11 links against iOS 26 SDK classes (UIViewLayoutRegion): Xcode 26.
+    runs-on: macos-26
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Cache Kotlin/Native toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Tools and versions
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          brew install xcodegen
+          echo "VERSION_NAME=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle.kts)" >> "$GITHUB_ENV"
+          xcodebuild -version
+
+      - name: Generate the Xcode project
+        working-directory: iosApp
+        run: xcodegen generate
+
+      - name: Pick and boot a simulator
+        run: |
+          SIM=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          phones = [d for runtime, ds in sorted(devices.items()) if "iOS" in runtime for d in ds if d["name"].startswith("iPhone")]
+          print(phones[-1]["udid"])')
+          echo "SIM=$SIM" >> "$GITHUB_ENV"
+          xcrun simctl boot "$SIM" || true
+          xcrun simctl list devices | grep "$SIM"
+
+      - name: Build and run the UI tests
+        run: |
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/results/screenshots"
+          TEST_RUNNER_SCREENSHOT_DIR="$RUNNER_TEMP/results/screenshots" \
+          xcodebuild test \
+            -project iosApp/MyHealth.xcodeproj \
+            -scheme MyHealth \
+            -destination "id=$SIM" \
+            -resultBundlePath "$RUNNER_TEMP/results/MyHealth.xcresult" \
+            MARKETING_VERSION="$VERSION_NAME" \
+            CURRENT_PROJECT_VERSION="$VERSION_CODE" \
+            2>&1 | tee "$RUNNER_TEMP/results/xcodebuild.log" | grep -E "error:|warning: .*\.swift|Test Case|\*\* |Executed"
+
+      - name: Collect logs
+        if: always()
+        run: |
+          xcrun simctl spawn "$SIM" log show --last 60m --style compact \
+            --predicate 'process == "MyHealth"' > "$RUNNER_TEMP/results/app.log" 2>&1 || true
+          mkdir -p "$RUNNER_TEMP/results/crashes"
+          cp ~/Library/Logs/DiagnosticReports/MyHealth* "$RUNNER_TEMP/results/crashes/" 2>/dev/null || true
+          grep -E "^e: |error:" "$RUNNER_TEMP/results/xcodebuild.log" | head -50 > "$RUNNER_TEMP/results/errors.txt" || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-results
+          path: ${{ runner.temp }}/results
+          retention-days: 14

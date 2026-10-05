@@ -681,3 +681,23 @@ Emulator `myhealth_api35`, date 4 Oct 2026. Release build (R8). Started from the
 | Exercise detail animation (Barbell back squat) | PASS | moves at animator scale 1, still pose at scale 0 (reduced motion) |
 | Calendar month swipes; date picker in New event | PASS | Oct → Nov → Sep; picked 15 Oct → field 2026-10-15 (`p203_event_date.png`) |
 | logcat | PASS | no FATAL / ANR for `com.myhealth` |
+
+
+## Session 25 — 2026-10-05 (P21: iOS shell on the simulator via GitHub Actions; Android regression on the emulator)
+iOS: `macos-26` runner, Xcode 26, iPhone simulator (iOS 26), debug build of the `Shared` framework + Swift shell, fresh install per run; synthetic onboarding values only. Android: emulator `myhealth_api35`, debug build.
+
+| Step | Result | Evidence |
+|---|---|---|
+| iOS run 1 (Xcode 16.4) | **FAIL → fixed**: Kotlin framework built, link failed on `UIViewLayoutRegion` (CMP 1.11 needs the iOS 26 SDK) → runner `macos-26` + newest Xcode 26 | run log |
+| iOS fresh launch → onboarding step 1, green theme, same layout as Android | PASS | `p21_ios_01_onboarding.png` |
+| Name typed; birth date picker → text input → 01/15/1992 → OK | PASS | `p21_ios_04_date_typed.png` |
+| After the date dialog the keyboard returned and covered "Next" (no back key on iPhone, no return key on the number pad) | **FOUND → fixed** (iOS shell: content above the keyboard, tap outside clears focus); re-run: "Next" above the number pad, tap on the title closes the keyboard | `p21_ios_07_step2_filled.png`, `p21_ios_07b_keyboard_closed.png` |
+| Height 175, weight 72 → Next → Finish → Today: "0 / 2230 kcal", protein 115 g, carbs 260 g, fat 82 g — identical to Android with the same inputs | PASS | `p21_ios_09_today.png` |
+| Calendar (October 2026, today marked), Training (5–11 Oct, Base, Generate suggestions), More (all entries) | PASS | `p21_ios_10_tab_*.png` |
+| App terminated and relaunched → Today directly, same target (Room on bundled SQLite + DataStore persisted) | PASS | `p21_ios_11_relaunch_today.png` |
+| iOS app log / crash reports | PASS | no exceptions, no crash report |
+| Android: `bash tools/verify.sh` | PASS | 1101 unit tests (+8 `InProcessSyncSchedulerTest`), lint clean, release APK 13.9 MB |
+| Android: `bash tools/connected.sh emulator-5554` | PASS | 26/26 |
+| Android: launch on the `CoreGraph`-based `AppGraph` → onboarding → Today "0 / 2230 kcal"; start-up `LoadRecomputeWorker` SUCCESS; no FATAL | PASS | logcat (HC sync "permission denied" is expected after the instrumented run reset the app) |
+
+- NOTE-27: iOS still has no HealthKit, camera scanner, document pickers or background tasks — the Health status shows "unavailable", "Sync now" does nothing and the scanner is a placeholder (P22).

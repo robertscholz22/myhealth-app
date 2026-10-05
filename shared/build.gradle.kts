@@ -23,8 +23,14 @@ kotlin {
     }
     // Built on macOS CI only (P21); on Linux these targets are skipped, but commonMain is still
     // compiled as metadata, which rejects any JVM-only API.
-    iosArm64()
-    iosSimulatorArm64()
+    // The Xcode project (iosApp/, P21) links this as a static framework named `Shared`, built by
+    // `embedAndSignAppleFrameworkForXcode` from its pre-build script.
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
