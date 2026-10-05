@@ -157,8 +157,10 @@ final class LaunchTests: XCTestCase {
 
         app.buttons["Back"].tap()
         openEntry("Activities", in: app)
-        expect(label(containing: "Run", in: app), app, "27_activities", timeout: 30)
-        XCTAssertTrue(label(containing: "Soccer", in: app).exists, "no soccer session synced")
+        expect(label(containing: "Run Outdoor", in: app), app, "27_activities", timeout: 30)
+        // The sport filter chips only list sports that have sessions.
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'Soccer'")).firstMatch.exists,
+                      "no soccer session synced")
         XCTAssertTrue(label(containing: "Apple Health", in: app).exists, "source badge does not say Apple Health")
         label(containing: "Run Outdoor", in: app).tap()
         sleep(3)
