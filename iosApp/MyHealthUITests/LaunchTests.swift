@@ -160,7 +160,7 @@ final class LaunchTests: XCTestCase {
         expect(label(containing: "Run", in: app), app, "27_activities", timeout: 30)
         XCTAssertTrue(label(containing: "Soccer", in: app).exists, "no soccer session synced")
         XCTAssertTrue(label(containing: "Apple Health", in: app).exists, "source badge does not say Apple Health")
-        label(containing: "Run", in: app).tap()
+        label(containing: "Run Outdoor", in: app).tap()
         sleep(3)
         capture(app, "28_activity_detail")
         app.swipeUp()
@@ -182,12 +182,25 @@ final class LaunchTests: XCTestCase {
         capture(app, "32_calendar_after_sync")
     }
 
-    /// Picks the photo at [index] in the system photo picker (newest first). CI adds the label
-    /// last, so it is the first photo, the barcode the second.
+    /// Picks the photo at [index] in the system photo picker. The grid's tiles report as not
+    /// hittable, so the tap goes to their centre.
     private func pickPhoto(_ index: Int, _ app: XCUIApplication, _ name: String) {
         let photo = app.descendants(matching: .image).matching(NSPredicate(format: "label BEGINSWITH 'Photo'")).element(boundBy: index)
         expect(photo, app, name, timeout: 30)
-        photo.tap()
+        photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
+
+    /// The two test photos were added within the same minute, so their order in the picker is
+    /// not fixed: tries the first two until [done] appears, dismissing the error in between.
+    private func pickTestPhoto(_ fromPhoto: XCUIElement, until done: XCUIElement, _ app: XCUIApplication, _ name: String) {
+        for index in 0..<2 {
+            fromPhoto.tap()
+            pickPhoto(index, app, "\(name)_\(index)")
+            if done.waitForExistence(timeout: 60) { return }
+            capture(app, "\(name)_\(index)_miss")
+            let retry = app.buttons["Retry"].firstMatch
+            if retry.exists { retry.tap() }
+        }
     }
 
     /// P22.3: the simulator has no camera, so the scan screen offers "From photo"; Vision reads
@@ -224,9 +237,8 @@ final class LaunchTests: XCTestCase {
         let fromPhoto = app.buttons.matching(NSPredicate(format: "label CONTAINS 'From photo'")).firstMatch
         expect(fromPhoto, app, "43_scan_no_camera")
         XCTAssertTrue(label(containing: "No camera", in: app).exists, "the no-camera state is not shown")
-        fromPhoto.tap()
-        pickPhoto(0, app, "44_photo_picker")
-        expect(app.staticTexts["Check the scan"], app, "45_ocr_review", timeout: 60)
+        pickTestPhoto(fromPhoto, until: app.staticTexts["Check the scan"], app, "44_photo_picker")
+        expect(app.staticTexts["Check the scan"], app, "45_ocr_review", timeout: 5)
         XCTAssertTrue(label(containing: "373", in: app).exists, "the energy value was not recognised")
         app.swipeUp()
         capture(app, "46_ocr_review_values")
@@ -236,11 +248,10 @@ final class LaunchTests: XCTestCase {
         let barcode = app.descendants(matching: .any)["Barcode"].firstMatch
         expect(barcode, app, "47_scan_again")
         barcode.tap()
-        fromPhoto.tap()
-        pickPhoto(1, app, "48_photo_picker_barcode")
         let code = app.descendants(matching: .any).matching(
             NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", "3017620422003", "3017620422003")).firstMatch
-        expect(code, app, "49_barcode_result", timeout: 60)
+        pickTestPhoto(fromPhoto, until: code, app, "48_photo_picker_barcode")
+        expect(code, app, "49_barcode_result", timeout: 5)
         app.swipeUp()
         capture(app, "50_barcode_result_values")
     }
