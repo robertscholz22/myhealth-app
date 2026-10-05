@@ -95,7 +95,7 @@ class IosScanViewModel(
         platform.Foundation.NSLog("IosScan: %ld text lines", lines.size.toLong())
         // Simulator diagnostics for the label parser (P22.3); the test image holds no personal data.
         if (platform.Foundation.NSProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != null) {
-            lines.forEach { platform.Foundation.NSLog("IosScan line: %@", "${it.left},${it.top},${it.right},${it.bottom}|${it.text}") }
+            lines.forEach { platform.Foundation.NSLog("IosScan line: %s", "${it.left},${it.top},${it.right},${it.bottom}|${it.text}") }
         }
         parseLabel(lines, IosVision.saveJpeg(upright, imageDir), fromPhoto)
     }

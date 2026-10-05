@@ -110,7 +110,7 @@ object IosVision {
             val error = alloc<ObjCObjectVar<NSError?>>()
             val ok = VNImageRequestHandler(cGImage = image, options = emptyMap<Any?, Any>())
                 .performRequests(listOf(request), error = error.ptr)
-            if (!ok) NSLog("IosVision: %@", error.value?.localizedDescription ?: "request failed")
+            if (!ok) NSLog("IosVision: %s", error.value?.localizedDescription ?: "request failed")
         }
     }
 

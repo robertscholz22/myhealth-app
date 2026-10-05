@@ -101,15 +101,22 @@ final class LaunchTests: XCTestCase {
     }
 
     /// Taps a More-screen entry, scrolling down to it when needed.
-    private func openEntry(_ name: String, in app: XCUIApplication) {
+    private func openEntry(_ name: String, in app: XCUIApplication, until opened: XCUIElement? = nil) {
         let entry = app.staticTexts[name]
+        _ = entry.waitForExistence(timeout: 5)
         // More may still be scrolled from the last visit: look downwards first, then upwards.
         var swipes = 0
         while !(entry.exists && entry.isHittable) && swipes < 12 {
             if swipes < 6 { app.swipeUp() } else { app.swipeDown() }
             swipes += 1
         }
+        // A tap during the pop transition is swallowed: settle first, and tap once more if the
+        // screen did not open.
+        sleep(1)
         entry.tap()
+        if let opened = opened, !opened.waitForExistence(timeout: 10), entry.exists, entry.isHittable {
+            entry.tap()
+        }
     }
 
     /// Answers HealthKit's permission sheet: "Turn On All", then "Allow".
@@ -156,8 +163,9 @@ final class LaunchTests: XCTestCase {
         capture(app, "26_synced_backfill")
 
         app.buttons["Back"].tap()
-        openEntry("Activities", in: app)
-        expect(label(containing: "Run Outdoor", in: app), app, "27_activities", timeout: 30)
+        let runRow = label(containing: "Run Outdoor", in: app)
+        openEntry("Activities", in: app, until: runRow)
+        expect(runRow, app, "27_activities", timeout: 30)
         // The sport filter chips only list sports that have sessions.
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'Soccer'")).firstMatch.exists,
                       "no soccer session synced")
