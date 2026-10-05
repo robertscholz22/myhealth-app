@@ -182,21 +182,27 @@ final class LaunchTests: XCTestCase {
         capture(app, "32_calendar_after_sync")
     }
 
-    /// Picks the photo at [index] in the system photo picker. The grid's tiles report as not
-    /// hittable, so the tap goes to their centre.
+    private func photoTiles(_ app: XCUIApplication) -> XCUIElementQuery {
+        app.descendants(matching: .image).matching(NSPredicate(format: "label BEGINSWITH 'Photo'"))
+    }
+
+    /// Picks the photo at [index] in the system photo picker once its grid has settled. The
+    /// tiles report as not hittable, so the tap goes to their centre.
     private func pickPhoto(_ index: Int, _ app: XCUIApplication, _ name: String) {
-        let photo = app.descendants(matching: .image).matching(NSPredicate(format: "label BEGINSWITH 'Photo'")).element(boundBy: index)
+        let photo = photoTiles(app).element(boundBy: index)
         expect(photo, app, name, timeout: 30)
+        sleep(3)
         photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
-    /// The two test photos were added within the same minute, so their order in the picker is
-    /// not fixed: tries the first two until [done] appears, dismissing the error in between.
+    /// The two test photos are the newest in the library, but they were added within the same
+    /// minute, so their order is not fixed: tries the first and the second tile until [done]
+    /// appears. "From photo" is only tapped while the picker is closed.
     private func pickTestPhoto(_ fromPhoto: XCUIElement, until done: XCUIElement, _ app: XCUIApplication, _ name: String) {
         for index in 0..<2 {
-            fromPhoto.tap()
+            if !photoTiles(app).firstMatch.exists { fromPhoto.tap() }
             pickPhoto(index, app, "\(name)_\(index)")
-            if done.waitForExistence(timeout: 60) { return }
+            if done.waitForExistence(timeout: 45) { return }
             capture(app, "\(name)_\(index)_miss")
             let retry = app.buttons["Retry"].firstMatch
             if retry.exists { retry.tap() }

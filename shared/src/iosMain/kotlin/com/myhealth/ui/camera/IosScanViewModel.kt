@@ -92,6 +92,7 @@ class IosScanViewModel(
     private suspend fun recognizeLabel(image: UIImage, fromPhoto: Boolean = false) {
         val upright = IosVision.upright(image)
         val lines = IosVision.recognizeText(upright)
+        platform.Foundation.NSLog("IosScan: %ld text lines", lines.size.toLong())
         parseLabel(lines, IosVision.saveJpeg(upright, imageDir), fromPhoto)
     }
 

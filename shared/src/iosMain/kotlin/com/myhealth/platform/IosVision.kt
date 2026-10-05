@@ -2,7 +2,17 @@ package com.myhealth.platform
 
 import com.myhealth.domain.engine.label.OcrLine
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.ObjCObjectVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
 import kotlinx.cinterop.useContents
+import kotlinx.cinterop.value
+import platform.CoreGraphics.CGImageRef
+import platform.Foundation.NSError
+import platform.Foundation.NSLog
+import platform.Foundation.NSProcessInfo
+import platform.Vision.VNRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
@@ -62,7 +72,7 @@ object IosVision {
             recognitionLanguages = listOf("de-DE", "en-US")
             usesLanguageCorrection = false
         }
-        VNImageRequestHandler(cGImage = cgImage, options = emptyMap<Any?, Any>()).performRequests(listOf(request), error = null)
+        perform(cgImage, request)
         request.results().orEmpty().filterIsInstance<VNRecognizedTextObservation>().mapNotNull { observation ->
             val text = (observation.topCandidates(1u).firstOrNull() as? VNRecognizedText)?.string ?: return@mapNotNull null
             // Vision's boxes are normalised with the origin bottom-left.
@@ -84,7 +94,26 @@ object IosVision {
         val request = VNDetectBarcodesRequest(completionHandler = null).apply {
             symbologies = listOf(VNBarcodeSymbologyEAN13, VNBarcodeSymbologyEAN8, VNBarcodeSymbologyUPCE)
         }
-        VNImageRequestHandler(cGImage = cgImage, options = emptyMap<Any?, Any>()).performRequests(listOf(request), error = null)
+        perform(cgImage, request)
         request.results().orEmpty().filterIsInstance<VNBarcodeObservation>().firstNotNullOfOrNull { it.payloadStringValue }
     }
+
+    /**
+     * Runs [request] on [image]. The simulator has no Neural Engine and Vision's default device
+     * fails there ("could not create inference context"), so it is pinned to the CPU; a failure
+     * is logged and leaves the results empty.
+     */
+    @Suppress("DEPRECATION")
+    private fun perform(image: CGImageRef, request: VNRequest) {
+        if (isSimulator) request.usesCPUOnly = true
+        memScoped {
+            val error = alloc<ObjCObjectVar<NSError?>>()
+            val ok = VNImageRequestHandler(cGImage = image, options = emptyMap<Any?, Any>())
+                .performRequests(listOf(request), error = error.ptr)
+            if (!ok) NSLog("IosVision: %@", error.value?.localizedDescription ?: "request failed")
+        }
+    }
+
+    private val isSimulator: Boolean
+        get() = NSProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != null
 }

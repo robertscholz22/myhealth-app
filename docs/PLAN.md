@@ -3082,6 +3082,19 @@ Order of work (each step green on Linux — JVM tests + `compileIosMainKotlinMet
 - **P22.4 Background.** `BGAppRefreshTask` (daily target/load recompute + health sync) and HealthKit background delivery for workouts.
 - **P22.5 Small actuals.** Reduced motion (`UIAccessibilityIsReduceMotionEnabled`), half-size image loading, opening the app's Settings page.
 
+**As built (branch `ios/p22`):**
+- Apple Health: `HealthKitReader`, `HealthKitAccess`, `HealthKitSeeder` in `iosMain/data/applehealth`; pure mapping (workout types, sleep nights, daily totals, anchor token) in `commonMain/data/applehealth/AppleHealthMapping.kt` with JVM tests `ah01…ah05`. Sleep nights are assembled per source with a 3 h gap and keyed `applehealth-sleep:<night>`. `InProcessSyncScheduler` got `HealthJobs` (`ips09…ips11`). Sync runs only after the permission sheet was answered.
+- Files: `platform/IosDocuments.kt`. Opened documents are copied into `Caches/Inbox`; a backup is written to `Caches/Export` and handed to the "save to Files" picker when its sink closes. "Open in MyHealth" for `.fit/.csv/.zip/.json` (`CFBundleDocumentTypes`) sets `pendingImportUri`.
+- Scanner: `platform/IosCamera.kt` (AVFoundation session: preview, photo output, EAN/UPC metadata output), `platform/IosVision.kt` (Vision text → `OcrLine` in upright pixel coordinates, barcode from a photo), `platform/IosPhotos.kt` (PHPicker), `ui/camera/IosScanViewModel` + `IosScanScreen` on the now common `ScanUiState`. On a device without a camera (simulator) no permission is asked and only "From photo" is offered.
+- Background: `platform/IosBackground.kt`. A `BGAppRefreshTask` (`io.github.robertscholz22.myhealth.refresh`, earliest every 6 h) and HealthKit observer queries with hourly background delivery for workouts and sleep both run `InProcessSyncScheduler.syncAndRecomputeNow()`: sync, target and load recompute, all awaited (`ips12`).
+- Navigation: an iPhone has no back key, so the More screens without their own top bar get a `BackBar` on iOS (`platformHasBackKey`). Android is unchanged.
+- Simulator UI tests (`iosApp/MyHealthUITests/LaunchTests.swift`):
+  - onboarding;
+  - Apple Health seed → connect → sync → activities, load, calendar;
+  - scan from photo (label OCR, barcode + Open Food Facts);
+  - FIT import from Files and a backup export/import round trip.
+  CI adds the test photos (`simctl addmedia`) and puts `run_5k.fit` into Files › On My iPhone.
+
 ## 6. Verification strategy
 
 ### 6.1 After every task (the lead runs this)
