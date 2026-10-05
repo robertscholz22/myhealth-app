@@ -1,0 +1,11 @@
+Nutrition Facts|40|40|340|80
+Serving size 1 bar (40 g)|40|100|480|140
+Amount per serving|40|160|420|200
+Calories 190|40|210|300|250
+Total Fat 9g|40|260|320|300
+Saturated Fat 1.5g|40|310|420|350
+Sodium 160mg|40|360|340|400
+Total Carbohydrate 22g|40|410|500|450
+Dietary Fiber 3g|40|460|400|500
+Total Sugars 12g|40|510|400|550
+Protein 4g|40|560|300|600

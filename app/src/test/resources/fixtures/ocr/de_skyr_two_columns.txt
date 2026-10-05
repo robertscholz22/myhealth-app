@@ -1,0 +1,12 @@
+Skyr Natur|40|40|300|80
+Nährwerte|40|110|220|150
+je 100 g|390|110|550|150
+je Portion (150 g)|660|110|940|150
+Energie 63 kcal 95 kcal|40|170|940|210
+Brennwert 265 kJ 398 kJ|40|230|940|270
+Fett 0,2 g 0,3 g|40|290|940|330
+davon gesättigte Fettsäuren 0,1 g 0,2 g|40|350|940|390
+Kohlenhydrate 4,0 g 6,0 g|40|410|940|450
+davon Zucker 4,0 g 6,0 g|40|470|940|510
+Eiweiß 11,0 g 16,5 g|40|530|940|570
+Salz 0,13 g 0,20 g|40|590|940|630

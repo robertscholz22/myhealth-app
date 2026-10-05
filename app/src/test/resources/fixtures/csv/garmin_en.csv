@@ -1,0 +1,6 @@
+Activity Type,Date,Favorite,Title,Distance,Calories,Time,Avg HR,Max HR,Aerobic TE,Avg Pace,Best Pace,Elev Gain,Number of Laps
+Running,2026-05-10 09:00:00,false,"Morning run, easy",5.00,355,00:25:00,152,178,3.4,5:00,4:04,42,2
+Cycling,2026-05-11 17:30:00,false,Evening Ride,30.25,700,1:05:30,138,168,3.0,--,--,310,1
+Soccer,2026-05-12 19:00:00,false,Training,8.20,890,01:30:00,155,192,4.1,--,--,--,1
+Strength Training,2026-05-13 07:15:00,false,Gym,--,310,45:00,112,158,2.1,--,--,--,1
+Pickleball,2026-05-14 18:00:00,false,"Doubles, indoor",--,200,30:00,--,--,--,--,--,--,1

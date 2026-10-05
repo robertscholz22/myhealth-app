@@ -1,0 +1,6 @@
+Studentenfutter|40|40|340|80
+Nährwerte je 100 g|40|110|400|150
+Brennwert 1.560 kJ|40|160|420|200
+Fett 20,0 g|40|210|300|250
+Kohlenhydrate 30,0 g|40|260|460|300
+Eiweiss 12,0 g|40|310|380|350

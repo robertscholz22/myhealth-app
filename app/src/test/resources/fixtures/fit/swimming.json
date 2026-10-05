@@ -1,0 +1,38 @@
+{
+  "fileId": {
+    "type": "ACTIVITY",
+    "manufacturer": 1,
+    "product": 3121,
+    "serialNumber": 3912345678,
+    "timeCreatedMillis": 1778392800000
+  },
+  "sessions": [
+    {
+      "startAtMillis": 1778396400000,
+      "sport": "SWIMMING",
+      "subSport": "LAP_SWIMMING",
+      "totalElapsedSec": 1800.0,
+      "totalTimerSec": 1700.0,
+      "totalDistanceMeters": 1500.0,
+      "totalCalories": 420,
+      "avgHr": 132,
+      "maxHr": 150,
+      "avgSpeedMps": 0.88
+    }
+  ],
+  "laps": [],
+  "records": [
+    {
+      "timestampMillis": 1778396400000,
+      "hr": 128
+    },
+    {
+      "timestampMillis": 1778396401000,
+      "hr": 129
+    },
+    {
+      "timestampMillis": 1778396402000,
+      "hr": 130
+    }
+  ]
+}

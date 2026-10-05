@@ -1,0 +1,5 @@
+Bio Hafer Drink|40|40|340|80
+Ungeöffnet mindestens haltbar bis|40|100|620|140
+siehe Deckel|40|160|260|200
+Vor Gebrauch gut schütteln|40|220|500|260
+Hergestellt in Deutschland|40|280|520|320

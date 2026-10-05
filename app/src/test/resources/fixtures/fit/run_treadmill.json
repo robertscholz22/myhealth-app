@@ -1,0 +1,56 @@
+{
+  "fileId": {
+    "type": "ACTIVITY",
+    "manufacturer": 1,
+    "product": 3121,
+    "serialNumber": 3912345678,
+    "timeCreatedMillis": 1778392800000
+  },
+  "sessions": [
+    {
+      "startAtMillis": 1778396400000,
+      "sport": "RUNNING",
+      "subSport": "TREADMILL",
+      "sportProfileName": "Treadmill",
+      "totalElapsedSec": 1800.0,
+      "totalTimerSec": 1800.0,
+      "totalDistanceMeters": 5500.0,
+      "totalCalories": 400,
+      "avgHr": 149,
+      "maxHr": 170,
+      "avgSpeedMps": 3.0555,
+      "avgCadenceSpm": 86.0
+    }
+  ],
+  "laps": [],
+  "records": [
+    {
+      "timestampMillis": 1778396400000,
+      "hr": 145,
+      "distanceMeters": 0.0,
+      "speedMps": 3.05,
+      "cadenceSpm": 86
+    },
+    {
+      "timestampMillis": 1778396401000,
+      "hr": 146,
+      "distanceMeters": 3.05,
+      "speedMps": 3.05,
+      "cadenceSpm": 86
+    },
+    {
+      "timestampMillis": 1778396402000,
+      "hr": 147,
+      "distanceMeters": 6.1,
+      "speedMps": 3.05,
+      "cadenceSpm": 86
+    },
+    {
+      "timestampMillis": 1778396403000,
+      "hr": 148,
+      "distanceMeters": 9.15,
+      "speedMps": 3.05,
+      "cadenceSpm": 86
+    }
+  ]
+}

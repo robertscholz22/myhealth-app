@@ -1,0 +1,36 @@
+{
+  "fileId": {
+    "type": "ACTIVITY",
+    "manufacturer": 1,
+    "product": 3121,
+    "serialNumber": 3912345678,
+    "timeCreatedMillis": 1778392800000
+  },
+  "sessions": [
+    {
+      "startAtMillis": 1778396400000,
+      "sport": "BASKETBALL",
+      "subSport": "GENERIC",
+      "totalElapsedSec": 2700.0,
+      "totalTimerSec": 2700.0,
+      "totalCalories": 500,
+      "avgHr": 140,
+      "maxHr": 180
+    }
+  ],
+  "laps": [],
+  "records": [
+    {
+      "timestampMillis": 1778396400000,
+      "hr": 138
+    },
+    {
+      "timestampMillis": 1778396401000,
+      "hr": 139
+    },
+    {
+      "timestampMillis": 1778396402000,
+      "hr": 140
+    }
+  ]
+}

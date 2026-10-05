@@ -1,0 +1,11 @@
+Reiswaffeln ungesalzen|40|40|460|80
+Nährwerte pro 100 g|40|110|420|150
+Energie 1520 kJ / 363 kcal|40|160|600|200
+Fett 0,5 g|40|210|290|250
+davon gesättigte Fettsäuren < 0,1 g|40|260|740|300
+Kohlenhydrate 86,0 g|40|310|460|350
+davon Zucker < 0,5 g|40|360|450|400
+Ballaststoffe|40|410|300|450
+2,5 g|150|460|280|500
+Eiweiss 6,0 g|40|510|360|550
+Salz < 0,1 g|40|560|350|600

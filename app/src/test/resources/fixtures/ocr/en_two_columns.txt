@@ -1,0 +1,12 @@
+Crunchy Granola|40|40|360|80
+Nutrition information|40|100|460|140
+per 100 g|390|150|550|190
+per serving (45 g)|660|150|940|190
+Energy 1870 kJ 842 kJ|40|200|940|240
+Energy 447 kcal 201 kcal|40|250|940|290
+Fat 18.0 g 8.1 g|40|300|940|340
+Carbohydrate 60.0 g 27.0 g|40|350|940|390
+Sugars 12.0 g 5.4 g|40|400|940|440
+Fibre 7.0 g 3.2 g|40|450|940|490
+Protein 10.0 g 4.5 g|40|500|940|540
+Salt 0.05 g 0.02 g|40|550|940|590

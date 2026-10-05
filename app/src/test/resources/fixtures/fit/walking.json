@@ -1,0 +1,44 @@
+{
+  "fileId": {
+    "type": "ACTIVITY",
+    "manufacturer": 1,
+    "product": 3121,
+    "serialNumber": 3912345678,
+    "timeCreatedMillis": 1778392800000
+  },
+  "sessions": [
+    {
+      "startAtMillis": 1778396400000,
+      "sport": "WALKING",
+      "totalElapsedSec": 2400.0,
+      "totalTimerSec": 2400.0,
+      "totalDistanceMeters": 2800.0,
+      "totalCalories": 150,
+      "avgHr": 98,
+      "maxHr": 112,
+      "avgSpeedMps": 1.1667,
+      "avgCadenceSpm": 55.0
+    }
+  ],
+  "laps": [],
+  "records": [
+    {
+      "timestampMillis": 1778396400000,
+      "hr": 95,
+      "distanceMeters": 0.0,
+      "speedMps": 1.16
+    },
+    {
+      "timestampMillis": 1778396401000,
+      "hr": 96,
+      "distanceMeters": 1.16,
+      "speedMps": 1.16
+    },
+    {
+      "timestampMillis": 1778396402000,
+      "hr": 97,
+      "distanceMeters": 2.32,
+      "speedMps": 1.16
+    }
+  ]
+}

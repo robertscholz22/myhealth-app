@@ -1,0 +1,9 @@
+Frische Vollmilch|40|40|380|80
+Nährwerte pro 100 ml|40|110|440|150
+Energie 272 kJ / 65 kcal|40|160|570|200
+Fett 3,5 g|40|210|280|250
+davon gesättigte Fettsäuren 2,3 g|40|260|700|300
+Kohlenhydrate 4,8 g|40|310|440|350
+davon Zucker 4,8 g|40|360|420|400
+Eiweiß 3,4 g|40|410|350|450
+Salz 0,13 g|40|460|300|500

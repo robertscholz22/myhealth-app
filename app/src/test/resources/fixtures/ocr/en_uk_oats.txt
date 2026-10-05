@@ -1,0 +1,10 @@
+Organic Porridge Oats|40|40|480|80
+Typical values per 100g|40|110|480|150
+Energy 1560 kJ / 372 kcal|40|160|580|200
+Fat 8.0g|40|210|260|250
+of which saturates 1.4g|40|260|520|300
+Carbohydrate 60.0g|40|310|440|350
+of which sugars 1.0g|40|360|480|400
+Fibre 9.0g|40|410|280|450
+Protein 11.0g|40|460|340|500
+Salt 0.01g|40|510|300|550

@@ -1,0 +1,16 @@
+{
+  "code": "0000000000000",
+  "errors": [
+    {
+      "field": { "id": "code", "value": "0000000000000" },
+      "impact": { "id": "failure", "lc_name": "Failure", "name": "Failure" },
+      "message": {
+        "id": "invalid_code",
+        "lc_name": "Invalid code",
+        "name": "Invalid code"
+      }
+    }
+  ],
+  "status": 0,
+  "status_verbose": "product not found"
+}

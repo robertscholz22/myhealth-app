@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- P20.3: the app's strings are Compose resources in shared/src/commonMain/composeResources;
+     only what the manifest references stays here (hc_rationale_title is in both). -->
+<resources>
+    <string name="app_name">MyHealth</string>
+    <string name="hc_rationale_title">MyHealth and Health Connect</string>
+</resources>

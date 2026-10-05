@@ -1,0 +1,1156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Bottom navigation -->
+    <string name="nav_today">Today</string>
+    <string name="nav_calendar">Calendar</string>
+    <string name="nav_nutrition">Nutrition</string>
+    <string name="nav_training">Training</string>
+    <string name="nav_more">More</string>
+
+    <!-- Placeholders -->
+    <string name="placeholder_coming_soon">Coming soon</string>
+
+    <!-- Common actions -->
+    <string name="action_back">Back</string>
+    <string name="action_next">Next</string>
+    <string name="action_finish">Finish</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_step_identity">About you</string>
+    <string name="onboarding_step_body">Body &amp; goals</string>
+    <string name="onboarding_step_preferences">Preferences</string>
+    <string name="onboarding_name_label">Name</string>
+    <string name="onboarding_sex_label">Sex</string>
+    <string name="onboarding_birth_date_label">Birth date</string>
+    <string name="onboarding_height_label">Height</string>
+    <string name="onboarding_weight_label">Current weight</string>
+    <string name="onboarding_goal_weight_label">Goal weight (optional)</string>
+    <string name="onboarding_goal_pace_label">Goal pace</string>
+    <string name="onboarding_neat_label">Daily activity level</string>
+    <string name="onboarding_mobility_label">Mobility on rest days</string>
+    <string name="onboarding_sleep_target_label">Sleep target</string>
+
+    <!-- Body & Health -->
+    <string name="body_title">Body &amp; Health</string>
+    <string name="body_current_weight_title">Current weight</string>
+    <string name="body_no_weight_yet">No weight logged yet.</string>
+    <string name="body_history_title">Last %1$d days</string>
+    <string name="body_empty_title">No measurements yet</string>
+    <string name="body_empty_history">No measurements in the last %1$d days. Log your weight to start tracking it here.</string>
+    <string name="body_log_weight_title">Log weight</string>
+    <string name="body_weight_field">Weight</string>
+    <string name="body_body_fat_field">Body fat (optional)</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_profile">Profile</string>
+    <string name="settings_section_app">App preferences</string>
+    <string name="settings_section_advanced">Advanced</string>
+    <!-- Health Connect -->
+    <string name="hc_rationale_title">MyHealth and Health Connect</string>
+    <string name="hc_rationale_what_we_read">MyHealth reads your workouts, steps, distance, speed, cadence, cycling power, cycling cadence, heart rate, resting heart rate, heart-rate variability, calories, floors, elevation, blood oxygen, respiratory rate, VO2 max, sleep, weight and body fat from Health Connect. It never writes anything back.</string>
+    <string name="hc_rationale_why">This data is used to show your training history, to estimate training load and recovery, and to work out daily calorie and macro targets that match what you actually did.</string>
+    <string name="hc_rationale_on_device">Your data stays on this device. MyHealth stores everything in a local database, has no account, and does not upload your health data to any server.</string>
+    <string name="hc_rationale_revoke">You can withdraw access at any time in the Health Connect app. MyHealth then keeps only the data already synced, which you can delete from the app.</string>
+
+    <!-- ===== Shared composables and onboarding (P8.1) ===== -->
+    <!-- Generic common widgets (ui/common/DatePickerField.kt, TimePickerField.kt) -->
+    <string name="common_ok">OK</string>
+    <!-- ErrorBanner (ui/common/ErrorBanner.kt) -->
+    <string name="common_retry">Retry</string>
+    <!-- DurationField (ui/common/DurationField.kt) -->
+    <string name="common_duration_label">Duration</string>
+    <string name="common_duration_suffix">min</string>
+    <!-- ConfidenceUnderline (ui/common/ConfidenceUnderline.kt) -->
+    <string name="common_confidence_high">read clearly</string>
+    <string name="common_confidence_medium">check this value</string>
+    <string name="common_confidence_low">unsure — please check</string>
+    <!-- Onboarding step progress header, and unit suffixes shared by onboarding's NumberFields (ui/onboarding/OnboardingScreen.kt) -->
+    <string name="common_step_progress">Step %1$d of %2$d: %3$s</string>
+    <string name="common_unit_cm">cm</string>
+    <string name="common_unit_kg">kg</string>
+    <string name="common_unit_kg_per_week">kg/week</string>
+    <string name="common_unit_hours">h</string>
+    <!-- Hand-drawn chart cards (ui/common/charts/BarChartCard.kt, LineChartCard.kt) -->
+    <string name="chart_common_no_data">No data for this range yet.</string>
+    <!-- SourceBadge (ui/common/SourceBadge.kt) -->
+    <string name="source_health_connect">Health Connect</string>
+    <string name="source_fit_import">FIT</string>
+    <string name="source_csv_import">CSV</string>
+    <string name="source_garmin_api">Garmin</string>
+    <string name="source_manual">Manual</string>
+    <!-- SportGroup.displayName() (ui/common/SportIcon.kt) -->
+    <string name="sport_group_soccer">Soccer</string>
+    <string name="sport_group_run">Run</string>
+    <string name="sport_group_strength">Strength</string>
+    <string name="sport_group_cycle">Cycle</string>
+    <string name="sport_group_walk">Walk</string>
+    <string name="sport_group_swim">Swim</string>
+    <string name="sport_group_other">Other</string>
+    <!-- OnboardingDraft.kt: validate() field-error messages (UiMessage, resolved in OnboardingScreen.kt) -->
+    <string name="onboarding_name_required">Name is required.</string>
+    <string name="onboarding_birth_date_required">Birth date is required.</string>
+    <string name="onboarding_birth_date_future">Birth date cannot be in the future.</string>
+    <string name="onboarding_birth_date_min_age">Must be at least %1$d years ago.</string>
+    <string name="onboarding_height_range">Height must be between %1$d and %2$d cm.</string>
+    <string name="onboarding_weight_range">Weight must be between %1$d and %2$d kg.</string>
+    <string name="onboarding_goal_weight_range">Goal weight must be between %1$d and %2$d kg.</string>
+    <string name="onboarding_goal_pace_range">Goal pace must be between %1$.1f and +%2$.1f kg/week.</string>
+    <!-- OnboardingViewModel.kt: save() failure messages (UiMessage) -->
+    <string name="onboarding_save_profile_error">Could not save your profile. Please try again.</string>
+    <string name="onboarding_save_weight_error">Could not save your starting weight. Please try again.</string>
+    <!-- OnboardingScreen.kt: section titles, hints and per-field labels not already covered by the shared onboarding_*_label keys -->
+    <string name="onboarding_body_section_title">Body</string>
+    <string name="onboarding_goals_section_title">Goals</string>
+    <string name="onboarding_weekly_sessions_title">Weekly sessions</string>
+    <string name="onboarding_recovery_section_title">Recovery</string>
+    <string name="onboarding_goal_pace_hint">Negative to lose weight, positive to gain.</string>
+    <string name="onboarding_sport_sessions_label">%1$s sessions / week</string>
+    <string name="onboarding_ride_sessions_label">Ride sessions / week</string>
+    <string name="onboarding_neat_desk">Desk job, mostly sitting</string>
+    <string name="onboarding_neat_light_active">Light activity, on your feet sometimes</string>
+    <string name="onboarding_neat_active">Active, on your feet most of the day</string>
+    <string name="onboarding_neat_physical_job">Physical job, manual labor</string>
+
+    <!-- ===== Calendar, day detail and events (P8.1) ===== -->
+    <!-- Calendar screen (CalendarScreen.kt) -->
+    <string name="calendar_action_today_desc">Jump to today</string>
+    <string name="calendar_action_new_event_desc">New event</string>
+    <string name="calendar_mode_month">Month</string>
+    <string name="calendar_mode_week">Week</string>
+    <!-- Agenda list (AgendaList.kt) -->
+    <string name="agenda_empty_title">Nothing planned</string>
+    <string name="agenda_empty_message">No events, sessions, activities or meals on this day.</string>
+    <string name="agenda_all_day">All day</string>
+    <string name="agenda_planned_lead">Planned</string>
+    <string name="agenda_meals_lead">Meals</string>
+    <string name="agenda_meals_logged_count">%1$d logged</string>
+    <string name="agenda_meals_kcal">%1$.0f kcal</string>
+    <string name="agenda_day_detail_action">Day detail</string>
+    <!-- Day detail sections (DayDetailSections.kt) -->
+    <string name="daydetail_all_day">All day</string>
+    <string name="daydetail_section_events">Events</string>
+    <string name="daydetail_section_planned">Planned sessions</string>
+    <string name="daydetail_section_activities">Activities</string>
+    <string name="daydetail_section_meals">Meals</string>
+    <string name="daydetail_section_sleep">Sleep</string>
+    <string name="daydetail_section_targets">Targets vs intake</string>
+    <string name="daydetail_section_load">Load</string>
+    <string name="daydetail_empty_events">No events on this day.</string>
+    <string name="daydetail_empty_planned">Nothing planned for this day.</string>
+    <string name="daydetail_empty_activities">No activities recorded.</string>
+    <string name="daydetail_empty_meals">Nothing logged yet.</string>
+    <string name="daydetail_empty_sleep">No sleep recorded for this night.</string>
+    <string name="daydetail_empty_targets">No target yet for this day.</string>
+    <string name="daydetail_empty_load">No load computed for this day.</string>
+    <string name="daydetail_action_edit">Edit</string>
+    <string name="daydetail_action_manage_link">Manage link</string>
+    <string name="daydetail_action_link_activity">Link activity</string>
+    <string name="daydetail_action_mark_done">Mark done</string>
+    <string name="daydetail_action_skip">Skip</string>
+    <string name="daydetail_overflow_more_actions_desc">More actions</string>
+    <string name="daydetail_event_key_event">Key event</string>
+    <string name="daydetail_event_modified_occurrence">Modified occurrence</string>
+    <string name="daydetail_event_no_details">No details</string>
+    <string name="daydetail_linked_activity_fallback">Linked to activity #%1$d</string>
+    <string name="daydetail_linked_activity_label">Linked: %1$s, %2$s · %3$s</string>
+    <string name="daydetail_activity_trimp">TRIMP %1$d</string>
+    <string name="daydetail_meal_kcal_protein">%1$.0f kcal · %2$.0f g P</string>
+    <string name="daydetail_meal_day_total">Day total: %1$.0f kcal · %2$.0f g protein</string>
+    <string name="daydetail_sleep_stage_deep">Deep %1$dm</string>
+    <string name="daydetail_sleep_stage_rem">REM %1$dm</string>
+    <string name="daydetail_sleep_stage_light">Light %1$dm</string>
+    <string name="daydetail_sleep_stage_awake">Awake %1$dm</string>
+    <string name="daydetail_sleep_score">Score %1$d</string>
+    <string name="daydetail_load_trimp_acwr">TRIMP %1$.0f · ACWR %2$s</string>
+    <string name="daydetail_load_recovery">Recovery %1$d</string>
+    <!-- Day detail screen dialogs / nav (DayDetailScreen.kt) -->
+    <string name="daydetail_dialog_delete_event_text">This removes the event and all of its occurrences.</string>
+    <string name="daydetail_previous_day_desc">Previous day</string>
+    <string name="daydetail_next_day_desc">Next day</string>
+    <!-- Day detail messages (DayDetailViewModel.kt) -->
+    <string name="daydetail_msg_event_deleted">Event deleted.</string>
+    <string name="daydetail_msg_event_delete_failed">Could not delete the event.</string>
+    <string name="daydetail_msg_session_marked">Session marked %1$s.</string>
+    <string name="daydetail_msg_session_update_failed">Could not update the session.</string>
+    <string name="daydetail_msg_activity_linked">Activity linked.</string>
+    <string name="daydetail_msg_activity_link_failed">Could not link the activity.</string>
+    <string name="daydetail_msg_activity_unlinked">Activity unlinked.</string>
+    <string name="daydetail_msg_activity_unlink_failed">Could not unlink the activity.</string>
+    <!-- Event editor validation (EventDraft.kt) -->
+    <string name="event_error_title_required">Title is required.</string>
+    <string name="event_error_date_required">Date is required.</string>
+    <string name="event_error_duration_positive">Duration must be greater than zero.</string>
+    <string name="event_error_recurrence_until_before_start">The end date must be on or after the start date.</string>
+    <string name="event_error_distance_required">Target distance is required for a race.</string>
+    <string name="event_error_recurrence_weekday_required">Pick at least one weekday.</string>
+    <!-- Event editor VM messages (EventEditViewModel.kt) -->
+    <string name="event_load_not_found">Event not found.</string>
+    <string name="event_save_failed">Could not save the event. Please try again.</string>
+    <string name="event_delete_series_failed">Could not delete the event.</string>
+    <string name="event_delete_occurrence_failed">Could not delete this occurrence.</string>
+    <!-- Event edit screen (EventEditScreen.kt) -->
+    <string name="event_title_new">New event</string>
+    <string name="event_title_edit">Edit event</string>
+    <string name="event_action_delete_desc">Delete event</string>
+    <string name="event_section_event">Event</string>
+    <string name="event_section_when">When</string>
+    <string name="event_label_sport">Sport</string>
+    <string name="event_section_notes">Notes</string>
+    <string name="event_label_type">Type</string>
+    <string name="event_label_title">Title</string>
+    <string name="event_label_key_event">Key event</string>
+    <string name="event_label_date">Date</string>
+    <string name="event_label_all_day">All day</string>
+    <string name="event_label_start_time">Start time</string>
+    <string name="event_label_location">Location (optional)</string>
+    <string name="event_label_target_distance">Target distance</string>
+    <string name="event_unit_km">km</string>
+    <string name="event_dialog_delete_title">Delete event?</string>
+    <string name="event_dialog_delete_text">This cannot be undone.</string>
+    <string name="event_dialog_delete_recurring_title">Delete recurring event?</string>
+    <string name="event_dialog_delete_recurring_text">This event repeats. Choose what to delete.</string>
+    <string name="event_action_this_occurrence">This occurrence</string>
+    <string name="event_action_whole_series">Whole series</string>
+    <!-- Recurrence picker (RecurrencePicker.kt) -->
+    <string name="event_section_recurrence">Recurrence</string>
+    <string name="event_recurrence_none">None</string>
+    <string name="event_recurrence_weekly">Weekly</string>
+    <string name="event_label_repeat_on">Repeat on</string>
+    <string name="event_label_repeat_every">Repeat every</string>
+    <string name="event_unit_weeks_suffix">week(s)</string>
+    <string name="event_label_until">Until (optional)</string>
+    <string name="event_action_clear">Clear</string>
+    <!-- Link activity sheet (LinkActivitySheet.kt) -->
+    <string name="linksheet_title">Link “%1$s” to an activity</string>
+    <string name="linksheet_unlink_action">Unlink current activity</string>
+    <string name="linksheet_empty_message">No activities recorded on this day yet.</string>
+    <string name="linksheet_section_suggested">Suggested</string>
+    <string name="linksheet_section_more">More activities</string>
+
+    <!-- ===== Nutrition diary, food search and meal templates (P8.1) ===== -->
+    <!-- P8.1 nutrition/meals — AddFoodScreen / AddFoodUiState / AddFoodViewModel -->
+    <string name="addfood_title_add_to">Add to %1$s</string>
+    <string name="addfood_new_ingredient_cd">New ingredient</string>
+    <string name="addfood_search_label">Search ingredients</string>
+    <string name="addfood_empty_recents_title">Nothing logged yet</string>
+    <string name="addfood_empty_favorites_title">No favorites yet</string>
+    <string name="addfood_empty_search_title">No matching ingredients</string>
+    <string name="addfood_empty_ingredients_message">Search for an ingredient, or create one with the + button.</string>
+    <string name="addfood_kcal_value">%1$d kcal</string>
+    <string name="addfood_empty_templates_title">No meal templates yet</string>
+    <string name="addfood_empty_templates_message">Create one from More → Meal Templates to log a whole meal in one tap.</string>
+    <string name="addfood_template_item_count">%1$d ingredients</string>
+    <string name="addfood_tab_recents">Recents</string>
+    <string name="addfood_tab_favorites">Favorites</string>
+    <string name="addfood_tab_search">Search</string>
+    <string name="addfood_tab_templates">Templates</string>
+    <string name="addfood_tab_scan">Scan</string>
+    <string name="addfood_error_add_failed">Could not add that item.</string>
+    <string name="addfood_error_log_template_failed">Could not log that template.</string>
+    <!-- P8.1 nutrition/meals — DiaryHeader / NutritionScreen / NutritionViewModel -->
+    <string name="diary_title_intake">Intake</string>
+    <string name="diary_title_target_vs_intake">Target vs intake</string>
+    <string name="diary_intake_summary">%1$.0f kcal · %2$.0f g P · %3$.0f g C · %4$.0f g F</string>
+    <string name="diary_kcal_over_target">%1$d / %2$d kcal</string>
+    <string name="diary_hide_explanation">Hide explanation</string>
+    <string name="diary_why_target">Why this target?</string>
+    <string name="diary_no_explanation">No explanation was stored with this target.</string>
+    <string name="diary_copied_yesterday">Copied yesterday's meals.</string>
+    <string name="diary_error_copy_yesterday">Could not copy yesterday's meals.</string>
+    <string name="diary_error_update_item">Could not update that item.</string>
+    <string name="diary_item_removed">Item removed.</string>
+    <string name="diary_error_remove_item">Could not remove that item.</string>
+    <string name="diary_meal_removed">Meal removed.</string>
+    <string name="diary_error_remove_meal">Could not remove that meal.</string>
+    <string name="nutrition_copy_yesterday_cd">Copy yesterday</string>
+    <string name="nutrition_copy_yesterday_button">Copy yesterday's meals</string>
+    <string name="nutrition_previous_day_cd">Previous day</string>
+    <string name="nutrition_next_day_cd">Next day</string>
+    <!-- P8.1 nutrition/meals — MealSlotSection -->
+    <string name="mealslot_add_button">+ Add</string>
+    <string name="mealslot_empty_slot">Nothing logged.</string>
+    <string name="mealslot_remove_meal">Remove meal</string>
+    <string name="mealslot_meal_actions_cd">Meal actions</string>
+    <string name="mealslot_item_kcal_protein">%1$d kcal · %2$.0f g P</string>
+    <string name="mealslot_item_actions_cd">Item actions</string>
+    <string name="mealslot_totals_summary">%1$d kcal · %2$.0f g P · %3$.0f g C · %4$.0f g F</string>
+    <!-- P8.1 nutrition/meals — QuantityEditor / QuantityDialog (shared quantity_ prefix) -->
+    <string name="quantity_label">Quantity</string>
+    <string name="quantity_unit_label">Unit</string>
+    <string name="quantity_enter_prompt">Enter a quantity to see the macros.</string>
+    <string name="quantity_add_button">Add</string>
+    <string name="quantity_preview_summary">%1$d kcal · %2$.1f g P · %3$.1f g C · %4$.1f g F</string>
+    <string name="quantity_error_zero">Enter a quantity above zero.</string>
+    <!-- P8.1 nutrition/meals — WaterCard -->
+    <string name="water_title">Water</string>
+    <string name="water_quick_add_button">+%1$d ml</string>
+    <string name="water_custom_button">Custom</string>
+    <string name="water_entry_row">%1$s · %2$d ml</string>
+    <string name="water_delete_drink_cd">Delete drink</string>
+    <string name="water_dialog_title">Add water</string>
+    <string name="water_millilitres_label">Millilitres</string>
+    <string name="water_empty_message">No water logged yet today.</string>
+    <string name="water_error_log_drink">Could not log that drink.</string>
+    <string name="water_error_amount_zero">Enter an amount above zero.</string>
+    <string name="water_error_remove_drink">Could not remove that drink.</string>
+    <!-- P8.1 nutrition/meals — MealTemplateEditScreen / MealTemplateEditViewModel -->
+    <string name="mealtpl_title_new">New template</string>
+    <string name="mealtpl_title_edit">Edit template</string>
+    <string name="mealtpl_delete_cd">Delete template</string>
+    <string name="mealtpl_delete_confirm_title">Delete this template?</string>
+    <string name="mealtpl_delete_confirm_message">Meals already logged from it keep their own copy of the ingredients.</string>
+    <string name="mealtpl_section_template">Template</string>
+    <string name="mealtpl_name_label">Name</string>
+    <string name="mealtpl_default_slot_label">Default slot</string>
+    <string name="mealtpl_no_default">No default</string>
+    <string name="mealtpl_note_label">Note</string>
+    <string name="mealtpl_favorite_label">Favorite</string>
+    <string name="mealtpl_section_ingredients">Ingredients</string>
+    <string name="mealtpl_add_ingredient_cd">Add ingredient</string>
+    <string name="mealtpl_empty_items">No ingredients yet — add one with +.</string>
+    <string name="mealtpl_section_totals">Totals</string>
+    <string name="mealtpl_save_button">Save template</string>
+    <string name="mealtpl_remove_item_cd">Remove %1$s</string>
+    <string name="mealtpl_ingredient_missing">This ingredient is no longer available; it will not count towards the totals.</string>
+    <string name="mealtpl_picker_empty">No matching ingredients.</string>
+    <string name="mealtpl_close_button">Close</string>
+    <string name="mealtpl_macro_summary">%1$.0f kcal · %2$.0f g P · %3$.0f g C · %4$.0f g F</string>
+    <string name="mealtpl_macro_summary_missing">%1$s · some ingredients are missing</string>
+    <string name="mealtpl_error_not_found">Template not found.</string>
+    <string name="mealtpl_error_save_failed">Could not save the template. Please try again.</string>
+    <string name="mealtpl_error_delete_failed">Could not delete the template.</string>
+    <!-- P8.1 nutrition/meals — MealTemplatesScreen / MealTemplatesViewModel -->
+    <string name="mealtpl_list_title">Meal templates</string>
+    <string name="mealtpl_new_cd">New template</string>
+    <string name="mealtpl_empty_message">Build a template for a meal you eat often, then log it in one tap.</string>
+    <string name="mealtpl_log_now_button">Log now</string>
+    <string name="mealtpl_unfavorite_cd">Unfavorite</string>
+    <string name="mealtpl_favorite_cd">Favorite</string>
+    <string name="mealtpl_log_dialog_title">Log %1$s</string>
+    <string name="mealtpl_date_label">Date</string>
+    <string name="mealtpl_slot_label">Slot</string>
+    <string name="mealtpl_log_button">Log</string>
+    <string name="mealtpl_logged_now">Logged %1$s.</string>
+    <string name="mealtpl_error_log_failed">Could not log this template.</string>
+
+    <!-- ===== Activities, load, body and running PRs (P8.1) ===== -->
+    <!-- Activities list (ui/activities/ActivitiesScreen.kt) -->
+    <string name="activities_filter_all">All</string>
+    <string name="activities_empty_title">No activities yet</string>
+    <string name="activities_empty_message">Sync with Health Connect, or import a FIT/CSV file, to see activities here.</string>
+    <string name="activities_empty_action">Sync now</string>
+    <string name="activities_sync_failed">Sync failed: %1$s</string>
+    <!-- Activity detail chart cards (ui/activities/ActivityChartCards.kt) -->
+    <string name="activity_chart_hr_title">Heart rate over time</string>
+    <string name="activity_chart_hr_series">HR</string>
+    <string name="activity_chart_hr_empty">This activity has no heart-rate stream.</string>
+    <string name="activity_chart_pace_title">Pace over time</string>
+    <string name="activity_chart_pace_series">Pace</string>
+    <string name="activity_chart_pace_empty">This run has no distance or speed stream to derive pace from.</string>
+    <string name="activity_chart_speed_title">Speed over time</string>
+    <string name="activity_chart_speed_series">Speed</string>
+    <string name="activity_chart_speed_empty">This activity has no speed stream.</string>
+    <string name="activity_chart_altitude_title">Altitude</string>
+    <string name="activity_chart_altitude_series">Altitude</string>
+    <string name="activity_chart_altitude_empty">This activity has no altitude stream.</string>
+    <string name="activity_chart_power_title">Power over time</string>
+    <string name="activity_chart_power_series">Power</string>
+    <string name="activity_chart_power_empty">This ride has no power stream.</string>
+    <!-- Activity detail screen (ui/activities/ActivityDetailScreen.kt) -->
+    <string name="activity_detail_title_fallback">Activity</string>
+    <string name="activity_detail_delete_cd">Delete activity</string>
+    <string name="activity_detail_not_found">Activity not found.</string>
+    <string name="activity_detail_overview_title">Overview</string>
+    <string name="activity_detail_duration_label">Duration</string>
+    <string name="activity_detail_elapsed_label">Elapsed</string>
+    <string name="activity_detail_distance_label">Distance</string>
+    <string name="activity_detail_avg_hr_label">Avg HR</string>
+    <string name="activity_detail_max_hr_label">Max HR</string>
+    <string name="activity_detail_avg_pace_label">Avg pace</string>
+    <string name="activity_detail_best_pace_label">Best pace</string>
+    <string name="activity_detail_avg_speed_label">Avg speed</string>
+    <string name="activity_detail_max_speed_label">Max speed</string>
+    <string name="activity_detail_cadence_label">Cadence</string>
+    <string name="activity_detail_elevation_gain_label">Elevation gain</string>
+    <string name="activity_detail_active_calories_label">Active calories</string>
+    <string name="activity_detail_total_calories_label">Total calories</string>
+    <string name="activity_detail_trimp_label">TRIMP</string>
+    <string name="activity_detail_load_method_hr_samples">HR samples</string>
+    <string name="activity_detail_load_method_avg_hr">avg HR</string>
+    <string name="activity_detail_load_method_rpe_estimate">RPE estimate</string>
+    <string name="activity_detail_load_method_duration_only">duration only</string>
+    <string name="activity_detail_load_method_power_tss">from power (TSS)</string>
+    <!-- Power card (ui/activities/ActivityDetailScreen.kt, P12.4) -->
+    <string name="activity_detail_power_title">Power</string>
+    <string name="activity_detail_avg_power_label">Avg power</string>
+    <string name="activity_detail_np_label">Normalized power</string>
+    <string name="activity_detail_max_power_label">Max power</string>
+    <string name="activity_detail_if_label">Intensity factor</string>
+    <string name="activity_detail_tss_label">TSS</string>
+    <string name="activity_detail_title_card_title">Title</string>
+    <string name="activity_detail_notes_title">Notes</string>
+    <string name="activity_detail_hr_summary_title">Heart rate</string>
+    <string name="activity_detail_hr_min_label">Min</string>
+    <string name="activity_detail_hr_avg_label">Avg</string>
+    <string name="activity_detail_hr_max_label">Max</string>
+    <string name="activity_detail_hr_time_in_zone_label">Time in zone</string>
+    <string name="activity_detail_laps_title">Laps</string>
+    <string name="activity_detail_laps_header_index">#</string>
+    <string name="activity_detail_laps_header_time">Time</string>
+    <string name="activity_detail_laps_header_distance">Dist.</string>
+    <string name="activity_detail_laps_header_avg_hr">Avg HR</string>
+    <string name="activity_detail_rpe_title">Perceived exertion (RPE)</string>
+    <string name="activity_detail_trimp_method_label">TRIMP method</string>
+    <string name="activity_detail_delete_dialog_title">Delete this activity?</string>
+    <string name="activity_detail_delete_dialog_text">This cannot be undone.</string>
+    <!-- Linked event card (ui/activities/LinkedEventCard.kt) -->
+    <string name="activity_linked_event_title">Linked event</string>
+    <string name="activity_linked_event_none">No event linked yet.</string>
+    <string name="activity_linked_event_link_action">Link to event…</string>
+    <string name="activity_linked_event_change_action">Change</string>
+    <string name="activity_linked_event_unlink_action">Unlink</string>
+    <string name="activity_event_picker_empty">No events on this day.</string>
+    <!-- Body screen (ui/body/BodyUiState.kt, ui/body/BodyScreen.kt) -->
+    <string name="body_range_30d">30d</string>
+    <string name="body_range_90d">90d</string>
+    <string name="body_range_365d">365d</string>
+    <string name="body_chart_weight_title">Weight</string>
+    <string name="body_chart_weight_series">Weight</string>
+    <string name="body_chart_weight_avg_series">7-day average</string>
+    <string name="body_chart_weight_empty">No weight logged in this window yet.</string>
+    <string name="body_chart_body_fat_title">Body fat</string>
+    <string name="body_chart_body_fat_series">Body fat %%</string>
+    <string name="body_chart_body_fat_empty">No body-fat readings in this window yet.</string>
+    <string name="body_chart_resting_hr_title">Resting heart rate</string>
+    <string name="body_chart_resting_hr_series">Resting HR</string>
+    <string name="body_chart_resting_hr_empty">No resting heart rate recorded in this window yet.</string>
+    <string name="body_chart_sleep_title">Sleep (last %1$d nights)</string>
+    <string name="body_chart_sleep_empty">No sleep sessions recorded in the last %1$d nights.</string>
+    <string name="body_goal_reached_message">At your goal weight.</string>
+    <string name="body_above_goal_message">%1$s kg above your %2$s kg goal.</string>
+    <string name="body_below_goal_message">%1$s kg below your %2$s kg goal.</string>
+    <!-- Load screen (ui/load/LoadUiState.kt, ui/load/LoadScreen.kt) -->
+    <string name="load_range_28d">28d</string>
+    <string name="load_range_90d">90d</string>
+    <string name="load_range_365d">365d</string>
+    <string name="load_recovery_confidence_label">%1$d%% confidence</string>
+    <string name="load_empty_title">No training load yet</string>
+    <string name="load_empty_message">Log or sync some activities to see ATL/CTL/ACWR and recovery here.</string>
+    <string name="load_tiles_title">Training load</string>
+    <string name="load_tiles_empty">No cached load yet.</string>
+    <string name="load_stat_atl">ATL</string>
+    <string name="load_stat_ctl">CTL</string>
+    <string name="load_stat_tsb">TSB</string>
+    <string name="load_stat_monotony">Monotony</string>
+    <string name="load_stat_strain">Strain</string>
+    <string name="load_stat_acwr">ACWR</string>
+    <string name="load_chart_atl_ctl_title">Acute vs chronic load</string>
+    <string name="load_chart_atl_series">ATL (7d)</string>
+    <string name="load_chart_ctl_series">CTL (28d)</string>
+    <string name="load_chart_atl_ctl_empty">No cached load for this range yet.</string>
+    <string name="load_chart_acwr_title">ACWR</string>
+    <string name="load_chart_acwr_series">ACWR</string>
+    <string name="load_chart_acwr_empty">Not enough chronic load yet for an ACWR.</string>
+    <string name="load_chart_trimp_title">Daily TRIMP</string>
+    <string name="load_chart_trimp_empty">No training logged in this range yet.</string>
+    <string name="load_chart_recovery_title">Recovery score</string>
+    <string name="load_chart_recovery_series">Recovery</string>
+    <string name="load_chart_recovery_empty">No recovery scores cached for this range yet.</string>
+    <string name="load_recovery_title">Recovery</string>
+    <string name="load_recovery_no_data">Not enough data yet for a recovery score.</string>
+    <string name="load_recovery_score_label">%1$d / 100</string>
+    <string name="load_acwr_zone_detraining">Detraining</string>
+    <string name="load_acwr_zone_optimal">Optimal</string>
+    <string name="load_acwr_zone_caution">Caution</string>
+    <string name="load_acwr_zone_high_risk">High risk</string>
+    <!-- Muscle load card (ui/load/LoadScreen.kt, P14.8) -->
+    <string name="load_muscle_title">Muscle load</string>
+    <string name="load_muscle_empty">No strength or endurance sessions in the last 14 days yet.</string>
+    <string name="load_muscle_row">%1$s — %2$d AU · %3$s</string>
+    <string name="load_muscle_hint_upper">Legs are loaded — an upper-body day fits today</string>
+    <string name="load_muscle_hint_lower">Legs are fresh — a lower-body day fits</string>
+    <!-- Running PRs screen (ui/running/RunningPrsScreen.kt) -->
+    <string name="running_add_manual_pr">Add manual PR</string>
+    <string name="running_empty_title">No personal bests yet</string>
+    <string name="running_empty_message">Run a canonical distance (5 km, 10 km, ...) or add one manually.</string>
+    <string name="running_chart_pr_progression_title">PR progression</string>
+    <string name="running_chart_pr_progression_empty">Two or more efforts at the same distance are needed to show progress.</string>
+    <string name="running_pr_table_title">Personal bests</string>
+    <string name="running_pr_estimated_suffix"> (est.)</string>
+    <string name="running_predictions_title">Riegel predictions</string>
+    <string name="running_pr_distance_field">Distance</string>
+    <string name="running_pr_minutes_field">Minutes</string>
+    <string name="running_pr_seconds_field">Seconds</string>
+    <string name="running_pr_date_field">Date</string>
+
+    <!-- ===== Bike screen (ui/bike/BikeScreen.kt, P12.4) ===== -->
+    <string name="more_entry_bike">Bike &amp; power</string>
+    <string name="bike_title">Bike &amp; power</string>
+    <string name="bike_empty_title">No ride bests yet</string>
+    <string name="bike_empty_message">Ride with power or over a canonical distance (10, 20, 40, 100 km) to see bests here.</string>
+    <string name="bike_ftp_title">FTP</string>
+    <string name="bike_ftp_hint_no_estimate">No FTP estimate yet — ride with a power meter, or set the override in Settings.</string>
+    <string name="bike_ftp_basis_date_format">from a ride on %1$s</string>
+    <string name="bike_indoor_trainer_status_on">Indoor trainer available</string>
+    <string name="bike_indoor_trainer_status_off">No indoor trainer set — turn it on in Settings for indoor-season rides.</string>
+    <string name="bike_power_bests_title">Power bests</string>
+    <string name="bike_time_bests_title">Time bests</string>
+    <string name="bike_estimated_suffix"> (est.)</string>
+
+    <!-- ===== Goals, ingredients and the camera / OCR flow (P8.1) ===== -->
+    <!-- goals: GoalDraft.kt validation (P8.1) -->
+    <string name="goal_error_title_required">Title is required.</string>
+    <string name="goal_error_distance_required">Pick a distance.</string>
+    <string name="goal_error_time_required">Enter a target time.</string>
+    <string name="goal_error_seconds_range">Seconds must be 0–59.</string>
+    <string name="goal_error_weight_required">Enter a target weight.</string>
+    <string name="goal_error_sessions_required">Enter sessions per week.</string>
+    <string name="goal_error_value_required">Enter a target value.</string>
+    <!-- goals: GoalsViewModel.kt snackbar messages (P8.1) -->
+    <string name="goal_message_primary_updated">Primary goal updated.</string>
+    <string name="goal_message_achieved">Goal marked achieved.</string>
+    <string name="goal_message_abandoned">Goal abandoned.</string>
+    <string name="goal_message_reactivated">Goal reactivated.</string>
+    <string name="goal_message_deleted">Goal deleted.</string>
+    <string name="goal_message_update_failed">Could not update goal #%1$d. Please try again.</string>
+    <!-- goals: GoalsScreen.kt -->
+    <string name="goals_title">Goals</string>
+    <string name="goals_new_content_description">New goal</string>
+    <string name="goals_empty_title">No goals yet</string>
+    <string name="goals_empty_message">Add a race time, a target weight or a weekly session count to steer the plan.</string>
+    <string name="goals_archived_header">Archived</string>
+    <string name="goals_cycle_cap_hint">Set the ride sessions / week cap in Settings to get ride suggestions.</string>
+    <string name="goals_primary_chip">Primary</string>
+    <string name="goals_action_make_primary">Make primary</string>
+    <string name="goals_action_achieved">Achieved</string>
+    <string name="goals_action_abandon">Abandon</string>
+    <string name="goals_action_reactivate">Reactivate</string>
+    <!-- goals: GoalEditViewModel.kt -->
+    <string name="goal_edit_load_error">Goal not found.</string>
+    <string name="goal_edit_save_error">Could not save the goal. Please try again.</string>
+    <string name="goal_edit_delete_error">Could not delete the goal.</string>
+    <!-- goals: GoalEditScreen.kt -->
+    <string name="goal_edit_title_new">New goal</string>
+    <string name="goal_edit_title_edit">Edit goal</string>
+    <string name="goal_edit_delete_content_description">Delete goal</string>
+    <string name="goal_edit_delete_dialog_title">Delete this goal?</string>
+    <string name="goal_edit_delete_dialog_message">This cannot be undone.</string>
+    <string name="goal_edit_section_goal">Goal</string>
+    <string name="goal_edit_type_label">Type</string>
+    <string name="goal_edit_title_label">Title</string>
+    <string name="goal_edit_target_date_label">Target date (optional)</string>
+    <string name="goal_edit_primary_label">Primary goal</string>
+    <string name="workouts_use_in_suggestions">Use in suggestions</string>
+    <string name="goal_edit_race_day_label">Race on this date</string>
+    <string name="goal_edit_race_day_on">The plan builds towards this day and tapers before it.</string>
+    <string name="goal_edit_race_day_off">A deadline: no taper — the plan keeps building and checks your form.</string>
+    <string name="goal_edit_notes_label">Notes</string>
+    <string name="goal_edit_create_action">Create goal</string>
+    <string name="goal_edit_save_action">Save goal</string>
+    <string name="goal_edit_section_status">Status</string>
+    <string name="goal_edit_current_status">Current: %1$s</string>
+    <string name="goal_edit_status_abandoned">Abandoned</string>
+    <string name="goal_edit_status_active">Active</string>
+    <string name="goal_edit_distance_label">Distance</string>
+    <string name="goal_edit_target_min_label">Target min</string>
+    <string name="goal_edit_target_sec_label">Target sec</string>
+    <string name="goal_edit_race_not_linked">Not linked</string>
+    <string name="goal_edit_linked_race_label">Linked race event</string>
+    <string name="goal_edit_race_option_with_date">%1$s (%2$s)</string>
+    <string name="goal_edit_target_weight_label">Target weight</string>
+    <string name="goal_edit_kg_suffix">kg</string>
+    <string name="goal_edit_sessions_label">Sessions per week</string>
+    <string name="goal_edit_target_lift_label">Target lift (kg)</string>
+    <string name="goal_edit_target_ftp_label">Target FTP (W)</string>
+    <string name="goal_edit_target_ride_hours_label">Target riding (h/week)</string>
+    <string name="goal_edit_target_matches_label">Target matches</string>
+    <string name="goal_edit_bike_event_time_hint">Target time is optional — leave it blank to track this event by date only.</string>
+    <!-- ingredients: IngredientDraft.kt -->
+    <string name="ingredient_unit_suffix_100g">g / 100 g</string>
+    <string name="ingredient_unit_suffix_100ml">g / 100 ml</string>
+    <string name="ingredient_unit_suffix_piece">g / piece</string>
+    <string name="ingredient_basis_label_100g">per 100 g</string>
+    <string name="ingredient_basis_label_100ml">per 100 ml</string>
+    <string name="ingredient_basis_label_piece">per piece</string>
+    <string name="ingredient_basis_label_piece_with_grams">per piece (%1$s g)</string>
+    <string name="ingredient_error_name_required">Name is required.</string>
+    <string name="ingredient_error_kcal_required">Calories are required and cannot be negative.</string>
+    <string name="ingredient_error_protein_required">Protein is required and cannot be negative.</string>
+    <string name="ingredient_error_carbs_required">Carbohydrate is required and cannot be negative.</string>
+    <string name="ingredient_error_fat_required">Fat is required and cannot be negative.</string>
+    <string name="ingredient_error_piece_grams_required">Piece weight is required for a per-piece ingredient.</string>
+    <string name="ingredient_error_sugar_negative">Sugar cannot be negative.</string>
+    <string name="ingredient_error_sat_fat_negative">Saturated fat cannot be negative.</string>
+    <string name="ingredient_error_fiber_negative">Fiber cannot be negative.</string>
+    <string name="ingredient_error_salt_negative">Salt cannot be negative.</string>
+    <!-- ingredients: IngredientEditViewModel.kt -->
+    <string name="ingredient_lookup_note_filled">Filled in from Open Food Facts — check the values.</string>
+    <string name="ingredient_edit_load_error">Ingredient not found.</string>
+    <string name="ingredient_edit_save_error">Could not save the ingredient. Please try again.</string>
+    <string name="ingredient_edit_delete_error">Could not delete the ingredient.</string>
+    <!-- ingredients: IngredientsScreen.kt -->
+    <string name="ingredients_title">Ingredients</string>
+    <string name="ingredients_new_content_description">New ingredient</string>
+    <string name="ingredients_search_label">Search ingredients</string>
+    <string name="ingredients_show_archived">Show archived</string>
+    <string name="ingredients_empty_title">No ingredients yet</string>
+    <string name="ingredients_empty_archived_title">No archived ingredients</string>
+    <string name="ingredients_empty_message">Add an ingredient with the + button, or scan a label.</string>
+    <string name="ingredients_brand_basis">%1$s · %2$s</string>
+    <string name="ingredients_kcal_suffix">%1$d kcal</string>
+    <string name="ingredients_unfavorite_content_description">Unfavorite</string>
+    <string name="ingredients_favorite_content_description">Favorite</string>
+    <!-- ingredients: IngredientEditCards.kt -->
+    <string name="ingredient_edit_section_ingredient">Ingredient</string>
+    <string name="ingredient_edit_name_label">Name</string>
+    <string name="ingredient_edit_brand_label">Brand (optional)</string>
+    <string name="ingredient_edit_barcode_label">Barcode (optional)</string>
+    <string name="ingredient_edit_scan_action"> Scan</string>
+    <string name="ingredient_edit_lookup_action">Look up barcode</string>
+    <string name="ingredient_edit_favorite_label">Favorite</string>
+    <string name="ingredient_edit_section_basis">Basis &amp; serving</string>
+    <string name="ingredient_edit_values_per_label">Values are per</string>
+    <string name="ingredient_edit_piece_weight_label">Piece weight</string>
+    <string name="ingredient_edit_grams_suffix">g</string>
+    <string name="ingredient_edit_default_serving_label">Default serving</string>
+    <string name="ingredient_edit_serving_label_label">Serving label (optional, e.g. "1 slice (30 g)")</string>
+    <string name="ingredient_edit_section_energy_macros">Energy &amp; macros (%1$s)</string>
+    <string name="ingredient_edit_calories_label">Calories</string>
+    <string name="ingredient_edit_kcal_suffix">kcal</string>
+    <string name="ingredient_edit_protein_label">Protein</string>
+    <string name="ingredient_edit_carbs_label">Carbohydrate</string>
+    <string name="ingredient_edit_fat_label">Fat</string>
+    <string name="ingredient_edit_section_more_nutrients">More nutrients</string>
+    <string name="ingredient_edit_sugars_label">of which sugars</string>
+    <string name="ingredient_edit_saturates_label">of which saturates</string>
+    <string name="ingredient_edit_fiber_label">Fiber</string>
+    <string name="ingredient_edit_salt_label">Salt</string>
+    <string name="ingredient_edit_sodium_label">Sodium (derived)</string>
+    <!-- ingredients: IngredientEditScreen.kt -->
+    <string name="ingredient_edit_title_new">New ingredient</string>
+    <string name="ingredient_edit_title_edit">Edit ingredient</string>
+    <string name="ingredient_edit_delete_content_description">Delete ingredient</string>
+    <string name="ingredient_edit_delete_dialog_title">Delete ingredient?</string>
+    <string name="ingredient_edit_delete_dialog_message">If it's still used in a logged meal or a template, it will be archived instead.</string>
+    <!-- camera: OcrReviewUiState.kt (OcrField labels/units) -->
+    <string name="ocr_field_calories">Calories</string>
+    <string name="ocr_field_fat">Fat</string>
+    <string name="ocr_field_saturates">of which saturates</string>
+    <string name="ocr_field_carbs">Carbohydrate</string>
+    <string name="ocr_field_sugars">of which sugars</string>
+    <string name="ocr_field_fiber">Fiber</string>
+    <string name="ocr_field_protein">Protein</string>
+    <string name="ocr_field_salt">Salt</string>
+    <string name="ocr_field_energy">Energy</string>
+    <string name="ocr_unit_kcal">kcal</string>
+    <string name="ocr_unit_grams">g</string>
+    <string name="ocr_unit_kj">kJ</string>
+    <!-- camera: OcrReviewScreen.kt -->
+    <string name="ocr_review_title">Check the scan</string>
+    <string name="ocr_review_missing_title">Nothing to review</string>
+    <string name="ocr_review_missing_message">The scan is gone — capture the nutrition table again.</string>
+    <string name="ocr_review_scan_again_action">Scan again</string>
+    <string name="ocr_review_section_product">Product</string>
+    <string name="ocr_review_name_label">Name</string>
+    <string name="ocr_review_brand_label">Brand (optional)</string>
+    <string name="ocr_review_section_recognised_values">Recognised values</string>
+    <string name="ocr_review_use_per_serving">Use per-serving column</string>
+    <string name="ocr_review_retake_action">Retake</string>
+    <string name="ocr_review_accept_action">Accept</string>
+    <string name="ocr_review_upper_bound_label">%1$s (label says "less than")</string>
+    <string name="ocr_review_captured_image_content_description">Captured nutrition label</string>
+
+    <!-- ===== Settings, integrations, backup, import and navigation (P8.1) ===== -->
+    <!-- Integrations screen (ui/settings/IntegrationsScreen.kt) -->
+    <string name="integrations_health_connect_title">Health Connect</string>
+    <string name="integrations_status_available">Available.</string>
+    <string name="integrations_status_update_required">An update is required.</string>
+    <string name="integrations_action_update_play_store">Update in Play Store</string>
+    <string name="integrations_status_not_installed">Not installed on this device.</string>
+    <string name="integrations_action_install_play_store">Install from Play Store</string>
+    <string name="integrations_permissions_title">Permissions</string>
+    <string name="integrations_action_grant_permissions">Grant permissions</string>
+    <string name="integrations_action_open_hc_settings">Open Health Connect settings</string>
+    <string name="integrations_cd_granted">Granted</string>
+    <string name="integrations_cd_not_granted">Not granted</string>
+    <string name="integrations_sync_title">Sync</string>
+    <string name="integrations_action_sync_now">Sync now</string>
+    <string name="integrations_sync_never">Never synced</string>
+    <string name="integrations_sync_status_format">%1$s: %2$s</string>
+    <string name="integrations_sync_last_error_format">Last error: %1$s</string>
+    <string name="integrations_backfill_title">Backfill history</string>
+    <string name="integrations_backfill_requires_history">Requires the "Full history" permission above, or Health Connect only returns the last 30 days.</string>
+    <string name="integrations_backfill_from_label">Backfill from</string>
+    <string name="integrations_action_start_backfill">Start backfill</string>
+    <string name="integrations_backfill_progress_format">Backfilled back to %1$s</string>
+    <string name="integrations_backfill_none_yet">No backfill has run yet.</string>
+    <!-- Backup screen (ui/settings/BackupScreen.kt, BackupViewModel.kt) -->
+    <string name="backup_section_export_title">Export</string>
+    <string name="backup_export_description">Writes every table to a JSON file you choose. Settings and any stored credentials are never included.</string>
+    <string name="backup_action_export">Export backup</string>
+    <string name="backup_section_import_title">Import</string>
+    <string name="backup_import_mode_merge_description">Merge adds only what this device does not have yet. Nothing is overwritten or deleted.</string>
+    <string name="backup_import_mode_replace_description">Replace deletes everything on this device first, then restores the backup exactly as it was.</string>
+    <string name="backup_mode_label_merge">Merge</string>
+    <string name="backup_mode_label_replace">Replace</string>
+    <string name="backup_action_import">Import backup</string>
+    <string name="backup_result_import_title">Import finished</string>
+    <string name="backup_result_export_title">Export finished</string>
+    <string name="backup_result_scope_format">%1$d rows over %2$d tables</string>
+    <string name="backup_result_import_summary_format">%1$s in the file · %2$d %3$s</string>
+    <string name="backup_result_export_summary_format">%1$s written</string>
+    <string name="backup_result_mode_merged">merged</string>
+    <string name="backup_result_mode_replaced">replaced</string>
+    <string name="backup_origin_format">Schema %1$d · app %2$s · %3$s</string>
+    <string name="backup_unknown_date">unknown date</string>
+    <string name="backup_unknown_build">unknown build</string>
+    <string name="backup_row_count_format">%1$s: %2$d</string>
+    <string name="backup_error_parse_format">That file is not a MyHealth backup (%1$s).</string>
+    <string name="backup_error_storage">The backup file could not be read or written. Check the storage and try again.</string>
+    <string name="backup_error_generic">The backup did not finish. Nothing was changed.</string>
+    <string name="backup_error_dynamic_format">%1$s</string>
+    <!-- Settings screen: profile (ui/settings/SettingsScreen.kt) -->
+    <string name="settings_no_profile">No profile yet.</string>
+    <string name="settings_profile_name_label">Name</string>
+    <string name="settings_profile_sex_label">Sex</string>
+    <string name="settings_profile_birth_date_label">Birth date</string>
+    <string name="settings_profile_height_label">Height</string>
+    <string name="settings_profile_goal_weight_label">Goal weight (optional)</string>
+    <string name="settings_profile_goal_pace_label">Goal pace</string>
+    <string name="settings_profile_neat_level_label">Daily activity level</string>
+    <string name="settings_profile_resting_hr_label">Resting HR override (optional)</string>
+    <string name="settings_profile_max_hr_label">Max HR override (optional)</string>
+    <string name="settings_profile_sleep_target_label">Sleep target</string>
+    <string name="settings_profile_mobility_rest_days_label">Mobility on rest days</string>
+    <string name="settings_profile_sport_sessions_cap_format">%1$s sessions / week cap</string>
+    <string name="settings_profile_ride_sessions_label">Ride sessions / week cap</string>
+    <string name="settings_unit_cm">cm</string>
+    <string name="settings_unit_kg">kg</string>
+    <string name="settings_unit_kg_per_week">kg/week</string>
+    <string name="settings_unit_bpm">bpm</string>
+    <string name="settings_unit_hours">h</string>
+    <string name="settings_unit_watts">W</string>
+    <!-- Settings screen: cycling (ui/settings/SettingsScreen.kt, P12.4) -->
+    <string name="settings_section_cycling">Cycling</string>
+    <string name="settings_profile_ftp_override_label">FTP override (optional)</string>
+    <string name="settings_profile_indoor_trainer_label">Indoor trainer available</string>
+    <string name="settings_unit_days">days</string>
+    <!-- Settings screen: app preferences / advanced (ui/settings/SettingsSections.kt) -->
+    <string name="settings_theme_label">Theme</string>
+    <string name="settings_dynamic_color_label">Use wallpaper colours</string>
+    <string name="settings_sync_interval_label">Sync interval</string>
+    <string name="settings_suggestion_horizon_label">Suggestion horizon</string>
+    <string name="settings_include_treadmill_prs_label">Include treadmill runs in PRs</string>
+    <string name="settings_off_contact_label">Open Food Facts contact (for the API user agent)</string>
+    <string name="settings_garmin_direct_label">Garmin direct client (experimental)</string>
+    <string name="settings_allow_destructive_migration_label">Allow destructive DB migration (debug builds only)</string>
+    <string name="settings_orphan_cleanup_button">Remove orphaned import data</string>
+    <string name="settings_orphan_cleanup_dialog_title">Remove orphaned import data?</string>
+    <string name="settings_orphan_cleanup_dialog_message">Removes activities imported from files before version 1.0.2 that can no longer be undone individually. Activities also known from Health Connect are kept.</string>
+    <string name="settings_orphan_cleanup_result_format">Removed %1$d activities, %2$d kept</string>
+    <string name="settings_orphan_cleanup_failed">Orphaned import data could not be removed.</string>
+    <string name="settings_recompute_load_button">Recompute training load</string>
+    <string name="settings_recompute_load_description">Rebuilds TRIMP, load and recovery for every activity, starting at the first one. Use it if older activities show no load.</string>
+    <string name="settings_recompute_load_scheduled">Training load recompute scheduled — it runs in the background for a few minutes.</string>
+    <!-- Import screen (ui/imports/ImportScreen.kt) -->
+    <string name="import_unsupported_file_format">%1$s is not a .fit, .csv or .zip file.</string>
+    <string name="import_section_title">Import activities</string>
+    <string name="import_description">Pick a Garmin .fit file, an activities .csv, or the whole Export-Your-Data .zip. Files you have already imported are detected by their checksum and skipped.</string>
+    <string name="import_action_pick_file">Choose file</string>
+    <string name="import_status_running_title">Importing</string>
+    <string name="import_status_done_title">Import finished</string>
+    <string name="import_action_done">Done</string>
+    <string name="import_status_already_imported_title">Already imported</string>
+    <string name="import_already_imported_message_format">This file was imported before (as %1$s).</string>
+    <string name="import_already_imported_message_plain">This file was imported before.</string>
+    <string name="import_action_import_anyway">Import anyway</string>
+    <string name="import_action_dismiss">Dismiss</string>
+    <string name="import_error_failed_fallback">The import failed.</string>
+    <string name="import_counts_format">%1$d parsed · %2$d saved · %3$d duplicates · %4$d errors</string>
+    <string name="import_history_title">Import history</string>
+    <string name="import_history_empty_title">Nothing imported yet</string>
+    <string name="import_history_empty_message">Imports you run appear here with their counts.</string>
+    <string name="import_history_summary_format">%1$s · %2$s · %3$d parsed, %4$d saved, %5$d duplicates</string>
+    <string name="import_history_summary_with_errors_format">%1$s · %2$s · %3$d parsed, %4$d saved, %5$d duplicates, %6$d errors</string>
+    <string name="import_action_undo">Undo import</string>
+    <string name="import_history_row_menu_cd">More actions for %1$s</string>
+    <string name="import_undo_dialog_title">Undo this import?</string>
+    <string name="import_undo_dialog_message_format">Removes the %1$d activities that only came from this file; activities also known from Health Connect are kept. %2$s can be imported again afterwards.</string>
+    <string name="import_undo_result_format">Import undone · %1$d activities removed, %2$d kept</string>
+    <string name="import_undo_failed">The import could not be undone.</string>
+    <string name="import_kind_fit_file">FIT file</string>
+    <string name="import_kind_garmin_csv">Garmin CSV</string>
+    <string name="import_kind_garmin_export">Garmin export</string>
+    <string name="import_kind_json_backup">JSON backup</string>
+    <!-- More screen (ui/more/MoreScreen.kt) -->
+    <string name="more_entry_activities">Activities</string>
+    <string name="more_entry_running_prs">Running PRs</string>
+    <string name="more_entry_load_recovery">Load &amp; Recovery</string>
+    <string name="more_entry_ingredients">Ingredients</string>
+    <string name="more_entry_meal_templates">Meal Templates</string>
+    <string name="more_entry_goals">Goals</string>
+    <string name="more_entry_import">Import</string>
+    <string name="more_entry_backup">Backup</string>
+    <string name="more_entry_integrations">Integrations</string>
+    <!-- Nav host placeholder (ui/nav/MyHealthNavHost.kt) -->
+    <string name="nav_garmin_direct_title">Garmin direct</string>
+
+    <!-- ===== Training plan, suggestions and Today (P8.1) ===== -->
+    <!-- ui/training/PlannedSessionCard.kt -->
+    <string name="training_session_linked">Linked</string>
+    <string name="session_unlock_desc">Unlock session</string>
+    <string name="session_lock_desc">Lock session</string>
+    <string name="training_mark_done">Mark done</string>
+    <string name="training_skip">Skip</string>
+    <string name="training_reopen">Reopen</string>
+    <string name="training_edit">Edit</string>
+    <!-- ui/training/PlannedSessionEditScreen.kt, PlannedSessionEditViewModel.kt -->
+    <string name="session_new_title">New session</string>
+    <string name="session_edit_title">Edit session</string>
+    <string name="session_delete_desc">Delete session</string>
+    <string name="session_delete_confirm_title">Delete this session?</string>
+    <string name="session_delete_confirm_message">This cannot be undone.</string>
+    <string name="session_section_title">Session</string>
+    <string name="session_sport_label">Sport</string>
+    <string name="session_type_label">Type</string>
+    <string name="session_intensity_label">Intensity</string>
+    <string name="session_when_title">When</string>
+    <string name="session_day_label">Day</string>
+    <string name="session_start_time_label">Start time (optional)</string>
+    <string name="session_notes_title">Notes</string>
+    <string name="session_description_label">Description</string>
+    <string name="session_lock_label">Lock (the suggester will not move it)</string>
+    <string name="session_targets_title">Targets</string>
+    <string name="session_distance_label">Distance</string>
+    <string name="session_pace_min_label">Pace min</string>
+    <string name="session_pace_sec_label">Pace sec</string>
+    <string name="session_estimated_load">Estimated load %1$d AU</string>
+    <string name="session_not_found">Session not found.</string>
+    <string name="session_save_error">Could not save the session. Please try again.</string>
+    <string name="session_delete_error">Could not delete the session.</string>
+    <!-- ui/training/SuggestionReviewScreen.kt, SuggestionReviewViewModel.kt -->
+    <string name="review_title">Suggested week</string>
+    <string name="review_select_all">Select all</string>
+    <string name="review_empty_title">No suggestions yet</string>
+    <string name="review_empty_message">Generate a week from the training screen; every session arrives here with the reasoning behind it before anything is added to your plan.</string>
+    <string name="review_generate">Generate</string>
+    <string name="review_proposal_title">This week's proposal</string>
+    <string name="review_target_label">target</string>
+    <string name="review_suggested_label">suggested</string>
+    <string name="review_rest_day_singular">rest day</string>
+    <string name="review_replaces_singular">earlier suggested session will be replaced</string>
+    <string name="review_replaces_plural">earlier suggested sessions will be replaced</string>
+    <string name="review_fixed_load_covers_target">your locked and hand-planned sessions already carry %1$d AU of the %2$d AU target, so only recovery is suggested</string>
+    <string name="review_rest_day_plural">rest days</string>
+    <string name="review_selected_summary">%1$d of %2$d selected · %3$d AU</string>
+    <string name="review_accept_selected">Accept selected</string>
+    <string name="review_rest_day_message">Rest — kept free so the week's hard days can be absorbed.</string>
+    <string name="review_save_error">Could not save the review. Please try again.</string>
+    <string name="review_generate_error">Could not generate suggestions. Please try again.</string>
+    <!-- ui/training/TrainingScreen.kt, TrainingViewModel.kt -->
+    <string name="training_this_week">This week</string>
+    <string name="training_empty_title">No sessions this week</string>
+    <string name="training_empty_message">Generate a week of suggestions from your goals, calendar and current load, review them, then accept the ones you want. You can always add a session by hand.</string>
+    <string name="training_generate_suggestions">Generate suggestions</string>
+    <string name="training_previous_week_desc">Previous week</string>
+    <string name="training_next_week_desc">Next week</string>
+    <string name="training_this_block_title">This block</string>
+    <string name="training_add_session">+ Session</string>
+    <string name="training_suggestions_stale">Calendar changed — regenerate</string>
+    <string name="training_action_regenerate">Regenerate</string>
+    <string name="training_generate_error">Could not generate suggestions. Complete onboarding and try again.</string>
+    <string name="training_session_locked">Session locked.</string>
+    <string name="training_session_unlocked">Session unlocked.</string>
+    <string name="training_session_marked_done">Session marked done.</string>
+    <string name="training_session_skipped">Session skipped.</string>
+    <string name="training_session_reopened">Session reopened.</string>
+    <string name="training_session_deleted">Session deleted.</string>
+    <string name="training_update_error">Could not update the session. Please try again.</string>
+    <!-- ui/training/WeekBoard.kt -->
+    <string name="training_today_badge">Today</string>
+    <string name="training_selected_badge">Selected</string>
+    <string name="training_rest_day">Rest day</string>
+    <string name="training_all_day">All day</string>
+    <!-- ui/training/WeeklyLoadBar.kt -->
+    <string name="training_load_planned">Planned</string>
+    <string name="training_load_target">Target</string>
+    <string name="training_load_actual">Actual</string>
+    <!-- ui/today/TodayPlanCard.kt -->
+    <string name="today_plan_title">Today's plan</string>
+    <string name="today_plan_action">Plan</string>
+    <string name="today_plan_empty">Nothing planned for today.</string>
+    <string name="today_mark_done">Done</string>
+    <string name="today_suggested_label">Suggested</string>
+    <string name="today_review_action">Review</string>
+    <!-- ui/today/TodayScreen.kt -->
+    <string name="today_suggested_links_title">Suggested links</string>
+    <string name="today_dismiss">Dismiss</string>
+    <string name="today_accept">Accept</string>
+    <string name="today_nutrition_title">Nutrition</string>
+    <string name="today_diary">Diary</string>
+    <string name="today_sync_failed">Sync failed: %1$s</string>
+    <string name="today_sync_now">Sync now</string>
+    <string name="today_activities_title">Today's activities</string>
+    <string name="today_day_detail">Day detail</string>
+    <string name="today_empty_activities_title">No activities yet today</string>
+    <string name="today_empty_activities_message">Anything you do today will show up here.</string>
+    <string name="today_body_title">Body</string>
+    <string name="today_no_weight">No weight logged yet.</string>
+    <string name="today_sleep_title">Sleep</string>
+    <string name="today_no_sleep">No sleep data for last night.</string>
+    <string name="today_last_night_label">Last night</string>
+    <!-- ui/today/TodayLoadCards.kt -->
+    <string name="today_recovery_title">Recovery</string>
+    <string name="today_recovery_no_data">Not enough data yet for a recovery score.</string>
+    <string name="today_confidence_label">%1$s%% confidence</string>
+    <string name="today_load_title">Training load</string>
+    <string name="today_load_no_data">No training load yet.</string>
+    <string name="today_acwr_label">ACWR</string>
+    <string name="today_atl_label">ATL</string>
+    <string name="today_ctl_label">CTL</string>
+    <string name="today_weekly_trimp_label">7d TRIMP</string>
+
+    <!-- ===== Goals, ingredients and the camera / OCR flow (P8.1) ===== -->
+    <!-- goals: GoalDraft.kt validation (P8.1) -->
+    <!-- goals: GoalsViewModel.kt snackbar messages (P8.1) -->
+    <!-- goals: GoalsScreen.kt -->
+    <!-- goals: GoalEditViewModel.kt -->
+    <!-- goals: GoalEditScreen.kt -->
+    <!-- ingredients: IngredientDraft.kt -->
+    <!-- ingredients: IngredientEditViewModel.kt -->
+    <!-- ingredients: IngredientsScreen.kt -->
+    <!-- ingredients: IngredientEditCards.kt -->
+    <!-- ingredients: IngredientEditScreen.kt -->
+    <!-- camera: OcrReviewUiState.kt (OcrField labels/units) -->
+    <!-- camera: OcrReviewScreen.kt -->
+    <!-- camera: ScanScreen.kt -->
+    <string name="scan_title">Scan</string>
+    <string name="scan_from_photo_content_description">Scan from photo</string>
+    <string name="scan_torch_off">Torch off</string>
+    <string name="scan_torch_on">Torch on</string>
+    <string name="scan_enter_manually_action">Enter it manually</string>
+    <string name="scan_hint_label">Fill the frame with the nutrition table, then capture.</string>
+    <string name="scan_hint_barcode">Hold the barcode inside the frame.</string>
+    <string name="scan_capture_label_action">  Capture label</string>
+    <string name="scan_mode_label">Nutrition label</string>
+    <string name="scan_mode_barcode">Barcode</string>
+    <string name="scan_from_photo_action">  From photo</string>
+    <string name="scan_permission_denied_title">Camera access is off</string>
+    <string name="scan_permission_denied_message_settings">Scanning a label or a barcode needs the camera. Turn it on for MyHealth in Android settings.</string>
+    <string name="scan_permission_denied_message_allow">Scanning a label or a barcode needs the camera. Allow it to continue.</string>
+    <string name="scan_open_settings_action">Open settings</string>
+    <string name="scan_allow_camera_action">Allow camera</string>
+
+    <!-- ===== Menstrual cycle tracker (P11.3) ===== -->
+    <!-- More screen entry (ui/more/MoreScreen.kt) — shown only while tracking is enabled -->
+    <string name="more_entry_cycle">Cycle</string>
+    <!-- ui/cycle/CycleScreen.kt -->
+    <string name="cycle_title">Cycle</string>
+    <string name="cycle_status_title">Status</string>
+    <string name="cycle_phase_menstrual">Menstrual</string>
+    <string name="cycle_phase_follicular">Follicular</string>
+    <string name="cycle_phase_ovulation">Ovulation</string>
+    <string name="cycle_phase_luteal">Luteal</string>
+    <string name="cycle_late_luteal_chip">Late luteal</string>
+    <string name="cycle_confidence_low">Based on a default 28-day cycle — log your period to improve this.</string>
+    <string name="cycle_confidence_based_on_one">Based on 1 logged cycle.</string>
+    <string name="cycle_confidence_based_on_many">Based on %1$d logged cycles.</string>
+    <string name="cycle_action_log_period_start">Log period start</string>
+    <string name="cycle_action_period_ended">Period ended</string>
+    <string name="cycle_dialog_log_period_start_title">Log period start</string>
+    <string name="cycle_dialog_period_ended_title">Period ended</string>
+    <string name="cycle_forecast_title">Forecast</string>
+    <string name="cycle_forecast_empty">Log a period to see the next six cycles.</string>
+    <string name="cycle_forecast_ovulation_format">Ovulation %1$s</string>
+    <string name="cycle_history_title">History</string>
+    <string name="cycle_history_empty">No periods logged yet.</string>
+    <string name="cycle_history_ongoing">Ongoing</string>
+    <string name="cycle_history_period_days_format">%1$d period days</string>
+    <string name="cycle_history_cycle_length_format">%1$d day cycle</string>
+    <string name="cycle_empty_title">No periods logged yet</string>
+    <string name="cycle_empty_message">Log your first period start to see phase predictions and a personalised forecast.</string>
+    <string name="cycle_delete_confirm_title">Delete this entry?</string>
+    <string name="cycle_delete_confirm_message">This cannot be undone.</string>
+    <string name="cycle_error_duplicate_start">A period already starts on this day.</string>
+    <string name="cycle_error_save_failed">Could not save. Please try again.</string>
+    <string name="cycle_error_no_period_to_end">Log a period start first.</string>
+    <string name="cycle_error_period_end_before_start">The end date can't be before the period started.</string>
+    <string name="cycle_msg_period_logged">Period start logged.</string>
+    <string name="cycle_msg_period_ended">Period end logged.</string>
+    <!-- ui/today/TodayCycleCard.kt -->
+    <string name="today_cycle_title">Cycle</string>
+    <string name="today_cycle_empty">Log your period to see cycle predictions.</string>
+    <!-- ui/calendar/DayDetailSections.kt -->
+    <string name="daydetail_section_cycle">Cycle</string>
+    <string name="daydetail_cycle_predicted_suffix">(predicted)</string>
+    <!-- ui/settings/SettingsSections.kt, ui/onboarding/OnboardingScreen.kt -->
+    <string name="cycle_track_switch_label">Track menstrual cycle</string>
+
+    <!-- ===== Zones & paces (ui/zones/*.kt, More entry, P14.6) ===== -->
+    <string name="more_entry_zones">Zones &amp; paces</string>
+    <string name="zones_title">Zones &amp; paces</string>
+    <string name="hr_zone_1_name">Recovery</string>
+    <string name="hr_zone_2_name">Endurance</string>
+    <string name="hr_zone_3_name">Tempo</string>
+    <string name="hr_zone_4_name">Threshold</string>
+    <string name="hr_zone_5_name">VO2max</string>
+    <string name="zones_scheme_karvonen">Heart-rate reserve (Karvonen)</string>
+    <string name="zones_scheme_lthr">From your lactate-threshold heart rate</string>
+    <string name="zones_scheme_manual">Manual zone bounds</string>
+    <string name="zones_section_zones_title">Heart-rate zones</string>
+    <string name="zones_section_paces_title">Pace per zone</string>
+    <string name="zones_section_daniels_title">Daniels training paces</string>
+    <string name="zones_section_polarisation_title">Last 28 days</string>
+    <string name="zones_section_sessions_title">Target by session type</string>
+    <string name="zones_confidence_measured">Measured from %1$d runs</string>
+    <string name="zones_confidence_partly_modelled">Partly modelled</string>
+    <string name="zones_confidence_modelled">Modelled from your VDOT</string>
+    <string name="zones_confidence_not_enough_data">Not enough data yet</string>
+    <string name="zones_pace_placeholder">—</string>
+    <string name="zones_polarisation_summary_format">Easy %1$d%% · Moderate %2$d%% · Hard %3$d%%</string>
+    <string name="zones_polarisation_hint">Less than 70 % easy over the last 28 days — most weeks should be mostly easy.</string>
+    <string name="zones_table_na">n/a</string>
+    <string name="zones_daniels_easy">Easy</string>
+    <string name="zones_daniels_marathon">Marathon</string>
+    <string name="zones_daniels_threshold">Threshold</string>
+    <string name="zones_daniels_interval">Interval</string>
+    <string name="zones_daniels_repetition">Repetition</string>
+    <string name="zones_empty_title">No zone or pace data yet</string>
+    <string name="zones_empty_message">Set a resting/max heart rate in Settings, or record a few runs, to see your zones and paces here.</string>
+
+    <!-- ===== Plan-UI structure display (ui/training/PlannedSessionCard.kt, P14.6) ===== -->
+    <string name="session_structure_warmup_prefix">Warm-up</string>
+    <string name="session_structure_recovery_prefix">Recovery</string>
+    <string name="session_structure_cooldown_prefix">Cool-down</string>
+    <string name="session_structure_expand">Show steps</string>
+    <string name="session_structure_collapse">Hide steps</string>
+
+    <!-- ===== Activity detail zone table marker (ui/activities/ActivityDetailScreen.kt, P14.6) ===== -->
+    <string name="activity_detail_target_zone_marker">(target)</string>
+
+    <!-- ===== Settings: Heart-rate zones section (ui/settings/SettingsSections.kt, P14.6) ===== -->
+    <string name="settings_section_hr_zones">Heart-rate zones</string>
+
+    <!-- ===== Settings: Strength / my equipment (ui/settings/SettingsSections.kt, P16.2) ===== -->
+    <string name="settings_section_strength">Strength</string>
+    <string name="settings_my_equipment_explanation">Exercises and workouts only use what you select here. Select everything to turn this off.</string>
+    <string name="settings_hr_scheme_format">Current scheme: %1$s</string>
+    <string name="settings_hr_lthr_label">Lactate-threshold heart rate</string>
+    <string name="settings_hr_bound_z2_label">Zone 2 starts at</string>
+    <string name="settings_hr_bound_z3_label">Zone 3 starts at</string>
+    <string name="settings_hr_bound_z4_label">Zone 4 starts at</string>
+    <string name="settings_hr_bound_z5_label">Zone 5 starts at</string>
+    <string name="settings_hr_bounds_preview_title">Preview</string>
+    <string name="settings_hr_bounds_ascending_error">Enter all four zone bounds, ascending, or leave all four blank.</string>
+
+    <!-- ===== Body figure (ui/common/body/*.kt, P14.7) ===== -->
+    <string name="body_figure_legend_primary">Primary</string>
+    <string name="body_figure_legend_secondary">Secondary</string>
+    <string name="body_figure_legend_fresh">Fresh</string>
+    <string name="body_figure_legend_loaded">Loaded</string>
+    <string name="body_figure_legend_fatigued">Fatigued</string>
+
+    <!-- ===== Exercises (ui/strength/ExercisesScreen.kt, More entry, P14.7) ===== -->
+    <string name="more_entry_exercises">Exercises</string>
+    <string name="exercises_title">Exercises</string>
+    <string name="exercises_search_label">Search exercises or muscles</string>
+    <string name="exercises_clear_filters">Clear filters</string>
+    <string name="exercises_empty_title">No exercises match</string>
+    <string name="exercises_empty_message">Try a different search term or clear the filters.</string>
+    <string name="exercises_only_my_equipment_label">Only my equipment</string>
+
+    <!-- ===== Exercises: P17 kind chip (ui/strength/ExercisesScreen.kt, P17.2) ===== -->
+    <string name="exercises_kind_all">All</string>
+    <string name="exercises_kind_strength">Strength</string>
+    <string name="exercises_kind_mobility">Mobility</string>
+    <string name="exercises_row_subtitle_mobility_format">Mobility · %1$s</string>
+
+    <!-- ===== Exercise detail (ui/strength/ExerciseDetailScreen.kt, P14.7) ===== -->
+    <string name="exercise_detail_title">Exercise</string>
+    <string name="exercise_detail_add_to_workout">Add to workout…</string>
+    <string name="exercise_detail_added_to_format">Added to %1$s</string>
+    <string name="exercise_detail_not_found_title">Exercise not found</string>
+    <string name="exercise_detail_not_found_message">This exercise is no longer in the catalog.</string>
+    <string name="exercise_detail_section_details">Details</string>
+    <string name="exercise_detail_equipment_label">Equipment</string>
+    <string name="exercise_detail_pattern_label">Movement pattern</string>
+    <string name="exercise_detail_unilateral_flag">One side at a time</string>
+    <string name="exercise_detail_timed_flag">Timed hold</string>
+    <string name="exercise_detail_section_cue">Cue</string>
+    <string name="exercise_detail_pick_workout_title">Add to which workout?</string>
+    <!-- ===== Exercise animation (ui/common/body/AnimatedBodyFigure.kt, P18.2) ===== -->
+    <string name="exercise_detail_section_animation">Animation</string>
+    <string name="exercise_animation_play_cd">Play animation</string>
+    <string name="exercise_animation_pause_cd">Pause animation</string>
+    <string name="exercise_detail_pick_workout_empty">No workouts yet — create one from Strength workouts first.</string>
+    <string name="exercise_picker_title">Add an exercise</string>
+    <string name="exercise_picker_show_all_label">Show all equipment</string>
+
+    <!-- ===== Exercise detail: Progression card (ui/strength/ExerciseDetailScreen.kt, P16.2) ===== -->
+    <string name="exercise_detail_section_progression">Progression</string>
+    <string name="exercise_detail_last_feedback_format">Last: %1$s on %2$s</string>
+    <string name="exercise_detail_no_sessions">No sessions logged yet.</string>
+
+    <!-- ===== Strength workouts (ui/strength/WorkoutsScreen.kt, More entry, P14.7) ===== -->
+    <string name="more_entry_workouts">Strength workouts</string>
+    <string name="workouts_title">Strength workouts</string>
+    <string name="workouts_new_content_description">New workout</string>
+    <string name="workouts_empty_title">No workouts yet</string>
+    <string name="workouts_empty_message">Create a workout, or open Exercises and add one to get started.</string>
+    <string name="workouts_row_subtitle_format">%1$d exercises · about %2$d min</string>
+    <string name="workouts_overflow_desc">More actions</string>
+    <string name="workouts_action_duplicate">Duplicate</string>
+    <string name="workouts_action_plan_for_day">Plan for a day…</string>
+    <string name="workouts_delete_confirm_title">Delete this workout?</string>
+    <string name="workouts_delete_confirm_message">This cannot be undone. Sessions already planned with it keep their record.</string>
+    <string name="workouts_planned_message">Workout planned.</string>
+    <string name="workouts_plan_error">Could not plan the workout. Please try again.</string>
+
+    <!-- ===== Workout edit (ui/strength/WorkoutEditScreen.kt, P14.7) ===== -->
+    <string name="workout_edit_new_title">New workout</string>
+    <string name="workout_edit_title">Edit workout</string>
+    <string name="workout_edit_section_details">Details</string>
+    <string name="workout_edit_name_label">Name</string>
+    <string name="workout_edit_error_name_required">A workout needs a name.</string>
+    <string name="workout_edit_kind_label">Kind</string>
+    <string name="workout_edit_section_figure">Muscles worked</string>
+    <string name="workout_edit_estimated_minutes_format">About %1$d min</string>
+    <string name="workout_edit_section_exercises">Exercises</string>
+    <string name="workout_edit_add_exercise">Add exercise…</string>
+    <string name="workout_edit_move_up">Move up</string>
+    <string name="workout_edit_move_down">Move down</string>
+    <string name="workout_edit_remove_exercise">Remove exercise</string>
+    <string name="workout_edit_sets_label">Sets</string>
+    <string name="workout_edit_reps_label">Reps</string>
+    <string name="workout_edit_seconds_label">Seconds</string>
+    <string name="workout_edit_load_label">Load</string>
+    <string name="workout_edit_rest_label">Rest (s)</string>
+    <string name="workout_edit_bodyweight_label">Bodyweight</string>
+    <string name="workout_edit_note_label">Note</string>
+    <string name="workout_edit_error_sets">Needs at least one set.</string>
+    <string name="workout_edit_error_reps_xor_seconds">Needs either a rep count or a hold in seconds, not both.</string>
+    <string name="workout_edit_load_error">Could not load this workout.</string>
+    <string name="workout_edit_save_error">Could not save. Please try again.</string>
+
+    <!-- ===== Set log sheet (ui/strength/SetLogSheet.kt, P14.7) ===== -->
+    <string name="set_log_title_format">%1$s — log your sets</string>
+    <string name="set_log_row_format">%1$s · set %2$d</string>
+    <string name="set_log_skip">Skip logging</string>
+
+    <!-- ===== Planned session ↔ workout (ui/training/{PlannedSessionCard,PlannedSessionEditScreen}.kt, P14.7) ===== -->
+    <string name="session_workout_label">Workout</string>
+    <string name="session_workout_none">None</string>
+    <string name="session_workout_format">Workout: %1$s</string>
+
+    <!-- ===== Planned session ↔ mobility routine (ui/training/{PlannedSessionCard,PlannedSessionEditScreen}.kt, P17.2) ===== -->
+    <string name="session_routine_label">Routine</string>
+    <string name="session_routine_format">Routine: %1$s</string>
+
+    <!-- ===== Load progression (ui/training/TrainingViewModel.kt, P16.2) ===== -->
+    <string name="training_next_time_format">Next time: %1$s</string>
+</resources>

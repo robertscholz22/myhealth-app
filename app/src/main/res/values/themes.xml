@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The window theme only needs to be a sane, action-bar-free DayNight shell:
+      all real theming happens in Compose (MyHealthTheme, Material 3 + dynamic color).
+    -->
+    <style name="Theme.MyHealth" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

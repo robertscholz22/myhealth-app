@@ -1,0 +1,10 @@
+Haferflocken zart|40|40|520|80
+Nährwerte pro 100 g|40|110|420|150
+Energie 1548 kJ / 370 kcal|40|160|600|200
+Fett 7,0 g|40|210|280|250
+davon gesättigte Fettsäuren 1,3 g|40|260|700|300
+Kohlenhydrate 58,7 g|40|310|450|350
+davon Zucker 1,1 g|40|360|420|400
+Ballaststoffe 10,0 g|40|410|450|450
+Eiweiß 13,5 g|40|460|360|500
+Salz 0,02 g|40|510|300|550

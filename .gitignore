@@ -1,0 +1,32 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE
+*.iml
+.idea/
+.kotlin/
+
+# OS / misc
+.DS_Store
+*.log
+
+# Personal data — this repository is public. Never commit backups, health/Garmin exports,
+# or screenshots taken on the owner's phone or with the owner's data restored.
+*.json.bak
+myhealth-backup-*.json
+export.zip
+export.xml
+docs/screenshots/phone*.png
+docs/private/

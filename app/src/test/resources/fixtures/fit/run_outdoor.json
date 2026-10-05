@@ -1,0 +1,114 @@
+{
+  "fileId": {
+    "type": "ACTIVITY",
+    "manufacturer": 1,
+    "product": 3121,
+    "serialNumber": 3912345678,
+    "timeCreatedMillis": 1778392800000
+  },
+  "sessions": [
+    {
+      "startAtMillis": 1778396400000,
+      "sport": "RUNNING",
+      "subSport": "STREET",
+      "sportProfileName": "Morning Run",
+      "totalElapsedSec": 1500.0,
+      "totalTimerSec": 1490.0,
+      "totalDistanceMeters": 5000.0,
+      "totalCalories": 355,
+      "avgHr": 152,
+      "maxHr": 178,
+      "avgSpeedMps": 3.3557,
+      "maxSpeedMps": 4.1,
+      "avgCadenceSpm": 85.0,
+      "totalAscentM": 42.0
+    }
+  ],
+  "laps": [
+    {
+      "messageIndex": 0,
+      "startAtMillis": 1778396400000,
+      "totalElapsedSec": 750.0,
+      "totalTimerSec": 748.0,
+      "totalDistanceMeters": 2500.0,
+      "totalCalories": 175,
+      "avgHr": 148,
+      "maxHr": 165,
+      "avgSpeedMps": 3.34
+    },
+    {
+      "messageIndex": 1,
+      "startAtMillis": 1778397150000,
+      "totalElapsedSec": 750.0,
+      "totalTimerSec": 742.0,
+      "totalDistanceMeters": 2500.0,
+      "totalCalories": 180,
+      "avgHr": 158,
+      "maxHr": 178,
+      "avgSpeedMps": 3.37
+    }
+  ],
+  "records": [
+    {
+      "timestampMillis": 1778396400000,
+      "hr": 140,
+      "distanceMeters": 0.0,
+      "speedMps": 3.5,
+      "cadenceSpm": 85,
+      "altitudeM": 34.0,
+      "positionLatSemicircles": 626588007,
+      "positionLongSemicircles": 159927879
+    },
+    {
+      "timestampMillis": 1778396401000,
+      "hr": 144,
+      "distanceMeters": 3.5,
+      "speedMps": 3.5,
+      "cadenceSpm": 85,
+      "altitudeM": 34.5,
+      "positionLatSemicircles": 626588603,
+      "positionLongSemicircles": 159928357
+    },
+    {
+      "timestampMillis": 1778396402000,
+      "hr": 148,
+      "distanceMeters": 7.0,
+      "speedMps": 3.5,
+      "cadenceSpm": 85,
+      "altitudeM": 35.0,
+      "positionLatSemicircles": 626589200,
+      "positionLongSemicircles": 159928834
+    },
+    {
+      "timestampMillis": 1778396403000,
+      "hr": 152,
+      "distanceMeters": 10.5,
+      "speedMps": 3.5,
+      "cadenceSpm": 85,
+      "altitudeM": 35.5,
+      "positionLatSemicircles": 626589796,
+      "positionLongSemicircles": 159929311
+    },
+    {
+      "timestampMillis": 1778396404000,
+      "hr": 156,
+      "distanceMeters": 14.0,
+      "speedMps": 3.5,
+      "cadenceSpm": 85,
+      "altitudeM": 36.0,
+      "positionLatSemicircles": 626590393,
+      "positionLongSemicircles": 159929788
+    },
+    {
+      "timestampMillis": 1778396405000,
+      "hr": 160,
+      "distanceMeters": 17.5,
+      "speedMps": 3.5,
+      "cadenceSpm": 85,
+      "altitudeM": 36.5,
+      "positionLatSemicircles": 626590989,
+      "positionLongSemicircles": 159930266
+    }
+  ],
+  "localTimestampOffsetSec": 7200
+}

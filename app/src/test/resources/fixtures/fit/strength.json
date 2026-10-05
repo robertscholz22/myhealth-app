@@ -1,0 +1,41 @@
+{
+  "fileId": {
+    "type": "ACTIVITY",
+    "manufacturer": 1,
+    "product": 3121,
+    "serialNumber": 3912345678,
+    "timeCreatedMillis": 1778392800000
+  },
+  "sessions": [
+    {
+      "startAtMillis": 1778396400000,
+      "sport": "TRAINING",
+      "subSport": "STRENGTH_TRAINING",
+      "sportProfileName": "Kraft",
+      "totalElapsedSec": 3000.0,
+      "totalTimerSec": 2700.0,
+      "totalCalories": 310,
+      "avgHr": 112,
+      "maxHr": 158
+    }
+  ],
+  "laps": [],
+  "records": [
+    {
+      "timestampMillis": 1778396400000,
+      "hr": 108
+    },
+    {
+      "timestampMillis": 1778396401000,
+      "hr": 110
+    },
+    {
+      "timestampMillis": 1778396402000,
+      "hr": 112
+    },
+    {
+      "timestampMillis": 1778396403000,
+      "hr": 114
+    }
+  ]
+}

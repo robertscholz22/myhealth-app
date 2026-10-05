@@ -1,0 +1,46 @@
+{
+  "fileId": {
+    "type": "ACTIVITY",
+    "manufacturer": 1,
+    "product": 3121,
+    "serialNumber": 3912345678,
+    "timeCreatedMillis": 1778392800000
+  },
+  "sessions": [
+    {
+      "startAtMillis": 1778396400000,
+      "sport": "SOCCER",
+      "sportProfileName": "Fussball",
+      "totalElapsedSec": 5400.0,
+      "totalTimerSec": 5400.0,
+      "totalDistanceMeters": 8200.0,
+      "totalCalories": 890,
+      "avgHr": 155,
+      "maxHr": 192,
+      "maxSpeedMps": 8.1
+    }
+  ],
+  "laps": [],
+  "records": [
+    {
+      "timestampMillis": 1778396400000,
+      "hr": 150
+    },
+    {
+      "timestampMillis": 1778396401000,
+      "hr": 153
+    },
+    {
+      "timestampMillis": 1778396402000,
+      "hr": 156
+    },
+    {
+      "timestampMillis": 1778396403000,
+      "hr": 159
+    },
+    {
+      "timestampMillis": 1778396404000,
+      "hr": 162
+    }
+  ]
+}

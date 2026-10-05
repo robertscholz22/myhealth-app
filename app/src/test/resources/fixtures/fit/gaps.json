@@ -1,0 +1,67 @@
+{
+  "fileId": {
+    "type": "ACTIVITY",
+    "manufacturer": 1,
+    "product": 3121,
+    "serialNumber": 3912345678,
+    "timeCreatedMillis": 1778392800000
+  },
+  "sessions": [
+    {
+      "startAtMillis": 1778396400000,
+      "sport": "RUNNING",
+      "subSport": "TRAIL",
+      "totalElapsedSec": 600.0,
+      "totalTimerSec": 600.0,
+      "totalDistanceMeters": 1980.0,
+      "totalCalories": 140,
+      "avgHr": 144,
+      "maxHr": 155,
+      "avgSpeedMps": 3.3
+    }
+  ],
+  "laps": [],
+  "records": [
+    {
+      "timestampMillis": 1778396400000,
+      "distanceMeters": 0.0,
+      "speedMps": 3.2,
+      "altitudeM": 30.0
+    },
+    {
+      "timestampMillis": 1778396401000,
+      "hr": 141,
+      "distanceMeters": 3.2,
+      "speedMps": 3.2,
+      "altitudeM": 30.2,
+      "positionLatSemicircles": 626588007,
+      "positionLongSemicircles": 159927879
+    },
+    {
+      "timestampMillis": 1778396402000,
+      "distanceMeters": 6.4,
+      "speedMps": 3.2,
+      "altitudeM": 30.4
+    },
+    {
+      "timestampMillis": 1778396403000,
+      "hr": 143,
+      "distanceMeters": 9.6,
+      "positionLatSemicircles": 626589200,
+      "positionLongSemicircles": 159929072
+    },
+    {
+      "timestampMillis": 1778396409000,
+      "distanceMeters": 29.0,
+      "speedMps": 3.3,
+      "altitudeM": 31.0
+    },
+    {
+      "timestampMillis": 1778396410000,
+      "hr": 147,
+      "distanceMeters": 32.3,
+      "speedMps": 3.3,
+      "altitudeM": 31.2
+    }
+  ]
+}

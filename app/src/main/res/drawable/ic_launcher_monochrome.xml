@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  P8.6 — themed-icon (monochrome) layer. The launcher tints the whole drawable one colour, so the
+  pulse trace has to be a hole in the heart rather than a second colour: heart + pulse are one
+  path with `evenOdd` fill.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M54,80C54,80 28,62.5 28,46.5C28,38.5 34.3,32 42.1,32C46.7,32 51,34.3 54,38C57,34.3 61.3,32 65.9,32C73.7,32 80,38.5 80,46.5C80,62.5 54,80 54,80Z M33,50.5h10.5l4,-9.5l6.5,17.5l5.5,-12.5l3.4,4.5h12.6v4.6h-14.9l-1.5,-2l-6.3,14.3l-6.4,-17.4l-2.2,5H33z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M69,30.5c0,-7.5 5.5,-13 13.5,-13.5c0.6,8.2 -4.7,14.3 -13.5,13.5z" />
+</vector>

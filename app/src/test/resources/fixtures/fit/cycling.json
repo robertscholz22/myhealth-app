@@ -1,0 +1,65 @@
+{
+  "fileId": {
+    "type": "ACTIVITY",
+    "manufacturer": 1,
+    "product": 3121,
+    "serialNumber": 3912345678,
+    "timeCreatedMillis": 1778392800000
+  },
+  "sessions": [
+    {
+      "startAtMillis": 1778396400000,
+      "sport": "CYCLING",
+      "subSport": "ROAD",
+      "totalElapsedSec": 3600.0,
+      "totalTimerSec": 3500.0,
+      "totalDistanceMeters": 30000.0,
+      "totalCalories": 700,
+      "avgHr": 138,
+      "maxHr": 168,
+      "avgSpeedMps": 8.57,
+      "maxSpeedMps": 14.2,
+      "avgCadenceSpm": 82.0,
+      "totalAscentM": 310.0
+    }
+  ],
+  "laps": [],
+  "records": [
+    {
+      "timestampMillis": 1778396400000,
+      "hr": 130,
+      "distanceMeters": 0.0,
+      "speedMps": 8.5,
+      "cadenceSpm": 82,
+      "positionLatSemicircles": 626588007,
+      "positionLongSemicircles": 159927879
+    },
+    {
+      "timestampMillis": 1778396401000,
+      "hr": 131,
+      "distanceMeters": 8.5,
+      "speedMps": 8.5,
+      "cadenceSpm": 82,
+      "positionLatSemicircles": 626590393,
+      "positionLongSemicircles": 159930266
+    },
+    {
+      "timestampMillis": 1778396402000,
+      "hr": 132,
+      "distanceMeters": 17.0,
+      "speedMps": 8.5,
+      "cadenceSpm": 82,
+      "positionLatSemicircles": 626592779,
+      "positionLongSemicircles": 159932652
+    },
+    {
+      "timestampMillis": 1778396403000,
+      "hr": 133,
+      "distanceMeters": 25.5,
+      "speedMps": 8.5,
+      "cadenceSpm": 82,
+      "positionLatSemicircles": 626595165,
+      "positionLongSemicircles": 159935038
+    }
+  ]
+}
