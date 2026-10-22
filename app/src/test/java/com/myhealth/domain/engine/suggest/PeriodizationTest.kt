@@ -1,6 +1,8 @@
 package com.myhealth.domain.engine.suggest
 
 import com.google.common.truth.Truth.assertThat
+import com.myhealth.domain.engine.load.TrimpDefaults
+import com.myhealth.domain.model.DailyLoad
 import com.myhealth.domain.model.EventType
 import com.myhealth.domain.model.RecoveryBand
 import com.myhealth.domain.model.TrainingPhase
@@ -12,7 +14,8 @@ import org.junit.Test
  * [Periodization] against PLAN §3.5.2 — the phase table, the factors, the 25 % ramp cap and the
  * ACWR / recovery multipliers. Named cases `sug09`–`sug12`, `sug17` and `per01`–`per03` come from
  * §3.5.7 / P6.2; `per04`–`per07` cover the remaining branches of the same section, including the
- * POLISH-10 starter-week target (`per04`).
+ * POLISH-10 starter-week target (`per04`). `bug21_*` pin the BUG-21 fix (averaged levels, the
+ * accepted down week, acute overload against the heaviest recent level).
  */
 class PeriodizationTest {
 
@@ -59,12 +62,15 @@ class PeriodizationTest {
         val target = Periodization.weeklyTarget(
             phase = TrainingPhase.BUILD,
             ctl = 100.0, // 700 AU * 1.30 = 910 AU without the cap
-            lastWeekActual = 400.0,
+            lastWeekActual = 600.0,
             acwr = null,
             band = null,
         )
-        assertThat(target).isAtMost(500.0)
-        assertThat(target).isWithin(0.01).of(500.0)
+        assertThat(target).isAtMost(750.0)
+        assertThat(target).isWithin(0.01).of(750.0)
+        // BUG-21: after a light week the cap still allows the usual week (700), not 1.25 × 400.
+        assertThat(Periodization.weeklyTarget(TrainingPhase.BUILD, 100.0, 400.0, null, null))
+            .isWithin(0.01).of(700.0)
     }
 
     @Test
@@ -156,9 +162,12 @@ class PeriodizationTest {
 
     @Test
     fun per05_ramp_cap_has_a_150_au_floor_for_a_returning_athlete() {
-        // No load at all last week: the cap must not be 0, it is the 150 AU floor.
+        // No load at all last week: the cap must not be 0, it is the usual week (BUG-21) …
         val target = Periodization.weeklyTarget(TrainingPhase.BASE, ctl = 60.0, lastWeekActual = 0.0, acwr = null, band = null)
-        assertThat(target).isWithin(0.01).of(150.0)
+        assertThat(target).isWithin(0.01).of(420.0)
+        // … and never below the 150 AU floor: usual week 140, BASE would be 168.
+        val low = Periodization.weeklyTarget(TrainingPhase.BASE, ctl = 20.0, lastWeekActual = 0.0, acwr = null, band = null)
+        assertThat(low).isWithin(0.01).of(150.0)
     }
 
     @Test
@@ -290,6 +299,125 @@ class PeriodizationTest {
             assertThat(session.rationale.map { it.text })
                 .contains("Recovery week: 5 weeks of build-up without a lighter week.")
         }
+    }
+
+    /**
+     * BUG-21: rows from a real CTL EWMA over a weekly pattern, so CTL saw-tooths as in real
+     * training — up on a session day, down ~7 % on every rest day. Week `wb` (1 = last week) starts at
+     * `TODAY_DAY − 7·wb`; [pattern] maps a week to its sessions by day-in-week. 18 weeks of warm-up
+     * history are computed, the last 42 days returned (what the repository passes).
+     */
+    private fun ewmaHistory(pattern: (weeksBack: Int) -> Map<Int, Double>): List<DailyLoad> {
+        var ctl = 0.0
+        return (18 * 7 downTo 1).map { back ->
+            val weeksBack = (back - 1) / 7 + 1
+            val trimp = pattern(weeksBack)[7 * weeksBack - back] ?: 0.0
+            ctl += TrimpDefaults.LAMBDA_CTL * (trimp - ctl)
+            SuggestFixtures.load(day = SuggestFixtures.TODAY_DAY - back, trimp = trimp, atl = ctl, ctl = ctl)
+        }.takeLast(42)
+    }
+
+    private val soccerAndRun = mapOf(0 to 180.0, 2 to 100.0)
+
+    @Test
+    fun bug21_a_soccer_only_week_is_lighter_whatever_the_weekday() {
+        val steady = ewmaHistory { soccerAndRun }
+        val ctlNow = steady.last().ctl
+        assertThat(Periodization.downWeekReason(steady, SuggestFixtures.TODAY_DAY, ctlNow))
+            .isEqualTo(DownWeekReason.LONG_BUILD)
+        // Three weeks ago only the soccer session: 180 AU against a usual ~250. Against that week's
+        // Sunday CTL (the old reference, 28.5 × 7 × 0.8 = 160) it passed as build-up; against its
+        // average level (35.7 × 7 × 0.8 = 200) it is the lighter week that resets the count.
+        val soccerOnly = ewmaHistory { weeksBack -> if (weeksBack == 3) mapOf(0 to 180.0) else soccerAndRun }
+        assertThat(Periodization.downWeekReason(soccerOnly, SuggestFixtures.TODAY_DAY, soccerOnly.last().ctl)).isNull()
+        val byDay = soccerOnly.associateBy { it.day }
+        val start = SuggestFixtures.TODAY_DAY - 21
+        assertThat(Periodization.weekLevel(byDay, start)!!).isWithin(1.0).of(35.7 * 7)
+        assertThat(byDay.getValue(start + 6).ctl).isWithin(0.1).of(28.5)
+    }
+
+    @Test
+    fun bug21_an_accepted_down_week_runs_its_seven_days_then_counts_as_the_lighter_week() {
+        val history = SuggestFixtures.weeklyHistory(listOf(1.0, 1.0, 1.0, 1.0, 1.0))
+        val today = SuggestFixtures.TODAY_DAY
+        fun reason(lastDown: Long?) = Periodization.downWeekReason(history, today, ctl, lastDown)
+        assertThat(reason(null)).isEqualTo(DownWeekReason.LONG_BUILD)
+        // Still running: regenerating on day 0…6 keeps the down week.
+        assertThat(reason(today)).isEqualTo(DownWeekReason.CONTINUED)
+        assertThat(reason(today - 6)).isEqualTo(DownWeekReason.CONTINUED)
+        // Over: it is the lighter week even though the load did not drop (fixed team training).
+        assertThat(reason(today - 7)).isNull()
+        assertThat(reason(today - 41)).isNull()
+        // Outside the five weeks looked at, the long build is back.
+        assertThat(reason(today - 42)).isEqualTo(DownWeekReason.LONG_BUILD)
+        // A start in the future (a batch for a later horizon) is not a running down week.
+        assertThat(reason(today + 3)).isEqualTo(DownWeekReason.LONG_BUILD)
+
+        val result = Periodization.compute(SuggestFixtures.input(recentLoad = history).copy(lastDownWeekStartDay = today - 2))
+        assertThat(result.phase).isEqualTo(TrainingPhase.RECOVERY_WEEK)
+        assertThat(result.downWeekReason).isEqualTo(DownWeekReason.CONTINUED)
+        assertThat(Periodization.compute(SuggestFixtures.input(recentLoad = history).copy(lastDownWeekStartDay = today - 9)).phase)
+            .isEqualTo(TrainingPhase.BASE)
+    }
+
+    @Test
+    fun bug21_a_big_build_is_not_asked_for_again_after_a_down_week() {
+        val history = SuggestFixtures.weeklyHistory(listOf(1.45, 1.4, 1.45, 0.6))
+        val today = SuggestFixtures.TODAY_DAY
+        assertThat(Periodization.downWeekReason(history, today, ctl, today - 14)).isNull()
+        assertThat(Periodization.downWeekReason(history, today, ctl, today - 27)).isNull()
+        // The three weeks looked at no longer touch the down week.
+        assertThat(Periodization.downWeekReason(history, today, ctl, today - 28)).isEqualTo(DownWeekReason.BIG_BUILD)
+    }
+
+    @Test
+    fun bug21_reactive_reasons_still_apply_after_a_down_week() {
+        val today = SuggestFixtures.TODAY_DAY
+        val over = SuggestFixtures.weeklyHistory(listOf(1.55, 0.6))
+        assertThat(Periodization.downWeekReason(over, today, ctl, today - 14)).isEqualTo(DownWeekReason.ACUTE_OVERLOAD)
+        val three = listOf(RecoveryBand.FATIGUED, RecoveryBand.GOOD, RecoveryBand.STRAINED, null, RecoveryBand.FATIGUED)
+        val tired = SuggestFixtures.weeklyHistory(listOf(1.0, 0.6), bandsLastWeek = three)
+        assertThat(Periodization.downWeekReason(tired, today, ctl, today - 14)).isEqualTo(DownWeekReason.FATIGUE)
+    }
+
+    @Test
+    fun bug21_a_normal_week_after_a_break_is_not_an_acute_overload() {
+        // Six weeks back to four: normal; then two weeks off; last week normal again.
+        val back = ewmaHistory { weeksBack -> if (weeksBack in 2..3) emptyMap() else soccerAndRun }
+        val ctlNow = back.last().ctl
+        // Against today's CTL (the old reference) 280 AU looked like 1.5 × the usual week …
+        assertThat(280.0).isGreaterThan(ctlNow * 7 * Periodization.DOWN_ACUTE_RATIO)
+        // … but it is no more than the athlete carried four weeks ago.
+        assertThat(Periodization.downWeekReason(back, SuggestFixtures.TODAY_DAY, ctlNow)).isNull()
+        // A real spike still is one: a 700 AU week on top of steady training.
+        val spike = ewmaHistory { weeksBack -> if (weeksBack == 1) mapOf(0 to 300.0, 2 to 200.0, 5 to 200.0) else soccerAndRun }
+        assertThat(Periodization.downWeekReason(spike, SuggestFixtures.TODAY_DAY, spike.last().ctl))
+            .isEqualTo(DownWeekReason.ACUTE_OVERLOAD)
+    }
+
+    @Test
+    fun bug21_the_weekly_target_uses_the_averaged_level_not_the_last_day() {
+        // Yesterday was the sixth rest day after the soccer session: the saw-tooth's low point.
+        val history = ewmaHistory { weeksBack -> if (weeksBack == 3) mapOf(0 to 180.0) else soccerAndRun }
+        val usual = Periodization.usualWeek(history)!!
+        assertThat(usual).isWithin(1e-9).of(history.takeLast(7).map { it.ctl }.average() * 7)
+        assertThat(history.last().ctl * 7).isLessThan(usual - 40.0)
+
+        val result = Periodization.compute(SuggestFixtures.input(recentLoad = history))
+        assertThat(result.phase).isEqualTo(TrainingPhase.BASE)
+        // Last week (280 AU) × 1.25 = 350 is above usual × 1.20, so the phase factor decides.
+        assertThat(result.weeklyTarget).isWithin(0.01).of(usual * 1.20)
+    }
+
+    @Test
+    fun bug21_a_regenerated_down_week_keeps_its_first_day() {
+        assertThat(Periodization.downWeekStart(emptyList())).isNull()
+        assertThat(Periodization.downWeekStart(listOf(100L))).isEqualTo(100L)
+        // Accepted on day 100, regenerated on 103 and 105: one down week from day 100.
+        assertThat(Periodization.downWeekStart(listOf(105L, 100L, 103L))).isEqualTo(100L)
+        // A new down week a week later is a new one.
+        assertThat(Periodization.downWeekStart(listOf(107L, 100L))).isEqualTo(107L)
+        assertThat(Periodization.downWeekStart(listOf(120L, 100L, 103L))).isEqualTo(120L)
     }
 
     @Test

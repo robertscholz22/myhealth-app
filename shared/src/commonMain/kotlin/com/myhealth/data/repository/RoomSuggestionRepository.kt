@@ -7,6 +7,7 @@ import com.myhealth.data.time.PlatformClock
 import com.myhealth.data.time.todayEpochDay
 import com.myhealth.domain.engine.running.RiegelPredictor
 import com.myhealth.domain.engine.suggest.GoalFormInputs
+import com.myhealth.domain.engine.suggest.Periodization
 import com.myhealth.domain.engine.suggest.SuggestionEngine
 import com.myhealth.domain.engine.suggest.SuggestionInput
 import com.myhealth.domain.model.DailyLoad
@@ -264,6 +265,9 @@ class RoomSuggestionRepository(
             goalForm = goalForm(todayDay, lockedPlanned),
             strengthPool = strengthPool(),
             lastWorkoutIdBySessionType = muscle.lastWorkoutIdBySessionType,
+            lastDownWeekStartDay = Periodization.downWeekStart(
+                suggestionDao.getAcceptedDownWeekStarts(todayDay - LOAD_WINDOW_DAYS),
+            ),
         )
     }
 

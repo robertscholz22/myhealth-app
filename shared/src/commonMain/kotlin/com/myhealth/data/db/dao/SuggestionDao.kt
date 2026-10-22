@@ -33,6 +33,13 @@ interface SuggestionDao {
     @Query("SELECT * FROM suggestion_batch ORDER BY generatedAtMillis DESC, id DESC LIMIT 1")
     suspend fun getLatestBatch(): SuggestionBatchEntity?
 
+    /** BUG-21: where accepted down weeks started, from [fromDay] on, newest first. */
+    @Query(
+        "SELECT horizonStartDay FROM suggestion_batch WHERE phase = 'RECOVERY_WEEK' AND status = 'ACCEPTED' " +
+            "AND horizonStartDay >= :fromDay ORDER BY horizonStartDay DESC",
+    )
+    suspend fun getAcceptedDownWeekStarts(fromDay: Long): List<Long>
+
     /** P6.5: a new batch supersedes whatever was still on the review screen. */
     @Query("UPDATE suggestion_batch SET status = 'SUPERSEDED' WHERE status = 'PROPOSED'")
     suspend fun supersedeProposedBatches()

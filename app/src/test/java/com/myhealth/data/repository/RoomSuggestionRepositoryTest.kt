@@ -435,6 +435,46 @@ class RoomSuggestionRepositoryTest {
     }
 
     /** 42 days at 60 AU/day so `Periodization` has a CTL to build a real weekly budget from. */
+    @Test
+    fun bug21_an_accepted_down_week_is_remembered_by_the_next_generation() = runTest {
+        seedLoadHistory() // six flat weeks: a long build
+        assertThat((repo.generate(7) as Outcome.Ok).value.phase).isEqualTo(TrainingPhase.RECOVERY_WEEK)
+
+        // Not accepted: a superseded or still proposed recovery week does not count.
+        downWeekBatch(today - 8, SuggestionStatus.SUPERSEDED)
+        assertThat((repo.generate(7) as Outcome.Ok).value.phase).isEqualTo(TrainingPhase.RECOVERY_WEEK)
+
+        // Accepted 8 days ago and regenerated (accepted again) 3 days ago: one down week from day −8,
+        // over since yesterday — the next week is a normal one, not another recovery week.
+        downWeekBatch(today - 8, SuggestionStatus.ACCEPTED)
+        downWeekBatch(today - 3, SuggestionStatus.ACCEPTED)
+        val next = (repo.generate(7) as Outcome.Ok).value
+        assertThat(next.phase).isEqualTo(TrainingPhase.BASE)
+    }
+
+    @Test
+    fun bug21_a_running_down_week_stays_one_when_regenerated() = runTest {
+        seedLoadHistory()
+        downWeekBatch(today - 2, SuggestionStatus.ACCEPTED)
+        val regenerated = (repo.generate(7) as Outcome.Ok).value
+        assertThat(regenerated.phase).isEqualTo(TrainingPhase.RECOVERY_WEEK)
+        assertThat(repo.observeSessions(regenerated.id).first().flatMap { it.rationale }.map { it.text })
+            .contains("Recovery week: you accepted a recovery week that is still running.")
+    }
+
+    private suspend fun downWeekBatch(start: Long, status: SuggestionStatus): Long = suggestionDao.upsert(
+        SuggestionBatchEntity(
+            id = 0L,
+            generatedAtMillis = clock.millis() - (today - start) * 86_400_000L,
+            horizonStartDay = start,
+            horizonEndDay = start + 7,
+            phase = TrainingPhase.RECOVERY_WEEK,
+            weeklyLoadTarget = 250.0,
+            inputsHash = "down-$start-$status",
+            status = status,
+        ),
+    )
+
     private fun seedLoadHistory() {
         (1L..42L).forEach { back ->
             val day = today - back

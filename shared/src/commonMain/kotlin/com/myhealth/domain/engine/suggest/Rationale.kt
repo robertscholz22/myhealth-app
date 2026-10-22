@@ -122,10 +122,11 @@ object Rationale {
     fun downWeekEntry(reason: DownWeekReason): RationaleEntry = RationaleEntry(
         ruleId = RULE_DOWN_WEEK,
         text = "Recovery week: " + when (reason) {
-            DownWeekReason.ACUTE_OVERLOAD -> "last week's load was more than 1.5 × your usual week."
+            DownWeekReason.ACUTE_OVERLOAD -> "last week's load was more than 1.5 × your heaviest week of the last 6 weeks."
             DownWeekReason.FATIGUE -> "recovery was fatigued or strained on 3 of the last 7 days."
             DownWeekReason.BIG_BUILD -> "the last 3 weeks averaged more than 1.4 × your usual week."
             DownWeekReason.LONG_BUILD -> "5 weeks of build-up without a lighter week."
+            DownWeekReason.CONTINUED -> "you accepted a recovery week that is still running."
         },
     )
 

@@ -43,6 +43,8 @@ object SuggestionInputsHash {
         muscleLine(input)?.let { line("muscle", it) }
         goalFormLine(input)?.let { line("goalForm", it) }
         poolLine(input)?.let { line("pool", it) }
+        // BUG-21: only when set, so a database without an accepted down week keeps its digests.
+        input.lastDownWeekStartDay?.let { line("lastDownWeek", it.toString()) }
         input.goals.sortedWith(compareBy({ it.priority }, { it.id })).forEach { goal ->
             line(
                 "goal",

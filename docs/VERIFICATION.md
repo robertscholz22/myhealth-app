@@ -729,3 +729,21 @@ iOS: `macos-26` runner, Xcode 26, iPhone simulator (iOS 26), debug build, fresh 
 
 - NOTE-28: `BGAppRefreshTask` and HealthKit background delivery are wired (`IosBackground`, `ips12` covers the awaited sync + recompute) but iOS decides when they fire; the simulator run cannot show them. To be checked on a real iPhone in P23 (new Garmin run appears without opening the app).
 - NOTE-29: the live camera (preview, barcode metadata output, capture, torch) needs a device; the simulator covers the photo path, which shares the Vision and parser code.
+
+## Session 27 — 2026-10-22 (emulator, release build from main: BUG-21 recovery week every week)
+Emulator `myhealth_api35`, clock set per step. Started from v0.9.3: onboarding with synthetic values, then the owner's backup imported with **Replace**; upgraded in place to the BUG-21 release build. Values and screenshots are the owner's data and stay in `docs/private/`.
+
+| Step | Result | Evidence |
+|---|---|---|
+| `bash tools/verify.sh` | PASS | 1120 unit tests (+`bug21_*` ×9, `sug12`/`per05` updated), lint clean, release 13.9 MB |
+| `bash tools/connected.sh emulator-5554` | PASS | 26/26 (phone attached, untouched: still 0.9.3, no test package) |
+| 0.9.3, Training before generating, the week after an accepted recovery week | FOUND | The new week is already labelled "Recovery week" — the badge came from the previous week's batch |
+| 0.9.3, Training → Generate | FOUND (reproduces the report) | Another recovery week, reason "5 weeks of build-up without a lighter week" |
+| BUG-21 build (in-place upgrade), same day → Generate | PASS | "Base" week; target = usual week × 1.20; the accepted recovery week counts as the lighter week |
+| Three days later → Generate | PASS | "Base"; target capped at the usual week (the averaged level had dropped after a quiet week) |
+| Inside the accepted recovery week → Generate; batch via `sqlite3` | PASS | `RECOVERY_WEEK`; rationale "Recovery week: you accepted a recovery week that is still running." |
+| Training, a past week not covered by the newest batch | PASS | Badge = block phase, target 0 — no stale phase from another week |
+
+- NOTE-32: jumping the emulator clock backwards leaves the newest-generated batch superseded, so the review screen shows "No suggestions yet" after generating; the batch is stored as `PROPOSED`. Clock artefact only — real time never goes backwards.
+- NOTE-33: the Training badge for a past week shows the block phase, not the phase of the batch accepted for that week (only the newest batch is observed). Before BUG-21 it showed the newest batch's phase for every week.
+- NOTE-34: with many preferred strength sessions per week, strength and mobility fill the suggested week beyond the load target; unchanged from 0.9.3.

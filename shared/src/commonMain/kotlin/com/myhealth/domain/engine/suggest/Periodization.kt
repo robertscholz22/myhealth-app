@@ -33,6 +33,15 @@ import kotlin.math.min
  * checks the load history every week and only takes one when there is a reason; the phase factors
  * were raised so that training at the target actually builds CTL (≈ 3 %/week in `BASE`, ≈ 5 % in
  * `BUILD` — a 28-day EWMA only grows by `(factor − 1) / 4` per week, so 1.05 meant ≈ 1 %).
+ *
+ * BUG-21: "the usual week" is [weekLevel] — `7 ×` the **mean** CTL of seven days — instead of one
+ * day's CTL. CTL jumps on a training day and loses ~7 % on every rest day, so a single day's value
+ * depended on the weekday: the long-build check measured every week against its last day's CTL
+ * (the low point when the main session is early in the week), every normal week passed, and steady
+ * training got a recovery week every week. An accepted down week now counts as the lighter week
+ * ([downWeekReason]'s `lastDownWeekStartDay`), acute overload compares against the heaviest level
+ * of the last six weeks (returning from a break is not an overload), and the ramp cap always allows
+ * the usual week (after a light week the target returns to normal instead of staying capped).
  */
 object Periodization {
 
@@ -46,22 +55,28 @@ object Periodization {
     const val IN_SEASON_MATCH_WINDOW_DAYS: Long = 21L
 
     /**
-     * P19.6 down-week check. Weeks are the rolling seven-day blocks before today; a week's ratio is
-     * its summed TRIMP over `7 × CTL`. Acute overload: last week above [DOWN_ACUTE_RATIO] (training
-     * at the `BUILD` target sits near 1.3, so this is clearly beyond the plan). Big build: the last
-     * three weeks average above [DOWN_BUILD_RATIO]. Fatigue: at least [DOWN_FATIGUED_DAYS] of the
-     * last seven days `FATIGUED`/`STRAINED` (one bad night is the daily multiplier's job). Long
-     * build: [DOWN_LONG_BUILD_WEEKS] weeks in a row none of which was lighter than
-     * [DOWN_LIGHT_RATIO] of its own end-of-week CTL level — a holiday or a sick week counts.
+     * P19.6 down-week check. Weeks are the rolling seven-day blocks before today; levels are
+     * [weekLevel]s (BUG-21). Acute overload: last week above [DOWN_ACUTE_RATIO] × the heaviest level
+     * of the last [DOWN_ACUTE_LOOKBACK_WEEKS] weeks (training at the `BUILD` target sits near 1.3, so
+     * this is clearly beyond the plan, and a normal week after a break is not "acute"). Big build:
+     * the last three weeks average above [DOWN_BUILD_RATIO] × the usual week. Fatigue: at least
+     * [DOWN_FATIGUED_DAYS] of the last seven days `FATIGUED`/`STRAINED` (one bad night is the daily
+     * multiplier's job). Long build: [DOWN_LONG_BUILD_WEEKS] weeks in a row none of which was lighter
+     * than [DOWN_LIGHT_RATIO] of its own level — a holiday, a sick week or an accepted down week
+     * counts.
      */
     const val DOWN_ACUTE_RATIO: Double = 1.5
+    const val DOWN_ACUTE_LOOKBACK_WEEKS: Int = 6
     const val DOWN_BUILD_RATIO: Double = 1.4
     const val DOWN_BUILD_WEEKS: Int = 3
     const val DOWN_FATIGUED_DAYS: Int = 3
     const val DOWN_LONG_BUILD_WEEKS: Int = 5
     const val DOWN_LIGHT_RATIO: Double = 0.8
 
-    /** The weekly target may never exceed last week's actual load by more than 25 %. */
+    /**
+     * The weekly target may never exceed last week's actual load by more than 25 % — except that
+     * the usual week is always allowed (BUG-21): returning to it is not a ramp.
+     */
     const val MAX_RAMP_FACTOR: Double = 1.25
 
     /** …but a returning athlete is always allowed at least this much (the ramp cap's floor). */
@@ -142,32 +157,83 @@ object Periodization {
     }
 
     /**
+     * BUG-21: the load level of the seven days from [firstDay] — `7 ×` the mean CTL of the rows in
+     * `[firstDay, firstDay + 6]` — or `null` when none of those days has a row. Averaging is what
+     * makes the level independent of the weekday it is read on.
+     */
+    fun weekLevel(byDay: Map<Long, DailyLoad>, firstDay: Long): Double? {
+        val ctls = (firstDay until firstDay + DAYS_PER_WEEK).mapNotNull { byDay[it]?.ctl }
+        return if (ctls.isEmpty()) null else ctls.average() * DAYS_PER_WEEK
+    }
+
+    /** BUG-21: the usual week going into the coming one — the [weekLevel] ending at the newest row. */
+    fun usualWeek(recentLoad: List<DailyLoad>): Double? {
+        val latest = latestLoad(recentLoad) ?: return null
+        return weekLevel(recentLoad.associateBy { it.day }, latest.day - DAYS_PER_WEEK + 1)
+    }
+
+    /**
+     * BUG-21: where the newest down week began, from the horizon starts of the accepted
+     * `RECOVERY_WEEK` batches. A batch regenerated while a down week runs starts inside it: it
+     * belongs to that week and must not push the week's end back.
+     */
+    fun downWeekStart(acceptedStarts: List<Long>): Long? {
+        val newestFirst = acceptedStarts.sortedDescending()
+        var start = newestFirst.firstOrNull() ?: return null
+        for (earlier in newestFirst.drop(1)) {
+            if (start - earlier < DAYS_PER_WEEK) start = earlier else break
+        }
+        return start
+    }
+
+    /**
      * P19.6: why the coming week should be a down week, or `null` when nothing calls for one.
      * [recentLoad] is the last 42 days of `daily_load`; [ctl] today's CTL. A starter athlete
      * (CTL below [STARTER_CTL_THRESHOLD]) never gets one — there is nothing to absorb yet.
+     *
+     * BUG-21: [lastDownWeekStartDay] is where the newest accepted down week started. While it runs
+     * the week stays a down week ([DownWeekReason.CONTINUED], so regenerating mid-week does not undo
+     * it); afterwards it is the lighter week the big-build and long-build rules look for, whether or
+     * not the load actually dropped — fixed team training may not move, and asking again every week
+     * only turns every week into a recovery week. Acute overload and fatigue stay reactive.
      */
-    fun downWeekReason(recentLoad: List<DailyLoad>, todayDay: Long, ctl: Double): DownWeekReason? {
+    fun downWeekReason(
+        recentLoad: List<DailyLoad>,
+        todayDay: Long,
+        ctl: Double,
+        lastDownWeekStartDay: Long? = null,
+    ): DownWeekReason? {
         if (ctl < STARTER_CTL_THRESHOLD) return null
+        val sinceDownWeek = lastDownWeekStartDay?.let { todayDay - it }?.takeIf { it >= 0 }
+        if (sinceDownWeek != null && sinceDownWeek < DAYS_PER_WEEK) return DownWeekReason.CONTINUED
+        // A planned down week overlaps the last `weeks` weeks before today.
+        fun downWeekWithin(weeks: Int): Boolean = sinceDownWeek != null && sinceDownWeek < DAYS_PER_WEEK * (weeks + 1)
+
         val byDay = recentLoad.associateBy { it.day }
+        fun weekStart(weeksBack: Int): Long = todayDay - DAYS_PER_WEEK * weeksBack
         fun weekSum(weeksBack: Int): Double {
-            val start = todayDay - DAYS_PER_WEEK * weeksBack
+            val start = weekStart(weeksBack)
             return (start until start + DAYS_PER_WEEK).sumOf { byDay[it]?.trimp ?: 0.0 }
         }
-        val weekLevel = ctl * DAYS_PER_WEEK
 
-        if (weekSum(1) > weekLevel * DOWN_ACUTE_RATIO) return DownWeekReason.ACUTE_OVERLOAD
+        val heaviest = (1..DOWN_ACUTE_LOOKBACK_WEEKS).mapNotNull { weekLevel(byDay, weekStart(it)) }.maxOrNull()
+        if (heaviest != null && weekSum(1) > heaviest * DOWN_ACUTE_RATIO) return DownWeekReason.ACUTE_OVERLOAD
         val lastSeven = (todayDay - DAYS_PER_WEEK until todayDay).mapNotNull { byDay[it]?.recoveryBand }
         if (lastSeven.count { it == RecoveryBand.FATIGUED || it == RecoveryBand.STRAINED } >= DOWN_FATIGUED_DAYS) {
             return DownWeekReason.FATIGUE
         }
+        val usual = usualWeek(recentLoad) ?: return null
         val buildAverage = (1..DOWN_BUILD_WEEKS).sumOf { weekSum(it) } / DOWN_BUILD_WEEKS
-        if (buildAverage > weekLevel * DOWN_BUILD_RATIO) return DownWeekReason.BIG_BUILD
+        if (!downWeekWithin(DOWN_BUILD_WEEKS) && buildAverage > usual * DOWN_BUILD_RATIO) {
+            return DownWeekReason.BIG_BUILD
+        }
 
+        if (downWeekWithin(DOWN_LONG_BUILD_WEEKS)) return null
         val longBuild = (1..DOWN_LONG_BUILD_WEEKS).all { weeksBack ->
-            val end = byDay[todayDay - DAYS_PER_WEEK * (weeksBack - 1) - 1] ?: return@all false
             // A week with no history before it is not "build-up" — new users never trip this.
-            if (byDay[todayDay - DAYS_PER_WEEK * weeksBack] == null) return@all false
-            weekSum(weeksBack) >= end.ctl * DAYS_PER_WEEK * DOWN_LIGHT_RATIO
+            if (byDay[weekStart(weeksBack)] == null) return@all false
+            val level = weekLevel(byDay, weekStart(weeksBack)) ?: return@all false
+            weekSum(weeksBack) >= level * DOWN_LIGHT_RATIO
         }
         return if (longBuild) DownWeekReason.LONG_BUILD else null
     }
@@ -202,8 +268,10 @@ object Periodization {
 
     /**
      * The weekly AU budget of §3.5.2, in the order the plan writes it: phase factor, then the
-     * 25 % ramp cap (floored at 150 AU) — or the POLISH-10 starter target when there is no history
-     * at all — then the ACWR and recovery multipliers, then `max(_, 0)`.
+     * 25 % ramp cap (never below the usual week, floored at 150 AU) — or the POLISH-10 starter
+     * target when there is no history at all — then the ACWR and recovery multipliers, then
+     * `max(_, 0)`. [usualWeek] is BUG-21's averaged level; it defaults to `7 × ctl` for callers that
+     * only have one day's CTL.
      */
     fun weeklyTarget(
         phase: TrainingPhase,
@@ -211,12 +279,13 @@ object Periodization {
         lastWeekActual: Double,
         acwr: Double?,
         band: RecoveryBand?,
+        usualWeek: Double = ctl * DAYS_PER_WEEK,
     ): Double {
         var target = if (isStarterWeek(ctl, lastWeekActual)) {
             STARTER_TARGET_AU
         } else {
-            val base = ctl * DAYS_PER_WEEK * factorFor(phase)
-            min(base, max(lastWeekActual * MAX_RAMP_FACTOR, RAMP_FLOOR_AU))
+            val base = usualWeek * factorFor(phase)
+            min(base, maxOf(lastWeekActual * MAX_RAMP_FACTOR, usualWeek, RAMP_FLOOR_AU))
         }
         if (acwr != null && acwr > ACWR_SUPPRESS_ABOVE) target *= ACWR_SUPPRESS_FACTOR
         if (band == RecoveryBand.FATIGUED) target *= FATIGUED_FACTOR
@@ -239,8 +308,9 @@ object Periodization {
         val ctl = latest?.ctl ?: 0.0
         val acwr = latest?.acwr
         val lastWeek = lastWeekActual(input.recentLoad, todayDay)
+        val usual = usualWeek(input.recentLoad) ?: (ctl * DAYS_PER_WEEK)
         val daysToRace = daysToRace(input.goals, todayDay)
-        val reason = downWeekReason(input.recentLoad, todayDay, ctl)
+        val reason = downWeekReason(input.recentLoad, todayDay, ctl, input.lastDownWeekStartDay)
         val phase = phase(
             daysToRace = daysToRace,
             matchWithin21Days = matchWithinWindow(input.events, todayDay),
@@ -249,7 +319,7 @@ object Periodization {
         val cycleFactor = CycleRules.weeklyTargetFactor(input.cycleStatusByDay, input.horizonDays)
         return PeriodizationResult(
             phase = phase,
-            weeklyTarget = weeklyTarget(phase, ctl, lastWeek, acwr, input.recovery.bandOf()) * cycleFactor,
+            weeklyTarget = weeklyTarget(phase, ctl, lastWeek, acwr, input.recovery.bandOf(), usual) * cycleFactor,
             daysToRace = daysToRace,
             ctl = ctl,
             lastWeekActual = lastWeek,
@@ -278,5 +348,8 @@ data class PeriodizationResult(
     val downWeekReason: DownWeekReason? = null,
 )
 
-/** P19.6: the rule of [Periodization.downWeekReason] that made the coming week a down week. */
-enum class DownWeekReason { ACUTE_OVERLOAD, FATIGUE, BIG_BUILD, LONG_BUILD }
+/**
+ * P19.6: the rule of [Periodization.downWeekReason] that made the coming week a down week.
+ * BUG-21 adds [CONTINUED]: the accepted down week is still running.
+ */
+enum class DownWeekReason { ACUTE_OVERLOAD, FATIGUE, BIG_BUILD, LONG_BUILD, CONTINUED }

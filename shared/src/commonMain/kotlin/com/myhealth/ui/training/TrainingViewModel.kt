@@ -73,10 +73,10 @@ private data class TrainingAction(
  * Monday of today. The week itself comes from the [CalendarDay] aggregate (§2.3) so events,
  * planned sessions, completed activities and `daily_load` all arrive from a single observer.
  *
- * The phase badge prefers the phase of the latest suggestion batch — that is the phase the
- * sessions on screen were actually generated under — and falls back to [Periodization] recomputed
- * live from the active goals, the next three weeks of events and the plan's start day, so the
- * badge is still right before the first batch is ever generated. The weekly target only comes from
+ * The phase badge prefers the phase of the latest suggestion batch when its horizon overlaps the
+ * displayed week — that is the phase the sessions on screen were actually generated under — and
+ * falls back to [Periodization] recomputed live from the active goals and the next three weeks of
+ * events, so the badge is still right before the first batch is ever generated. The weekly target only comes from
  * a batch whose horizon overlaps the displayed week; other weeks show no target rather than a
  * number that was never computed for them.
  */
@@ -140,7 +140,7 @@ class TrainingViewModel(
             today = todayDay(),
             week = currentWeek,
             planName = ctx.plan?.name,
-            phase = phaseOf(ctx),
+            phase = phaseOf(ctx, currentWeek),
             outlook = GoalRules.outlook(ctx.goals, todayDay())?.let(::outlookLine),
             loads = weeklyLoadSums(planned, targetFor(currentWeek, ctx.batch), loads),
             selectedDay = act.selectedDay ?: defaultSelectedDay(currentWeek),
@@ -270,12 +270,14 @@ class TrainingViewModel(
     // ---- header ----------------------------------------------------------------------------
 
     /**
-     * The batch's phase when there is one, else §3.5.2 recomputed from goals and events. A down
-     * week (P19.6) needs the load history and is only decided when suggestions are generated.
+     * The batch's phase when it covers the displayed week, else §3.5.2 recomputed from goals and
+     * events. A down week (P19.6) needs the load history and is only decided when suggestions are
+     * generated. BUG-21: a batch is only about the week its horizon covers — last week's recovery
+     * week used to label every later week too.
      */
-    private fun phaseOf(ctx: TrainingContext): TrainingPhase {
+    private fun phaseOf(ctx: TrainingContext, week: TrainingWeek): TrainingPhase {
         val batch = ctx.batch
-        if (batch != null && batch.status != SuggestionStatus.SUPERSEDED) return batch.phase
+        if (batch != null && batch.status != SuggestionStatus.SUPERSEDED && batch.overlaps(week)) return batch.phase
         return Periodization.phase(
             daysToRace = Periodization.daysToRace(ctx.goals, todayDay()),
             matchWithin21Days = ctx.matchWithin21Days,
@@ -283,12 +285,11 @@ class TrainingViewModel(
     }
 
     /** A batch's weekly budget only describes the week its horizon covers. */
-    private fun targetFor(week: TrainingWeek, batch: SuggestionBatch?): Double {
-        if (batch == null) return 0.0
-        val weekEnd = week.startDay + DAYS_PER_WEEK
-        val overlaps = batch.horizonStartDay < weekEnd && batch.horizonEndDay > week.startDay
-        return if (overlaps) batch.weeklyLoadTarget else 0.0
-    }
+    private fun targetFor(week: TrainingWeek, batch: SuggestionBatch?): Double =
+        if (batch != null && batch.overlaps(week)) batch.weeklyLoadTarget else 0.0
+
+    private fun SuggestionBatch.overlaps(week: TrainingWeek): Boolean =
+        horizonStartDay < week.startDay + DAYS_PER_WEEK && horizonEndDay > week.startDay
 
     private fun defaultSelectedDay(week: TrainingWeek): Long {
         val today = todayDay()

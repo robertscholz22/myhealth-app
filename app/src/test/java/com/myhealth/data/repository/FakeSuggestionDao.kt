@@ -4,6 +4,7 @@ import com.myhealth.data.db.dao.SuggestionDao
 import com.myhealth.data.db.entity.SuggestedSessionEntity
 import com.myhealth.data.db.entity.SuggestionBatchEntity
 import com.myhealth.domain.model.SuggestionStatus
+import com.myhealth.domain.model.TrainingPhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -46,6 +47,14 @@ internal class FakeSuggestionDao : SuggestionDao {
 
     override suspend fun getLatestBatch(): SuggestionBatchEntity? =
         batches.value.values.maxWithOrNull(LATEST_FIRST)
+
+    override suspend fun getAcceptedDownWeekStarts(fromDay: Long): List<Long> = batches.value.values
+        .filter {
+            it.phase == TrainingPhase.RECOVERY_WEEK && it.status == SuggestionStatus.ACCEPTED &&
+                it.horizonStartDay >= fromDay
+        }
+        .map { it.horizonStartDay }
+        .sortedDescending()
 
     override suspend fun supersedeProposedBatches() {
         batches.value = batches.value.mapValues { (_, row) ->

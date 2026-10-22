@@ -32,6 +32,7 @@ import kotlinx.datetime.LocalDate
  * - [muscleLoad] / [lastAcceptedTemplateByKind] — added by P14.5 for `StrengthRules` and `C15`
  *   (§3.12.5). `null` muscle load switches the whole strength layer off, which is what `sug39`
  *   and `sug40` pin.
+ * - [lastDownWeekStartDay] — added by BUG-21 so that an accepted down week is remembered.
  */
 data class SuggestionInput(
     val today: LocalDate,
@@ -88,6 +89,12 @@ data class SuggestionInput(
     val strengthPool: List<StrengthWorkout>? = null,
     /** P19: the workout most recently accepted per session type, for the pool's rotation. */
     val lastWorkoutIdBySessionType: Map<SessionType, Long> = emptyMap(),
+    /**
+     * BUG-21: `horizonStartDay` of the newest accepted `RECOVERY_WEEK` batch, or `null` when there
+     * is none. [Periodization.downWeekReason] keeps a running down week and counts a past one as
+     * the lighter week, so steady training no longer turns into a recovery week every week.
+     */
+    val lastDownWeekStartDay: Long? = null,
 ) {
     val todayDay: Long get() = today.toEpochDays()
 
