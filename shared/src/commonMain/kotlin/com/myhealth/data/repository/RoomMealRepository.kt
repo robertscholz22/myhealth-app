@@ -88,9 +88,10 @@ class RoomMealRepository(
         withContext(ioDispatcher) { mealDao.getTemplateWithItems(id)?.toDomain() }
 
     /**
-     * Inserts or replaces a template and its item rows in one go: the incoming [MealTemplate.items]
-     * are the full desired set, so the old rows are dropped and re-inserted with `sortOrder` taken
-     * from the list order (the editor's row order is the template's order).
+     * Inserts or replaces a template and its item rows in one transaction
+     * ([MealDao.replaceTemplate], BUG-22): the incoming [MealTemplate.items] are the full desired
+     * set, so the old rows are dropped and re-inserted with `sortOrder` taken from the list order
+     * (the editor's row order is the template's order).
      */
     override suspend fun upsertTemplate(template: MealTemplate): Outcome<Long> = withContext(ioDispatcher) {
         if (template.name.isBlank()) {
@@ -98,6 +99,9 @@ class RoomMealRepository(
         }
         if (template.items.any { it.quantity <= 0.0 }) {
             return@withContext Outcome.Err(AppError.Validation("quantity", "Every item needs a quantity."))
+        }
+        if (template.servings <= 0.0) {
+            return@withContext Outcome.Err(AppError.Validation("servings", "Servings must be above zero."))
         }
         runCatchingApp {
             val now = clock.millis()
@@ -107,16 +111,10 @@ class RoomMealRepository(
                     createdAtMillis = if (it.id == 0L) now else it.createdAtMillis,
                 )
             }
-            val id = mealDao.upsertTemplate(entity)
-            mealDao.deleteTemplateItemsFor(id)
-            if (template.items.isNotEmpty()) {
-                mealDao.upsertTemplateItems(
-                    template.items.mapIndexed { index, item ->
-                        item.toEntity().copy(id = 0L, templateId = id, sortOrder = index)
-                    },
-                )
-            }
-            id
+            mealDao.replaceTemplate(
+                entity,
+                template.items.mapIndexed { index, item -> item.toEntity().copy(sortOrder = index) },
+            )
         }
     }
 
@@ -126,6 +124,6 @@ class RoomMealRepository(
         runCatchingApp { mealDao.deleteTemplateById(id) }
     }
 
-    override suspend fun logTemplate(templateId: Long, day: Long, slot: MealSlot): Outcome<Long> =
-        withContext(ioDispatcher) { writer.logTemplate(templateId, day, slot) }
+    override suspend fun logTemplate(templateId: Long, day: Long, slot: MealSlot, servings: Double): Outcome<Long> =
+        withContext(ioDispatcher) { writer.logTemplate(templateId, day, slot, servings) }
 }

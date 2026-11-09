@@ -127,11 +127,20 @@ class MigrationSqlTest {
         assertThat(schemaFile(7).readText()).doesNotContain("useInSuggestions")
     }
 
+    /** P24: one additive column; `DEFAULT 1` keeps every existing template a single serving. */
     @Test
-    fun the_exported_schema_is_version_eight_and_the_older_ones_are_untouched() {
-        val latest = Json.parseToJsonElement(schemaFile(8).readText()).jsonObject.getValue("database")
-        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("8")
-        (1..7).forEach { assertThat(schemaFile(it).isFile).isTrue() }
+    fun migration_8_to_9_adds_meal_template_servings_defaulting_to_one() {
+        assertThat(createSqlOf(exportedEntities(9), "meal_template")).contains("`servings` REAL NOT NULL DEFAULT 1")
+        assertThat(flattenedMigrationSource())
+            .contains("ALTER TABLE `meal_template` ADD COLUMN `servings` REAL NOT NULL DEFAULT 1")
+        assertThat(createSqlOf(exportedEntities(8), "meal_template")).doesNotContain("servings")
+    }
+
+    @Test
+    fun the_exported_schema_is_version_nine_and_the_older_ones_are_untouched() {
+        val latest = Json.parseToJsonElement(schemaFile(9).readText()).jsonObject.getValue("database")
+        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("9")
+        (1..8).forEach { assertThat(schemaFile(it).isFile).isTrue() }
         // `strength_*` exists only from v6 on: v5 must not have grown a table retroactively.
         assertThat(schemaFile(5).readText()).doesNotContain("strength_workout")
         // … and `exercise_progress` only from v7 on.
@@ -166,8 +175,8 @@ class MigrationSqlTest {
         entities.getValue(table).indices
 
     @Test
-    fun p20_2_the_steps_chain_1_to_8_and_each_platform_migration_runs_exactly_their_sql() {
-        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..7).map { it to it + 1 })
+    fun p20_2_the_steps_chain_1_to_9_and_each_platform_migration_runs_exactly_their_sql() {
+        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..8).map { it to it + 1 })
         val source = flattenedMigrationSource()
         Migrations.STEPS.flatMap { it.statements }.forEach { assertThat(source).contains(it) }
 

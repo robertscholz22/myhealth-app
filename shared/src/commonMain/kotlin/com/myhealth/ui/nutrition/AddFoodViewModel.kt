@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.myhealth.domain.model.Ingredient
 import com.myhealth.domain.model.MealSlot
 import com.myhealth.domain.model.MealTemplate
+import com.myhealth.domain.model.MacroTotals
 import com.myhealth.domain.model.QuantityUnit
 import com.myhealth.domain.repository.IngredientRepository
 import com.myhealth.domain.repository.MealItemInput
@@ -12,6 +13,7 @@ import com.myhealth.domain.repository.MealRepository
 import com.myhealth.domain.util.Outcome
 import com.myhealth.resources.*
 import com.myhealth.ui.common.UiMessage
+import com.myhealth.ui.meals.templateTotals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -82,6 +84,9 @@ class AddFoodViewModel(
                 isSaving = edit.isSaving,
                 message = edit.message,
                 added = edit.added,
+                pendingTemplate = edit.template,
+                templateServings = edit.templateServings,
+                templateTotals = edit.templateTotals,
             )
         }.stateIn(
             viewModelScope,
@@ -151,16 +156,43 @@ class AddFoodViewModel(
         }
     }
 
-    /** Templates tab: one tap logs the whole template into this day and slot (§4.2, P4.4). */
-    fun logTemplate(templateId: Long) {
+    /**
+     * Templates tab: a tap asks how many servings were eaten (P24; one by default) before
+     * [logTemplate] logs them into this day and slot (§4.2, P4.4). The template's ingredients are
+     * resolved once here for the dialog's kcal preview.
+     */
+    fun openTemplate(template: MealTemplate) {
+        editor.value = Editor(template = template)
+        viewModelScope.launch {
+            val ingredients = ingredientRepo.getByIds(template.items.map { it.ingredientId }.distinct())
+            val totals = templateTotals(template.items, ingredients.associateBy { it.id })
+            editor.update { if (it.template?.id == template.id) it.copy(templateTotals = totals) else it }
+        }
+    }
+
+    fun setTemplateServings(value: Double?) {
+        editor.update { it.copy(templateServings = value) }
+    }
+
+    fun cancelTemplate() {
+        editor.value = Editor()
+    }
+
+    fun logTemplate() {
+        val current = editor.value
+        val template = current.template ?: return
+        val servings = current.templateServings?.takeIf { it > 0.0 } ?: return
         viewModelScope.launch {
             editor.update { it.copy(isSaving = true, message = null) }
-            val result = mealRepo.logTemplate(templateId, day, slot)
+            val result = mealRepo.logTemplate(template.id, day, slot, servings)
             editor.update {
                 when (result) {
                     is Outcome.Ok -> it.copy(isSaving = false, added = true)
-                    is Outcome.Err ->
-                        it.copy(isSaving = false, message = UiMessage.of(Res.string.addfood_error_log_template_failed))
+                    is Outcome.Err -> it.copy(
+                        isSaving = false,
+                        template = null,
+                        message = UiMessage.of(Res.string.addfood_error_log_template_failed),
+                    )
                 }
             }
         }
@@ -177,5 +209,8 @@ class AddFoodViewModel(
         val isSaving: Boolean = false,
         val message: UiMessage? = null,
         val added: Boolean = false,
+        val template: MealTemplate? = null,
+        val templateServings: Double? = 1.0,
+        val templateTotals: MacroTotals? = null,
     )
 }

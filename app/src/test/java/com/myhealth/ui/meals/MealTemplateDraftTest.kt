@@ -115,6 +115,67 @@ class MealTemplateDraftTest {
         assertThat(draft.isFavorite).isTrue()
     }
 
+    @Test
+    fun p24_servings_must_be_above_zero_and_blank_is_an_error() {
+        val valid = MealTemplateDraft(name = "Oatmeal", items = listOf(itemDraftFor(oats)))
+
+        assertThat(validateTemplate(valid)).isEmpty()
+        assertThat(validateTemplate(valid.copy(servings = 0.0)).keys).containsExactly(TemplateField.SERVINGS)
+        assertThat(validateTemplate(valid.copy(servings = null)).keys).containsExactly(TemplateField.SERVINGS)
+        assertThat(validateTemplate(valid.copy(servings = 2.5))).isEmpty()
+    }
+
+    @Test
+    fun p24_per_serving_divides_the_live_totals_by_the_servings() {
+        val draft = MealTemplateDraft(name = "Oatmeal", items = listOf(itemDraftFor(oats).copy(quantity = 400.0)), servings = 4.0)
+
+        // 400 g at 370 kcal / 100 g = 1480 kcal for the recipe, 370 kcal a serving.
+        assertThat(draft.totals().kcal).isWithin(1e-9).of(1480.0)
+        assertThat(draft.perServing(draft.totals())!!.kcal).isWithin(1e-9).of(370.0)
+        assertThat(draft.copy(servings = null).perServing(draft.totals())).isNull()
+    }
+
+    @Test
+    fun p24_servings_survive_load_and_save() {
+        val template = MealTemplate(
+            id = 7L, name = "Chili", defaultSlot = null, note = null, isFavorite = false, useCount = 0,
+            lastUsedAtMillis = null, archived = false,
+            items = listOf(MealTemplateItem(1L, 7L, oats.id, 400.0, QuantityUnit.G, sortOrder = 0)),
+            createdAtMillis = 1L, updatedAtMillis = 2L, servings = 2.5,
+        )
+
+        val draft = templateDraftOf(template, mapOf(oats.id to oats))
+
+        assertThat(draft.servings).isEqualTo(2.5)
+        assertThat(draft.copy(servings = 6.0).toMealTemplate(clock).servings).isEqualTo(6.0)
+        assertThat(MealTemplateDraft().servings).isEqualTo(1.0)
+    }
+
+    @Test
+    fun p24_the_servings_field_shows_as_many_decimals_as_the_number_has() {
+        assertThat(servingsDecimals(4.0)).isEqualTo(0)
+        assertThat(servingsDecimals(2.5)).isEqualTo(1)
+        assertThat(servingsDecimals(1.25)).isEqualTo(2)
+        assertThat(servingsDecimals(null)).isEqualTo(0)
+    }
+
+    @Test
+    fun p24_a_list_row_and_the_log_preview_scale_the_whole_recipe() {
+        val template = MealTemplate(
+            id = 7L, name = "Chili", defaultSlot = null, note = null, isFavorite = false, useCount = 0,
+            lastUsedAtMillis = null, archived = false,
+            items = listOf(MealTemplateItem(1L, 7L, oats.id, 400.0, QuantityUnit.G, sortOrder = 0)),
+            createdAtMillis = 1L, updatedAtMillis = 2L, servings = 4.0,
+        )
+        val row = templateRow(template, mapOf(oats.id to oats))
+
+        assertThat(row.perServing.kcal).isWithin(1e-9).of(370.0)
+        val state = MealTemplatesUiState(isLoading = false, rows = listOf(row), logTemplate = template, logServings = 1.5)
+        assertThat(state.logPreview!!.kcal).isWithin(1e-9).of(555.0)
+        assertThat(state.copy(logServings = null).logPreview).isNull()
+        assertThat(state.copy(logServings = 0.0).logPreview).isNull()
+    }
+
     private fun errors(draft: MealTemplateDraft): String = validateTemplate(draft).values.joinToString()
 
     private fun ingredient(id: Long, name: String, basis: MeasureBasis, pieceGrams: Double? = null) = Ingredient(

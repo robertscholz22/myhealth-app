@@ -87,10 +87,12 @@ internal class FakeMealDao : MealDao {
         items.value = items.value.filterNot { it.id == id }
     }
 
+    /** Room's `@Upsert` contract: the new row id on insert, `-1` when an existing row was updated (BUG-22). */
     override suspend fun upsertTemplate(entity: MealTemplateEntity): Long {
+        val existed = entity.id != 0L && templates.value.any { it.id == entity.id }
         val id = if (entity.id == 0L) nextTemplateId++ else entity.id
         templates.value = templates.value.filterNot { it.id == id } + entity.copy(id = id)
-        return id
+        return if (existed) -1L else id
     }
 
     override suspend fun getTemplateById(id: Long): MealTemplateEntity? =

@@ -51,6 +51,7 @@ class MealTemplatesViewModel(
                 logTemplate = logNow?.template,
                 logDay = logNow?.day ?: today(),
                 logSlot = logNow?.slot ?: FALLBACK_SLOT,
+                logServings = logNow?.servings ?: 1.0,
                 message = msg,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MealTemplatesUiState())
@@ -74,15 +75,20 @@ class MealTemplatesViewModel(
         dialog.update { it?.copy(slot = slot) }
     }
 
+    fun setLogServings(servings: Double?) {
+        dialog.update { it?.copy(servings = servings) }
+    }
+
     fun cancelLogNow() {
         dialog.value = null
     }
 
     fun confirmLogNow() {
         val current = dialog.value ?: return
+        val servings = current.servings?.takeIf { it > 0.0 } ?: return
         dialog.value = null
         viewModelScope.launch {
-            val result = mealRepo.logTemplate(current.template.id, current.day, current.slot)
+            val result = mealRepo.logTemplate(current.template.id, current.day, current.slot, servings)
             message.value = when (result) {
                 is Outcome.Ok -> UiMessage.of(Res.string.mealtpl_logged_now, current.template.name)
                 is Outcome.Err -> UiMessage.of(Res.string.mealtpl_error_log_failed)
@@ -96,5 +102,10 @@ class MealTemplatesViewModel(
 
     private fun today(): Long = clock.today().toEpochDays()
 
-    private data class LogNowDialog(val template: MealTemplate, val day: Long, val slot: MealSlot)
+    private data class LogNowDialog(
+        val template: MealTemplate,
+        val day: Long,
+        val slot: MealSlot,
+        val servings: Double? = 1.0,
+    )
 }

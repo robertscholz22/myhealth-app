@@ -103,6 +103,23 @@ class AddFoodUiStateTest {
         assertThat(state.copy(quantity = 0.0).canAdd).isFalse()
     }
 
+    @Test
+    fun p24_the_template_dialog_previews_the_servings_eaten() {
+        val template = com.myhealth.domain.model.MealTemplate(
+            id = 7L, name = "Chili", defaultSlot = null, note = null, isFavorite = false, useCount = 0,
+            lastUsedAtMillis = null, archived = false, createdAtMillis = 1L, updatedAtMillis = 2L, servings = 4.0,
+        )
+        val whole = com.myhealth.domain.model.MacroTotals.ZERO.copy(kcal = 2000.0, proteinG = 120.0)
+        val state = AddFoodUiState(day = 1L, slot = MealSlot.DINNER, pendingTemplate = template, templateServings = 2.0)
+
+        // Ingredients not resolved yet: no preview rather than a wrong one.
+        assertThat(state.templatePreview).isNull()
+        val preview = state.copy(templateTotals = whole).templatePreview!!
+        assertThat(preview.kcal).isWithin(1e-9).of(1000.0)
+        assertThat(preview.proteinG).isWithin(1e-9).of(60.0)
+        assertThat(state.copy(templateTotals = whole, templateServings = null).templatePreview).isNull()
+    }
+
     private fun ingredient(
         basis: MeasureBasis,
         pieceGrams: Double? = null,

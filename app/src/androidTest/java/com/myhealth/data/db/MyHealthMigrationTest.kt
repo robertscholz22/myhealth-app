@@ -552,6 +552,40 @@ class MyHealthMigrationTest {
         }
     }
 
+    /**
+     * P24: an existing v8 template makes one serving (`DEFAULT 1`), so logging it is unchanged,
+     * and the migrated table takes an edited servings count (through BUG-22's transactional save).
+     */
+    @Test
+    fun migration_8_to_9_keeps_every_template_at_one_serving() {
+        migrations.createDatabase(MIGRATION_DB, 8).use { v8 ->
+            v8.execSQL(
+                "INSERT INTO meal_template (id, name, defaultSlot, note, isFavorite, useCount, " +
+                    "lastUsedAtMillis, archived, createdAtMillis, updatedAtMillis) VALUES " +
+                    "(1, 'Porridge', 'BREAKFAST', NULL, 0, 0, NULL, 0, 1, 1)",
+            )
+        }
+
+        migrations.runMigrationsAndValidate(MIGRATION_DB, 9, true, *Migrations.ALL)
+
+        val migrated = Room.databaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            MyHealthDatabase::class.java,
+            MIGRATION_DB,
+        ).addMigrations(*Migrations.ALL).build()
+        try {
+            runTest {
+                val dao = migrated.mealDao()
+                val template = checkNotNull(dao.getTemplateWithItems(1L)).template
+                assertThat(template.servings).isEqualTo(1.0)
+                assertThat(dao.replaceTemplate(template.copy(servings = 3.0), emptyList())).isEqualTo(1L)
+                assertThat(checkNotNull(dao.getTemplateWithItems(1L)).template.servings).isEqualTo(3.0)
+            }
+        } finally {
+            migrated.close()
+        }
+    }
+
     private companion object {
         const val MIGRATION_DB = "migration-test.db"
     }

@@ -747,3 +747,26 @@ Emulator `myhealth_api35`, clock set per step. Started from v0.9.3: onboarding w
 - NOTE-32: jumping the emulator clock backwards leaves the newest-generated batch superseded, so the review screen shows "No suggestions yet" after generating; the batch is stored as `PROPOSED`. Clock artefact only — real time never goes backwards.
 - NOTE-33: the Training badge for a past week shows the block phase, not the phase of the batch accepted for that week (only the newest batch is observed). Before BUG-21 it showed the newest batch's phase for every week.
 - NOTE-34: with many preferred strength sessions per week, strength and mobility fill the suggested week beyond the load target; unchanged from 0.9.3.
+
+## Session 28 — 2026-11-09 (emulator, release build from main: BUG-22 template edit, P24 servings)
+Emulator `myhealth_api35`. Started from the published v0.9.4 APK: onboarding with synthetic values, two ingredients typed in (Oats 370 kcal / 13 P / 60 C / 7 F per 100 g, Milk 64 / 3.4 / 4.8 / 3.5), template "Porridge" = 80 g oats + 200 g milk; then upgraded in place (same signer) to the release build from main (DB 8 → 9). All values are test data.
+
+| Step | Result | Evidence |
+|---|---|---|
+| `bash tools/verify.sh` | PASS | 1133 unit tests (+13: `bug22_*`, `p24_*`, `migration_8_to_9_*`), lint clean, release 13.9 MB |
+| `bash tools/connected.sh emulator-5554` | PASS | 31/31 (+5: `MealTemplateRoomTest` ×3, `migration_8_to_9_*`, `editedTemplate_*`); phone attached, untouched: still 0.9.4, no test package |
+| 0.9.4: template list | PASS | "424 kcal · 17 g P · 58 g C · 13 g F" (296 + 128) |
+| 0.9.4: edit oats 80 → 100 g, Save template | FOUND (reproduces the report) | Stays on the editor with "Could not save the template. Please try again."; back on the list the template still shows 424 kcal — the edit is lost |
+| Upgrade to the new build, Meal Templates | PASS | No crash; the template is unchanged (424 kcal); the editor shows Servings = 1 (migration default) |
+| Edit: name "Porridge for two", Servings 2, oats 100 g | PASS | Totals "Per serving: 249 kcal · 10 g P · 35 g C · 7 g F", "Whole recipe: 498 kcal · …" |
+| Save template | PASS (BUG-22 fixed) | Back on the list: "249 kcal · 10 g P · 35 g C · 7 g F per serving · makes 2 servings" |
+| Star on the list | PASS | Shows "Unfavorite"; the row keeps its macros (items intact) |
+| Log now dialog | PASS | Servings eaten = 1, "≈ 249 kcal · the template makes 2 servings"; 1.5 → "≈ 374 kcal …"; 0 → "Enter how many servings you had." and the Log button disabled |
+| Log 1.5 servings (Lunch) → Nutrition | PASS | Snackbar "Logged Porridge for two."; Lunch: Oats 75 g (278 kcal), Milk 150 g (96 kcal), meal 374 kcal |
+| Breakfast › Add › Templates | PASS | Row "2 ingredients · makes 2 servings"; tap opens "Log Porridge for two" with Servings eaten = 1, ≈ 249 kcal |
+| Log (1 serving) | PASS | Back on Nutrition; Breakfast: Oats 50 g (185 kcal), Milk 100 g (64 kcal) |
+| Backup › Export (test file name) | PASS | "26 rows over 9 tables", "Schema 9"; the JSON has `servings: 2.0`, `isFavorite: true`, `useCount: 2`, both items with `templateId: 1` |
+| Backup › Import, Replace, the same file | PASS | "26 replaced"; the editor shows Servings 2, oats 100 g. Test file deleted afterwards |
+| Editor: Servings emptied, Save | PASS | "Servings must be above zero.", stays on the editor; Back leaves the template unchanged |
+
+- NOTE-35: Add food › Templates now needs two taps (template, then Log) instead of one; the dialog opens with one serving, so the common case is one extra tap. The empty-state texts no longer promise "one tap".

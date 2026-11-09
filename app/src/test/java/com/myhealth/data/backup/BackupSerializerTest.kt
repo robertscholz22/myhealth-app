@@ -87,6 +87,26 @@ class BackupSerializerTest {
     }
 
     @Test
+    fun p24_a_schema_8_meal_template_restores_as_one_serving_and_a_schema_9_one_keeps_its_servings() {
+        val v8 = """
+            {"schemaVersion":8,"exportedAtMillis":7,"appVersion":"0.9.4",
+             "mealTemplate":[{"id":1,"name":"Porridge","defaultSlot":"BREAKFAST","note":null,
+             "isFavorite":false,"useCount":2,"lastUsedAtMillis":null,"archived":false,
+             "createdAtMillis":1,"updatedAtMillis":1}]}
+        """.trimIndent()
+
+        val old = (BackupSerializer.decodeFromString(v8) as Outcome.Ok).value
+        assertThat(old.mealTemplate.single().servings).isEqualTo(1.0)
+
+        val current = old.copy(
+            schemaVersion = BackupFile.CURRENT_SCHEMA_VERSION,
+            mealTemplate = listOf(old.mealTemplate.single().copy(servings = 4.0)),
+        )
+        val again = BackupSerializer.decodeFromString(BackupSerializer.encodeToString(current))
+        assertThat((again as Outcome.Ok).value.mealTemplate.single().servings).isEqualTo(4.0)
+    }
+
+    @Test
     fun a_file_that_is_not_json_fails_as_a_parse_error() {
         val decoded = BackupSerializer.decodeFromString("this is not a backup")
 

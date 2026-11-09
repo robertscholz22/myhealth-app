@@ -87,6 +87,21 @@ interface MealDao {
     @Query("DELETE FROM meal_template_item WHERE templateId = :templateId")
     suspend fun deleteTemplateItemsFor(templateId: Long)
 
+    /**
+     * BUG-22: writes [entity] and replaces all its item rows in one transaction, returning the
+     * template's id. `@Upsert` returns `-1` when it **updated** an existing row, so the id is the
+     * entity's own unless the row was just inserted — using the return value wrote an edited
+     * template's items against id `-1` (a foreign-key failure that left the edit half-saved).
+     */
+    @Transaction
+    suspend fun replaceTemplate(entity: MealTemplateEntity, items: List<MealTemplateItemEntity>): Long {
+        val inserted = upsertTemplate(entity)
+        val id = if (entity.id != 0L) entity.id else inserted
+        deleteTemplateItemsFor(id)
+        if (items.isNotEmpty()) upsertTemplateItems(items.map { it.copy(id = 0L, templateId = id) })
+        return id
+    }
+
     // ---- ingredient reference counts (P4.2: archive-vs-delete branching) ----------------------
 
     @Query("SELECT COUNT(*) FROM meal_log_item WHERE ingredientId = :ingredientId")

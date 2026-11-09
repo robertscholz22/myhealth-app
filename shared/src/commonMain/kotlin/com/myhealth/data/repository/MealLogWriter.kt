@@ -76,16 +76,22 @@ class MealLogWriter(
 
     /**
      * Copies a template's items into a new `meal_log`, snapshotting each one at the ingredient's
-     * *current* values, and bumps the template's `useCount`/`lastUsedAtMillis`.
+     * *current* values, and bumps the template's `useCount`/`lastUsedAtMillis`. P24: the template
+     * holds the whole recipe, so every item is scaled by [servings] (eaten) over the template's
+     * `servings` (made).
      */
-    suspend fun logTemplate(templateId: Long, day: Long, slot: MealSlot): Outcome<Long> {
+    suspend fun logTemplate(templateId: Long, day: Long, slot: MealSlot, servings: Double = 1.0): Outcome<Long> {
+        if (servings <= 0.0) {
+            return Outcome.Err(AppError.Validation("servings", "Servings must be above zero."))
+        }
         val template = mealDao.getTemplateWithItems(templateId)
             ?: return Outcome.Err(AppError.Validation("templateId", "That template no longer exists."))
         if (template.items.isEmpty()) {
             return Outcome.Err(AppError.Validation("items", "This template has no ingredients yet."))
         }
+        val factor = MealMath.servingFactor(eaten = servings, made = template.template.servings)
         val inputs = template.items.sortedBy { it.sortOrder }
-            .map { MealItemInput(it.ingredientId, it.quantity, it.unit) }
+            .map { MealItemInput(it.ingredientId, it.quantity * factor, it.unit) }
         val result = logMeal(
             day = day,
             slot = slot,

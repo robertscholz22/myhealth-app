@@ -31,6 +31,13 @@ data class MealMathResult(val totals: MacroTotals, val warnings: List<EngineWarn
 object MealMath {
 
     /**
+     * P24: how much of a template's items [eaten] servings are, when the items make [made]
+     * servings. A non-positive [made] (never stored, but a hand-edited backup could carry one)
+     * counts as one serving, so logging never divides by zero.
+     */
+    fun servingFactor(eaten: Double, made: Double): Double = eaten / (made.takeIf { it > 0.0 } ?: 1.0)
+
+    /**
      * Grams (millilitres for `ML`, treated as grams downstream — §3.7) that [item] resolves to
      * against [ingredient]:
      * - `G`/`ML` → the quantity itself.

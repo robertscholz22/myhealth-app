@@ -110,6 +110,7 @@ fun MealTemplateEditScreen(id: Long, onBack: () -> Unit, modifier: Modifier = Mo
                     onSlotChange = vm::setDefaultSlot,
                     onNoteChange = vm::setNote,
                     onFavoriteChange = vm::setFavorite,
+                    onServingsChange = vm::setServings,
                     onQuantityChange = vm::setItemQuantity,
                     onUnitChange = vm::setItemUnit,
                     onRemoveItem = vm::removeItem,
@@ -148,6 +149,7 @@ data class TemplateEditActions(
     val onSlotChange: (MealSlot?) -> Unit,
     val onNoteChange: (String) -> Unit,
     val onFavoriteChange: (Boolean) -> Unit,
+    val onServingsChange: (Double?) -> Unit,
     val onQuantityChange: (Int, Double?) -> Unit,
     val onUnitChange: (Int, QuantityUnit) -> Unit,
     val onRemoveItem: (Int) -> Unit,
@@ -179,6 +181,15 @@ private fun MealTemplateEditContent(
                     isError = state.errors.containsKey(TemplateField.NAME),
                     supportingText = state.errors[TemplateField.NAME]?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
+                )
+                NumberField(
+                    label = stringResource(Res.string.mealtpl_servings_label),
+                    value = state.draft.servings,
+                    onValueChange = actions.onServingsChange,
+                    decimals = servingsDecimals(state.draft.servings),
+                    isError = state.errors.containsKey(TemplateField.SERVINGS),
+                    supportingText = state.errors[TemplateField.SERVINGS]
+                        ?: stringResource(Res.string.mealtpl_servings_help),
                 )
                 val noDefaultSlotLabel = stringResource(Res.string.mealtpl_no_default)
                 DropdownField(
@@ -237,7 +248,20 @@ private fun MealTemplateEditContent(
 
         item {
             SectionCard(title = stringResource(Res.string.mealtpl_section_totals)) {
-                Text(text = macroSummary(state.totals), style = MaterialTheme.typography.bodyLarge)
+                val perServing = state.draft.perServing(state.totals)
+                if (perServing == null || state.draft.servings == 1.0) {
+                    Text(text = macroSummary(state.totals), style = MaterialTheme.typography.bodyLarge)
+                } else {
+                    Text(
+                        text = stringResource(Res.string.mealtpl_totals_per_serving, macroSummary(perServing)),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        text = stringResource(Res.string.mealtpl_totals_whole, macroSummary(state.totals)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
 
@@ -358,6 +382,7 @@ private fun MealTemplateEditContentPreview() {
                     id = 1L,
                     name = "Oatmeal with berries",
                     defaultSlot = MealSlot.BREAKFAST,
+                    servings = 2.0,
                     items = listOf(
                         TemplateItemDraft(1L, "Rolled oats", 80.0, QuantityUnit.G, null),
                         TemplateItemDraft(2L, "Blueberries", 100.0, QuantityUnit.G, null),
@@ -368,7 +393,7 @@ private fun MealTemplateEditContentPreview() {
                     fiberG = 9.0, sugarG = 12.0, satFatG = 1.0, saltG = 0.1,
                 ),
             ),
-            actions = TemplateEditActions({}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {}),
+            actions = TemplateEditActions({}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {}, {}),
         )
     }
 }

@@ -259,6 +259,14 @@ object Migrations {
     }
 
     /**
+     * 8 -> 9 (P24): `meal_template.servings`, how many servings a template's items make. `1` keeps
+     * every existing template's meaning: logging one serving logs the whole template, as before.
+     */
+    private val MIGRATION_8_9 = MigrationStep(8, 9) { db ->
+        db.execSQL("ALTER TABLE `meal_template` ADD COLUMN `servings` REAL NOT NULL DEFAULT 1")
+    }
+
+    /**
      * Every migration, oldest first. `.addMigrations(*ALL)` is the only call site, in each
      * platform's database builder, so adding a migration never changes it.
      */
@@ -275,6 +283,7 @@ object Migrations {
             MIGRATION_5_6,
             MIGRATION_6_7,
             MIGRATION_7_8,
+            MIGRATION_8_9,
         )
 }
 

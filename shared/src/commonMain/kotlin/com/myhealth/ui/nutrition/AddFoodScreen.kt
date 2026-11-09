@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -23,6 +24,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,9 +39,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.myhealth.di.rememberVm
 import com.myhealth.domain.model.Ingredient
 import com.myhealth.domain.model.MealSlot
+import com.myhealth.domain.model.MealTemplate
 import com.myhealth.ui.calendar.displayName
 import com.myhealth.ui.common.EmptyState
 import com.myhealth.ui.ingredients.basisLabel
+import com.myhealth.ui.meals.ServingsEatenField
+import com.myhealth.ui.meals.fmtServings
 import com.myhealth.ui.theme.MyHealthTheme
 import kotlin.math.roundToInt
 
@@ -97,7 +102,7 @@ fun AddFoodScreen(
             onTabSelected = { tab -> if (tab == AddFoodTab.SCAN) onScan() else vm.setTab(tab) },
             onQueryChange = vm::setQuery,
             onSelectIngredient = vm::select,
-            onLogTemplate = vm::logTemplate,
+            onLogTemplate = vm::openTemplate,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         )
     }
@@ -118,6 +123,30 @@ fun AddFoodScreen(
             onDismiss = vm::cancelSelection,
         )
     }
+
+    state.pendingTemplate?.let { template ->
+        val canLog = (state.templateServings ?: 0.0) > 0.0 && !state.isSaving
+        AlertDialog(
+            onDismissRequest = vm::cancelTemplate,
+            title = { Text(stringResource(Res.string.mealtpl_log_dialog_title, template.name)) },
+            text = {
+                ServingsEatenField(
+                    servings = state.templateServings,
+                    onServingsChange = vm::setTemplateServings,
+                    preview = state.templatePreview,
+                    made = template.servings,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = vm::logTemplate, enabled = canLog) {
+                    Text(stringResource(Res.string.mealtpl_log_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = vm::cancelTemplate) { Text(stringResource(Res.string.action_cancel)) }
+            },
+        )
+    }
 }
 
 @Composable
@@ -126,7 +155,7 @@ private fun AddFoodContent(
     onTabSelected: (AddFoodTab) -> Unit,
     onQueryChange: (String) -> Unit,
     onSelectIngredient: (Ingredient) -> Unit,
-    onLogTemplate: (Long) -> Unit,
+    onLogTemplate: (MealTemplate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -192,7 +221,7 @@ private fun IngredientList(state: AddFoodUiState, onSelect: (Ingredient) -> Unit
 }
 
 @Composable
-private fun TemplateList(state: AddFoodUiState, onLogTemplate: (Long) -> Unit) {
+private fun TemplateList(state: AddFoodUiState, onLogTemplate: (MealTemplate) -> Unit) {
     if (state.templates.isEmpty()) {
         EmptyState(
             title = stringResource(Res.string.addfood_empty_templates_title),
@@ -205,8 +234,20 @@ private fun TemplateList(state: AddFoodUiState, onLogTemplate: (Long) -> Unit) {
         items(state.templates, key = { it.id }) { template ->
             ListItem(
                 headlineContent = { Text(template.name) },
-                supportingContent = { Text(stringResource(Res.string.addfood_template_item_count, template.items.size)) },
-                modifier = Modifier.fillMaxWidth().clickable { onLogTemplate(template.id) },
+                supportingContent = {
+                    Text(
+                        if (template.servings == 1.0) {
+                            stringResource(Res.string.addfood_template_item_count, template.items.size)
+                        } else {
+                            stringResource(
+                                Res.string.addfood_template_item_count_servings,
+                                template.items.size,
+                                fmtServings(template.servings),
+                            )
+                        },
+                    )
+                },
+                modifier = Modifier.fillMaxWidth().clickable { onLogTemplate(template) },
             )
             HorizontalDivider()
         }

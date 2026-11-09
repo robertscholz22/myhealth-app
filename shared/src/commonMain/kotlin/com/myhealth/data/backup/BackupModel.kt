@@ -143,8 +143,9 @@ data class BackupFile(
          * the P12 bump to 5. P14.1 raises it to **6** (zones + the three strength tables), so a
          * 0.4.0 export declares 6 and an older app refuses it, which is exactly the guarantee the
          * field exists for. P16.1 raises it to **7** ("my equipment", the set-log feedback and
-         * `exercise_progress`).
+         * `exercise_progress`). P24 raises it to **9** (`meal_template.servings`; an older file
+         * decodes with the entity's default of one serving).
          */
-        const val CURRENT_SCHEMA_VERSION: Int = 8
+        const val CURRENT_SCHEMA_VERSION: Int = 9
     }
 }

@@ -244,8 +244,9 @@
     <string name="addfood_empty_ingredients_message">Search for an ingredient, or create one with the + button.</string>
     <string name="addfood_kcal_value">%1$d kcal</string>
     <string name="addfood_empty_templates_title">No meal templates yet</string>
-    <string name="addfood_empty_templates_message">Create one from More → Meal Templates to log a whole meal in one tap.</string>
+    <string name="addfood_empty_templates_message">Create one from More → Meal Templates to log a whole meal at once.</string>
     <string name="addfood_template_item_count">%1$d ingredients</string>
+    <string name="addfood_template_item_count_servings">%1$d ingredients · makes %2$s servings</string>
     <string name="addfood_tab_recents">Recents</string>
     <string name="addfood_tab_favorites">Favorites</string>
     <string name="addfood_tab_search">Search</string>
@@ -311,10 +312,14 @@
     <string name="mealtpl_no_default">No default</string>
     <string name="mealtpl_note_label">Note</string>
     <string name="mealtpl_favorite_label">Favorite</string>
+    <string name="mealtpl_servings_label">Servings</string>
+    <string name="mealtpl_servings_help">How many servings these ingredients make.</string>
     <string name="mealtpl_section_ingredients">Ingredients</string>
     <string name="mealtpl_add_ingredient_cd">Add ingredient</string>
     <string name="mealtpl_empty_items">No ingredients yet — add one with +.</string>
     <string name="mealtpl_section_totals">Totals</string>
+    <string name="mealtpl_totals_whole">Whole recipe: %1$s</string>
+    <string name="mealtpl_totals_per_serving">Per serving: %1$s</string>
     <string name="mealtpl_save_button">Save template</string>
     <string name="mealtpl_remove_item_cd">Remove %1$s</string>
     <string name="mealtpl_ingredient_missing">This ingredient is no longer available; it will not count towards the totals.</string>
@@ -322,13 +327,14 @@
     <string name="mealtpl_close_button">Close</string>
     <string name="mealtpl_macro_summary">%1$.0f kcal · %2$.0f g P · %3$.0f g C · %4$.0f g F</string>
     <string name="mealtpl_macro_summary_missing">%1$s · some ingredients are missing</string>
+    <string name="mealtpl_row_per_serving">%1$s per serving · makes %2$s servings</string>
     <string name="mealtpl_error_not_found">Template not found.</string>
     <string name="mealtpl_error_save_failed">Could not save the template. Please try again.</string>
     <string name="mealtpl_error_delete_failed">Could not delete the template.</string>
     <!-- P8.1 nutrition/meals — MealTemplatesScreen / MealTemplatesViewModel -->
     <string name="mealtpl_list_title">Meal templates</string>
     <string name="mealtpl_new_cd">New template</string>
-    <string name="mealtpl_empty_message">Build a template for a meal you eat often, then log it in one tap.</string>
+    <string name="mealtpl_empty_message">Build a template for a meal you eat often, then log it whenever you have it.</string>
     <string name="mealtpl_log_now_button">Log now</string>
     <string name="mealtpl_unfavorite_cd">Unfavorite</string>
     <string name="mealtpl_favorite_cd">Favorite</string>
@@ -336,6 +342,10 @@
     <string name="mealtpl_date_label">Date</string>
     <string name="mealtpl_slot_label">Slot</string>
     <string name="mealtpl_log_button">Log</string>
+    <string name="mealtpl_log_servings_label">Servings eaten</string>
+    <string name="mealtpl_log_servings_error">Enter how many servings you had.</string>
+    <string name="mealtpl_log_servings_preview">≈ %1$s kcal</string>
+    <string name="mealtpl_log_servings_preview_of">≈ %1$s kcal · the template makes %2$s servings</string>
     <string name="mealtpl_logged_now">Logged %1$s.</string>
     <string name="mealtpl_error_log_failed">Could not log this template.</string>
 

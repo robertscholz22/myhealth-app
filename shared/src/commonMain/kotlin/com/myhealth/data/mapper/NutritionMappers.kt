@@ -118,6 +118,7 @@ fun MealTemplateEntity.toDomain(items: List<MealTemplateItem> = emptyList()): Me
     items = items,
     createdAtMillis = createdAtMillis,
     updatedAtMillis = updatedAtMillis,
+    servings = servings,
 )
 
 fun MealTemplate.toEntity(): MealTemplateEntity = MealTemplateEntity(
@@ -131,6 +132,7 @@ fun MealTemplate.toEntity(): MealTemplateEntity = MealTemplateEntity(
     archived = archived,
     createdAtMillis = createdAtMillis,
     updatedAtMillis = updatedAtMillis,
+    servings = servings,
 )
 
 /** Assembles the domain aggregate from the Room `@Transaction` relation (§2.2.5). */

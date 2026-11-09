@@ -1,5 +1,6 @@
 package com.myhealth.data.db.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -23,4 +24,7 @@ data class MealTemplateEntity(
     val archived: Boolean = false,
     val createdAtMillis: Long,
     val updatedAtMillis: Long,
+    /** DB v9: how many servings the items make (`1`, every older template: the whole template). */
+    @ColumnInfo(defaultValue = "1")
+    val servings: Double = 1.0,
 )

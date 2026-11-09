@@ -9,11 +9,12 @@ import com.myhealth.domain.model.MealSlot
 import com.myhealth.domain.model.MealTemplate
 import com.myhealth.domain.model.MealTemplateItem
 import com.myhealth.domain.model.QuantityUnit
+import com.myhealth.ui.common.fmtDecimal
 import com.myhealth.ui.nutrition.defaultUnitFor
 import com.myhealth.data.time.PlatformClock
 
 /** Field identity for [validateTemplate] errors (mirrors `IngredientField`, P4.3). */
-enum class TemplateField { NAME, ITEMS }
+enum class TemplateField { NAME, ITEMS, SERVINGS }
 
 /**
  * One editable item row of the template editor. [ingredient] is the resolved ingredient (it drives
@@ -39,6 +40,8 @@ data class MealTemplateDraft(
     val useCount: Int = 0,
     val lastUsedAtMillis: Long? = null,
     val createdAtMillis: Long = 0L,
+    /** P24: how many servings the items make; `null` while the field is blank. */
+    val servings: Double? = 1.0,
 )
 
 /** Blocking errors; everything else (a missing ingredient, say) is surfaced as a warning row. */
@@ -50,6 +53,7 @@ fun validateTemplate(draft: MealTemplateDraft): Map<TemplateField, String> {
     } else if (draft.items.any { (it.quantity ?: 0.0) <= 0.0 }) {
         errors[TemplateField.ITEMS] = "Every ingredient needs a quantity above zero."
     }
+    if ((draft.servings ?: 0.0) <= 0.0) errors[TemplateField.SERVINGS] = "Servings must be above zero."
     return errors
 }
 
@@ -61,6 +65,10 @@ fun MealTemplateDraft.totals(): MacroTotals {
     }
     return MealMath.totals(lines).totals
 }
+
+/** P24: [totals] of one serving, or `null` while [MealTemplateDraft.servings] is not a usable number. */
+fun MealTemplateDraft.perServing(totals: MacroTotals): MacroTotals? =
+    servings?.takeIf { it > 0.0 }?.let { totals * MealMath.servingFactor(eaten = 1.0, made = it) }
 
 /** The domain template the editor saves; `sortOrder` is the row order (P4.4). */
 fun MealTemplateDraft.toMealTemplate(clock: PlatformClock): MealTemplate {
@@ -86,6 +94,7 @@ fun MealTemplateDraft.toMealTemplate(clock: PlatformClock): MealTemplate {
         },
         createdAtMillis = if (id == 0L) now else createdAtMillis,
         updatedAtMillis = now,
+        servings = servings ?: 1.0,
     )
 }
 
@@ -110,6 +119,7 @@ fun templateDraftOf(template: MealTemplate, ingredients: Map<Long, Ingredient>):
         useCount = template.useCount,
         lastUsedAtMillis = template.lastUsedAtMillis,
         createdAtMillis = template.createdAtMillis,
+        servings = template.servings,
     )
 
 /** A new row for [ingredient], pre-filled with its most natural unit (§4.2 Add food rules). */
@@ -120,6 +130,19 @@ fun itemDraftFor(ingredient: Ingredient): TemplateItemDraft = TemplateItemDraft(
     unit = defaultUnitFor(ingredient),
     ingredient = ingredient,
 )
+
+/**
+ * P24: servings read as people say them — `4`, `2.5`, `1.25` — not as a fixed-decimal number
+ * ("4.0"). Also the number of decimals a servings [NumberField][com.myhealth.ui.common.NumberField]
+ * shows, so loading `2.5` does not round it to `3`.
+ */
+fun servingsDecimals(value: Double?): Int = when {
+    value == null || value % 1.0 == 0.0 -> 0
+    (value * 10.0) % 1.0 == 0.0 -> 1
+    else -> 2
+}
+
+fun fmtServings(value: Double): String = fmtDecimal(value, servingsDecimals(value))
 
 private fun defaultQuantityFor(ingredient: Ingredient): Double =
     when (defaultUnitFor(ingredient)) {

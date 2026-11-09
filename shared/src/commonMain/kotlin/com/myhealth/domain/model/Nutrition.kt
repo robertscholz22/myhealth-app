@@ -42,7 +42,10 @@ data class MealTemplateItem(
     val sortOrder: Int,
 )
 
-/** Mirrors `meal_template` plus its items (§2.2.5). */
+/**
+ * Mirrors `meal_template` plus its items (§2.2.5). The items are what the recipe makes in total;
+ * [servings] says how many servings that is, so logging one serving logs `items / servings`.
+ */
 data class MealTemplate(
     val id: Long,
     val name: String,
@@ -55,6 +58,7 @@ data class MealTemplate(
     val items: List<MealTemplateItem> = emptyList(),
     val createdAtMillis: Long,
     val updatedAtMillis: Long,
+    val servings: Double = 1.0,
 )
 
 /**
@@ -126,6 +130,18 @@ data class MacroTotals(
         sugarG = sugarG + other.sugarG,
         satFatG = satFatG + other.satFatG,
         saltG = saltG + other.saltG,
+    )
+
+    /** Every field multiplied by [factor] (P24: a template's totals per serving eaten). */
+    operator fun times(factor: Double): MacroTotals = MacroTotals(
+        kcal = kcal * factor,
+        proteinG = proteinG * factor,
+        carbsG = carbsG * factor,
+        fatG = fatG * factor,
+        fiberG = fiberG * factor,
+        sugarG = sugarG * factor,
+        satFatG = satFatG * factor,
+        saltG = saltG * factor,
     )
 
     companion object {

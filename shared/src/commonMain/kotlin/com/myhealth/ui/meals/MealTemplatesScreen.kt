@@ -100,6 +100,7 @@ fun MealTemplatesScreen(
                 onLogNow = vm::openLogNow,
                 onSetLogDay = vm::setLogDay,
                 onSetLogSlot = vm::setLogSlot,
+                onSetLogServings = vm::setLogServings,
                 onCancelLogNow = vm::cancelLogNow,
                 onConfirmLogNow = vm::confirmLogNow,
             ),
@@ -115,6 +116,7 @@ data class MealTemplateListActions(
     val onLogNow: (MealTemplate) -> Unit,
     val onSetLogDay: (Long) -> Unit,
     val onSetLogSlot: (MealSlot) -> Unit,
+    val onSetLogServings: (Double?) -> Unit,
     val onCancelLogNow: () -> Unit,
     val onConfirmLogNow: () -> Unit,
 )
@@ -153,8 +155,11 @@ private fun MealTemplatesContent(
             template = template,
             day = state.logDay,
             slot = state.logSlot,
+            servings = state.logServings,
+            preview = state.logPreview,
             onSetDay = actions.onSetLogDay,
             onSetSlot = actions.onSetLogSlot,
+            onSetServings = actions.onSetLogServings,
             onDismiss = actions.onCancelLogNow,
             onConfirm = actions.onConfirmLogNow,
         )
@@ -170,7 +175,7 @@ private fun TemplateListRow(
 ) {
     ListItem(
         headlineContent = { Text(row.template.name) },
-        supportingContent = { Text(macroSummary(row.totals, row.missingIngredients)) },
+        supportingContent = { Text(rowSummary(row)) },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onLogNow) { Text(stringResource(Res.string.mealtpl_log_now_button)) }
@@ -196,8 +201,11 @@ private fun LogNowDialog(
     template: MealTemplate,
     day: Long,
     slot: MealSlot,
+    servings: Double?,
+    preview: MacroTotals?,
     onSetDay: (Long) -> Unit,
     onSetSlot: (MealSlot) -> Unit,
+    onSetServings: (Double?) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -218,11 +226,36 @@ private fun LogNowDialog(
                     optionLabel = { it.displayName() },
                     onSelect = onSetSlot,
                 )
+                ServingsEatenField(
+                    servings = servings,
+                    onServingsChange = onSetServings,
+                    preview = preview,
+                    made = template.servings,
+                )
             }
         },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(Res.string.mealtpl_log_button)) } },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = (servings ?: 0.0) > 0.0) {
+                Text(stringResource(Res.string.mealtpl_log_button))
+            }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) } },
     )
+}
+
+/**
+ * A list row's macros: the whole template when it makes one serving, else one serving of it and
+ * how many it makes (P24), with the missing-ingredient note either way.
+ */
+@Composable
+private fun rowSummary(row: TemplateRow): String {
+    if (row.template.servings == 1.0) return macroSummary(row.totals, row.missingIngredients)
+    val perServing = stringResource(
+        Res.string.mealtpl_row_per_serving,
+        macroSummary(row.perServing),
+        fmtServings(row.template.servings),
+    )
+    return if (row.missingIngredients) stringResource(Res.string.mealtpl_macro_summary_missing, perServing) else perServing
 }
 
 /** "520 kcal · 31 g P · 54 g C · 18 g F", with a note when an ingredient is missing. */
@@ -244,13 +277,13 @@ private fun MealTemplatesContentPreview() {
     MyHealthTheme(dynamicColor = false) {
         MealTemplatesContent(
             state = MealTemplatesUiState(isLoading = false, rows = previewTemplateRows()),
-            actions = MealTemplateListActions({}, {}, {}, {}, {}, {}, {}),
+            actions = MealTemplateListActions({}, {}, {}, {}, {}, {}, {}, {}),
         )
     }
 }
 
 private fun previewTemplateRows(): List<TemplateRow> {
-    fun template(id: Long, name: String, slot: MealSlot?, favorite: Boolean) = MealTemplate(
+    fun template(id: Long, name: String, slot: MealSlot?, favorite: Boolean, servings: Double = 1.0) = MealTemplate(
         id = id,
         name = name,
         defaultSlot = slot,
@@ -262,11 +295,12 @@ private fun previewTemplateRows(): List<TemplateRow> {
         items = emptyList(),
         createdAtMillis = 0L,
         updatedAtMillis = 0L,
+        servings = servings,
     )
     return listOf(
         TemplateRow(
-            template = template(1L, "Oatmeal with berries", MealSlot.BREAKFAST, true),
-            totals = MacroTotals(kcal = 512.0, proteinG = 21.0, carbsG = 74.0, fatG = 13.0, fiberG = 9.0, sugarG = 18.0, satFatG = 3.0, saltG = 0.4),
+            template = template(1L, "Oatmeal with berries", MealSlot.BREAKFAST, true, servings = 2.0),
+            totals = MacroTotals(kcal = 1024.0, proteinG = 21.0, carbsG = 74.0, fatG = 13.0, fiberG = 9.0, sugarG = 18.0, satFatG = 3.0, saltG = 0.4),
             missingIngredients = false,
         ),
         TemplateRow(

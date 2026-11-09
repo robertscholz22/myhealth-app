@@ -57,6 +57,11 @@ interface MealRepository {
 
     suspend fun deleteTemplate(id: Long): Outcome<Unit>
 
-    /** "Log now": copies the template's items into a `meal_log`, snapshotting nutrients. */
-    suspend fun logTemplate(templateId: Long, day: Long, slot: MealSlot): Outcome<Long>
+    /**
+     * "Log now": copies the template's items into a `meal_log`, snapshotting nutrients. P24:
+     * [servings] is how many servings were eaten; each item is scaled by
+     * `servings / template.servings`, so one serving of a template that makes one is the whole
+     * template, as before.
+     */
+    suspend fun logTemplate(templateId: Long, day: Long, slot: MealSlot, servings: Double = 1.0): Outcome<Long>
 }

@@ -81,6 +81,8 @@ class MealTemplateEditViewModel(
 
     fun setFavorite(value: Boolean) = updateDraft { it.copy(isFavorite = value) }
 
+    fun setServings(value: Double?) = updateDraft { it.copy(servings = value) }
+
     fun setItemQuantity(index: Int, quantity: Double?) = updateItem(index) { it.copy(quantity = quantity) }
 
     fun setItemUnit(index: Int, unit: QuantityUnit) = updateItem(index) { it.copy(unit = unit) }

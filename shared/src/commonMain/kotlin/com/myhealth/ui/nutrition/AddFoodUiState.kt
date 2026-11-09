@@ -9,6 +9,7 @@ import com.myhealth.domain.model.Ingredient
 import com.myhealth.domain.model.MacroTotals
 import com.myhealth.domain.model.MealSlot
 import com.myhealth.domain.model.MealTemplate
+import com.myhealth.ui.meals.servingsPreview
 import com.myhealth.domain.model.MeasureBasis
 import com.myhealth.domain.model.QuantityUnit
 import com.myhealth.ui.common.UiMessage
@@ -53,7 +54,20 @@ data class AddFoodUiState(
     val message: UiMessage? = null,
     /** One-shot: the screen pops back once this flips to `true`. */
     val added: Boolean = false,
+    /** P24: non-null while the "how many servings" dialog for this template is open. */
+    val pendingTemplate: MealTemplate? = null,
+    val templateServings: Double? = 1.0,
+    /** The pending template's whole-recipe totals, once its ingredients are resolved. */
+    val templateTotals: MacroTotals? = null,
 ) {
+    /** Live totals of the servings about to be logged from [pendingTemplate]. */
+    val templatePreview: MacroTotals?
+        get() {
+            val template = pendingTemplate ?: return null
+            val whole = templateTotals ?: return null
+            return servingsPreview(whole, made = template.servings, eaten = templateServings)
+        }
+
     val validUnits: List<QuantityUnit>
         get() = selected?.let { validUnitsFor(it.basis, it) } ?: listOf(QuantityUnit.G)
 

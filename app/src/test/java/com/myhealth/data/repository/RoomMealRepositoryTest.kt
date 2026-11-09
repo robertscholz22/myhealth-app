@@ -165,6 +165,66 @@ class RoomMealRepositoryTest {
     }
 
     @Test
+    fun bug22_saving_an_edited_template_returns_its_id_and_writes_the_items_to_it() = runTest {
+        val oats = putIngredient(name = "Rolled oats", kcal = 370.0, protein = 13.0)
+        val id = (repo.upsertTemplate(template(items = listOf(item(oats, 80.0)))) as Outcome.Ok).value
+
+        // The fake DAO answers an update with -1, as Room's @Upsert does.
+        val saved = repo.upsertTemplate(repo.getTemplate(id)!!.copy(name = "Big oatmeal", items = listOf(item(oats, 120.0))))
+
+        assertThat(saved).isEqualTo(Outcome.Ok(id))
+        assertThat(mealDao.templateItems.value.map { it.templateId to it.quantity }).containsExactly(id to 120.0)
+        assertThat(repo.getTemplate(id)!!.name).isEqualTo("Big oatmeal")
+    }
+
+    @Test
+    fun p24_servings_round_trip_and_must_be_above_zero() = runTest {
+        val oats = putIngredient(name = "Rolled oats", kcal = 370.0, protein = 13.0)
+        val id = (repo.upsertTemplate(template(items = listOf(item(oats, 400.0))).copy(servings = 4.0)) as Outcome.Ok).value
+        assertThat(repo.getTemplate(id)!!.servings).isEqualTo(4.0)
+
+        val zero = repo.upsertTemplate(repo.getTemplate(id)!!.copy(servings = 0.0))
+
+        assertThat(zero).isInstanceOf(Outcome.Err::class.java)
+        assertThat(repo.getTemplate(id)!!.servings).isEqualTo(4.0)
+    }
+
+    @Test
+    fun p24_logging_servings_scales_every_item_by_eaten_over_made() = runTest {
+        val oats = putIngredient(name = "Rolled oats", kcal = 370.0, protein = 13.0)
+        val milk = putIngredient(name = "Milk", kcal = 64.0, protein = 3.4)
+        val recipe = template(items = listOf(item(oats, 400.0), item(milk, 600.0, QuantityUnit.ML)))
+        val id = (repo.upsertTemplate(recipe.copy(servings = 4.0)) as Outcome.Ok).value
+
+        assertThat(repo.logTemplate(id, day, MealSlot.BREAKFAST, servings = 1.5)).isInstanceOf(Outcome.Ok::class.java)
+
+        val items = repo.observeDay(day).first().single().items
+        assertThat(items.map { it.quantity }).containsExactly(150.0, 225.0).inOrder()
+        // 150 g of 370 kcal / 100 g.
+        assertThat(items.first().kcal).isWithin(1e-9).of(555.0)
+    }
+
+    @Test
+    fun p24_one_serving_of_a_one_serving_template_is_the_whole_template() = runTest {
+        val oats = putIngredient(name = "Rolled oats", kcal = 370.0, protein = 13.0)
+        val id = (repo.upsertTemplate(template(items = listOf(item(oats, 80.0)))) as Outcome.Ok).value
+
+        repo.logTemplate(id, day, MealSlot.BREAKFAST)
+        repo.logTemplate(id, day, MealSlot.LUNCH, servings = 2.0)
+
+        assertThat(repo.observeDay(day).first().map { it.items.single().quantity }).containsExactly(80.0, 160.0)
+    }
+
+    @Test
+    fun p24_logging_zero_servings_is_rejected() = runTest {
+        val oats = putIngredient(name = "Rolled oats", kcal = 370.0, protein = 13.0)
+        val id = (repo.upsertTemplate(template(items = listOf(item(oats, 80.0)))) as Outcome.Ok).value
+
+        assertThat(repo.logTemplate(id, day, MealSlot.LUNCH, servings = 0.0)).isInstanceOf(Outcome.Err::class.java)
+        assertThat(mealDao.logs.value).isEmpty()
+    }
+
+    @Test
     fun upsert_template_rejects_a_blank_name() = runTest {
         val result = repo.upsertTemplate(template(name = "  "))
 
