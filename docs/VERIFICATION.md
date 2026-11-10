@@ -770,3 +770,67 @@ Emulator `myhealth_api35`. Started from the published v0.9.4 APK: onboarding wit
 | Editor: Servings emptied, Save | PASS | "Servings must be above zero.", stays on the editor; Back leaves the template unchanged |
 
 - NOTE-35: Add food › Templates now needs two taps (template, then Log) instead of one; the dialog opens with one serving, so the common case is one extra tap. The empty-state texts no longer promise "one tap".
+
+## Session 29 — 2026-11-10 (emulator, published v0.9.5 APK: every user workflow)
+Emulator `myhealth_api35` (Android 15), `MyHealth-0.9.5.apk` from the GitHub release installed with its app data cleared, then onboarding with synthetic values. Health Connect data comes from `tools/hc-seeder` (synthetic fixture set); every profile, diary, goal, event, cycle and body value was typed in for the test. Files: `docs/testassets/*`, `app/src/test/resources/fixtures/csv/garmin_de.csv`, and one Garmin Export-Your-Data ZIP of the owner, imported and undone straight away (its counts stay in `docs/private/`). Driven through uiautomator and `adb input`; screenshots stayed in the session scratchpad. The workflow list with a result per row is `docs/WORKFLOWS.md` (117 workflows: 95 PASS, 15 PART, 4 FAIL, 3 N/T); the iOS rows come from the simulator CI run of the 0.9.5 commit (4/4 XCUITests).
+
+| Area | Result | Evidence |
+|---|---|---|
+| First start (ON1–ON3) | PASS, POLISH-22 | Every out-of-range onboarding field blocked with its range text; lands on Today; relaunch skips onboarding |
+| Health Connect (HC1–HC5) | PASS | Grant sheet → all types Granted; Sync now stamps all four streams; backfill "Backfilled back to …" one year; HC settings and HC's privacy link open the right screens |
+| Today (TD1–TD5) | PASS / PART | Cards fill or show empty states; Sync now advances "Last synced"; suggested links accept/dismiss (POLISH-25, POLISH-26); Done on the plan card |
+| Calendar, events, day detail (CA1–CA7, DD1–DD4) | PASS / PART | Recurring Mon+Thu until 31 Dec shows every occurrence and none after; "This occurrence" / "Whole series" deletes; link and unlink activity ↔ event; skip / mark done from the day; BUG-23 |
+| Training plan (TR1–TR8) | PASS except TR3 | Proposal with phase, target, rationale and rest days; accept selected; hand session "Estimated load 120 AU"; lock kept on regenerate; week browsing with actuals; **BUG-24** on regenerate |
+| Strength and mobility (ST1–ST11) | PASS / PART | Search and filters, animation pause/play, workouts created, duplicated, deleted, planned, logged with feedback; equipment filter; POLISH-28/29/30 |
+| Goals (GO1–GO6) | PASS | All goal types with progress lines, race vs deadline ("Race week · target 438 AU" vs "by …"), status changes with snackbars |
+| Activities (AC1–AC5) | PASS except AC5 | List, filters, detail charts and zones, title/notes/RPE kept, link to event; **BUG-25** on delete |
+| Performance screens (PF1–PF5) | PASS / PART | VDOT, PBs, Riegel, manual PR; FTP 285 W from a 300 W 20-min best, override 300 W "Manual"; zones, Daniels paces, polarisation; ATL/CTL/TSB, recovery, muscle load; POLISH-33/34/35 |
+| Nutrition (NU1–NU6, AF1–AF5) | PASS / PART | Day types follow the calendar, explanation, quantity edit and remove, Copy yesterday, water, search/recents/favorites/templates with live preview, new ingredient from Add food, Scan from the Search tab; **BUG-28**, POLISH-36/37 |
+| Ingredients and scanning (IN1–IN10) | PASS / N/T | Per-piece ingredient with sodium from salt, energy-mismatch warning, archive instead of delete when used, Open Food Facts lookup (Nutella) and clean "not found"; OCR / barcode-from-photo N/T on this image (NOTE-6, verified on the Pixel in session 7); POLISH-38 |
+| Meal templates (MT1–MT6) | PASS | BUG-22 fix holds: rename, servings 4, quantities saved; Log now 1.5 servings scales the items; delete keeps logged copies; validation texts |
+| Body, cycle (BO1–BO3, CY1–CY4) | PASS / PART | Weight + body fat with goal distance; resting HR and sleep bars; cycle on → More entry and Today card, phase, six-cycle forecast, duplicate-start and end-before-start errors, delete; POLISH-39 |
+| Import (IM1–IM5) | PASS except IM5 | FIT via the picker with the FIT badge, "Already imported" + Import anyway, Undo import then re-import, CSV and Export ZIP with live progress and undo; share of a `.csv` from Files runs the import; **BUG-26** for `.fit` |
+| Backup (BK1–BK3) | PASS | "706 rows over 30 tables written · Schema 9 · app 0.9.5"; Merge restored one deleted row ("1 merged"); Replace removed a row added after the export ("706 replaced"); POLISH-40 |
+| Settings (SE1–SE7) | PASS / PART / FAIL | Activity level Desk → Active moves today's target 2460 → 2860 kcal; LTHR and manual zone bounds with the ascending check; FTP override and indoor trainer; theme, wallpaper colours, horizon 10 days; maintenance actions with result messages; **BUG-27**, POLISH-41…44 |
+| Across the app (X1–X6) | PASS | Tabs keep their state and Back steps out; rotation keeps input; offline lookup fails with "No connection to Open Food Facts. Check your network." while sync and logging work; dark theme readable; process death restores the screen and data; periodic sync runs with the app in the background (NOTE-39) |
+| iPhone (IO1–IO3) | PASS (CI) | `testSyncAppleHealth`, `testUsesFilesForImportAndBackup`, `testScanFromPhoto`, `testOnboardingToTodayAndRelaunch` on the 0.9.5 commit |
+
+Bugs:
+- BUG-23: the event editor's weekday row is a plain `Row` of seven chips; on a 411 dp wide screen the seventh chip ("Su") is clipped to an unlabeled sliver at the right edge, and tapping the sliver selects Sunday without showing it. Fix: `FlowRow` or shrinking chips.
+- BUG-24: regenerating replaces only the earlier suggested sessions (correct), but the engine does not count the unlocked hand-planned and the completed sessions already in the week: after accepting, Sunday had two long runs (80 + 75 min, 233 AU) and Monday a second mobility session; the review's "Running: 1 of 3" ignored the hand run. Fixed sessions must occupy the grid and count towards caps and load.
+- BUG-25: deleting an activity (`ActivityDetailViewModel.confirmDelete`) never calls `syncScheduler.requestLoadRecompute`, so ATL/CTL stay stale until the next sync (ATL 123 → 81 only after a sync). `RoomActivityRepository.delete` keeps no tombstone: re-granting the Health Connect power permission triggers `rereadExerciseDetail`, which re-imported the deleted session.
+- BUG-26: Android types `.fit` as `image/fits` (MediaStore), while the manifest's SEND/VIEW filters list only `application/vnd.ant.fit` and `application/octet-stream` for FIT files. The share sheet and "Open with" never offer MyHealth for a `.fit` (`cmd package query-activities` for `image/fits`: not offered); tapping a `.fit` in Files opens Google Photos. Fix: add `image/fits` to both filters. Sharing a `.csv` works.
+- BUG-27: Settings text fields take `value` straight from the asynchronous DataStore/Room flow and write `settings.copy(…)` / `profile.copy(…)` built from the composable's snapshot (`SettingsSections.kt` OFF contact, `SettingsScreen.kt` Name, `SettingsViewModel.onSettingsChange` → `update { settings }`). Typing at about seven keys per second reorders characters ("wf29-test" was saved as "29-tetswf"; "Test User" + "ABCDEFGH" became "Test UserBCDEFGHA") and fast Backspace leaves stale characters. Fix: local text state per field, write on change with `update { current -> … }`.
+- BUG-28: a cached nutrition target shows a bare red "!" with no text: `NutritionMappers.toWarnings` decodes the stored warnings as empty strings, so the PLAN R12 clamp explanation is lost once the target is read back from the database.
+
+Polish:
+- POLISH-22: onboarding has no Health Connect step; Today greets a new user with "Sync failed: Health Connect permission denied" and a Retry that fails again, with no pointer to More › Integrations.
+- POLISH-23: the Today Body and Sleep cards are not tappable.
+- POLISH-24: Day detail › ⋮ › Delete on a recurring event only offers deleting the whole series (the event editor offers "This occurrence").
+- POLISH-25: suggested links are never auto-applied (PLAN P3.3: unique best ≥ 0.80); a 100 % match still waits for a tap.
+- POLISH-26: suggested links ignore the sport: an indoor-cycling activity was offered for an all-day soccer event ("Trainer · 60 %").
+- POLISH-27: in the proposal a match day and a locked session day render as "Rest — kept free…" and count as the week's rest day.
+- POLISH-28: a workout without exercises saves ("0 exercises · about 8 min") and stays available to suggestions.
+- POLISH-29: a session planned with "Plan for a day…" has no load estimate (no AU).
+- POLISH-30: deleting a workout leaves its planned sessions without the workout name and exercise list.
+- POLISH-31: the event editor's Save gives no feedback when the error is below the fold (race "Target distance is required for a race.", Until date); the form neither scrolls to the error nor shows a message.
+- POLISH-32: deleting a goal has no confirmation.
+- POLISH-33: Zones & paces › target by session type shows a running pace (/km) for bike sessions, mobility and cross training (`PaceZoneEngine.recommendedPaceFor` via `sessionZoneRows`).
+- POLISH-34: measured zone paces are not monotonic, so the tempo-run target (5:18 /km) was slower than the easy-run target (5:14 /km).
+- POLISH-35: the recovery component row reads "Resting_hr 25/25" (enum name from `LoadUiState.componentLabel`).
+- POLISH-36: a planned match adds no training energy to the day's target (only plan sessions count in `RoomNutritionRepository.gatherInput`), so the match-day target equals rest-day TDEE plus the carb floor and match-day carbs (340 g) were below the pre-match day (355 g).
+- POLISH-37: "Why this target?" prints raw enum names ("Day type: MATCH_DAY") and ASCII "->" / "x".
+- POLISH-38: `ScanMessages.of` maps every `AppError.Parse`, including `UNREADABLE_IMAGE`, to "Open Food Facts sent a response this app could not read."
+- POLISH-39: the weight and body-fat charts plot only weighed days (`dropGaps`), so the x range runs from the first to the last weigh-in while the axis labels show the selected range; at 365d the axis read "11 Nov · 12 May · 10 Nov" over the same three months as 90d.
+- POLISH-40: Backup › Import with Replace wipes the device right after the file is picked, with no confirmation (only the caption under the toggle warns).
+- POLISH-41: the Training week badge uses the batch phase for every week the batch overlaps (`TrainingViewModel.phaseOf`); a batch generated on a Tuesday with a 7-day horizon also labels the next week "Recovery week".
+- POLISH-42: active-recovery fillers skip the per-sport weekly caps (`ActiveRecovery.apply` only checks `cap > 0`, C10 is not applied): two recovery spins with a ride cap of 1.
+- POLISH-43: the sync interval field applies every keystroke; typing "12" re-enqueued the periodic sync with 1 h and then 12 h within milliseconds, the second UPDATE stopped the run the first had started, and no HealthSyncWorker job was left in JobScheduler until the process restarted. Fix: apply on a debounced or committed value.
+- POLISH-44: the "Garmin direct client (experimental)" switch saves but nothing reads `garminDirectEnabled`, and nothing navigates to `GarminDirectRoute` (a placeholder screen); PLAN P9 was not built (DELIVERY.md), so the switch should be hidden until it is.
+- POLISH-45 (small): "2 piece", "1 ingredients"; an ingredient search without hits says "No ingredients yet"; the "Show archived" label is not tappable; "1234" in the barcode field is not checked as an EAN and fills a placeholder product (the plausibility warnings catch it); no check that protein + carbs + fat exceed 100 g per 100 g; water 0 ml and a 500 kg weight are refused without a message; the sleep chart axis uses "28/10" while the other charts use "12 Oct"; a goal pace of −0.25 kg/week is shown as "0.3 kg/week"; the Settings zone preview starts Z1 at 60 bpm while Zones & paces uses the measured 56 bpm; the orphan-cleanup dialog names "version 1.0.2"; in landscape the event editor's form is about 250 px tall; a failed barcode lookup also shows "Name is required." on the empty name; Day detail event rows have no tap action (edit is behind ⋮); Import anyway replaces the earlier history row, so its Undo dialog says "Removes the 0 activities…" and then removes one.
+
+Notes:
+- NOTE-36: the Load & Recovery TSB tile comes from the EWMA (previous day's CTL − ATL) while the ATL/CTL tiles show 7- and 28-day rolling means, so the three tiles do not add up.
+- NOTE-37: Running PRs and Load & Recovery have no top bar or back arrow; Bike & power and Zones & paces do.
+- NOTE-38: two workflows could only be checked in part with this data: the seeder writes no treadmill runs (the PR toggle saves but changes nothing visible), and in a recovery week with the late-luteal spin preference a run cap of 1 and of 3 produce the same proposal.
+- NOTE-39: WorkManager refuses a forced periodic run before its period ("Delaying execution … before schedule"), so X6 moved the emulator clock 6 h ahead (adb root), force-ran the job with the launcher in front ("Worker result SUCCESS", "Last synced" advanced), then restored automatic time and ran Sync now.

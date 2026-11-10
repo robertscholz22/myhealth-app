@@ -64,5 +64,5 @@ app/src/main/java/com/myhealth/
   sync/     WorkManager workers (HC sync, target/load recompute, import)
   ui/       Compose screens + ViewModels (no imports from data/)
   di/       AppGraph (manual DI)
-docs/       BRIEF.md (requirements), PLAN.md (architecture + task plan), TOOLCHAIN.md, STATUS.md, VERIFICATION.md
+docs/       BRIEF.md (requirements), PLAN.md (architecture + task plan), TOOLCHAIN.md, STATUS.md, WORKFLOWS.md (user workflows + last results), VERIFICATION.md
 ```
