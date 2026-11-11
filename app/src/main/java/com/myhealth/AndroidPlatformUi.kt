@@ -1,11 +1,13 @@
 package com.myhealth
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -44,6 +46,15 @@ class AndroidPlatformUi(
         val contract = remember { healthConnect.permissionContract() }
         val launcher = rememberLauncherForActivityResult(contract) { result -> latest(result) }
         return remember(launcher) { { permissions -> launcher.launch(permissions) } }
+    }
+
+    @Composable
+    override fun rememberCalendarAccessRequest(onResult: (granted: Boolean) -> Unit): () -> Unit {
+        val latest by rememberUpdatedState(onResult)
+        val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            latest(granted)
+        }
+        return remember(launcher) { { launcher.launch(Manifest.permission.READ_CALENDAR) } }
     }
 
     override fun openHealthAppStore() {

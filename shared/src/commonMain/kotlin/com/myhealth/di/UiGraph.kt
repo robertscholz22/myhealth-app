@@ -61,6 +61,9 @@ interface UiGraph {
     val pendingImportUri: MutableStateFlow<String?>
     val backupRepo: BackupRepository
     val hcIntegration: HcIntegration
+
+    /** Appointments from the device's calendars (v10). */
+    val calendarImport: CalendarImport
     val draftStore: DraftStore
     val offLookup: OffLookup
     val syncScheduler: SyncScheduler

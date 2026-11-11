@@ -17,6 +17,8 @@
          P4.10 Open Food Facts lookups. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Calendar import: read-only, asked for only when the owner sets it up. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <!--

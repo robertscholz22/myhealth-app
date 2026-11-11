@@ -26,6 +26,8 @@ fun CalendarEventEntity.toDomain(): CalendarEvent = CalendarEvent(
     notes = notes,
     createdAtMillis = createdAtMillis,
     updatedAtMillis = updatedAtMillis,
+    externalSource = externalSource,
+    externalId = externalId,
 )
 
 fun CalendarEvent.toEntity(): CalendarEventEntity = CalendarEventEntity(
@@ -47,6 +49,8 @@ fun CalendarEvent.toEntity(): CalendarEventEntity = CalendarEventEntity(
     notes = notes,
     createdAtMillis = createdAtMillis,
     updatedAtMillis = updatedAtMillis,
+    externalSource = externalSource,
+    externalId = externalId,
 )
 
 fun EventOverrideEntity.toDomain(): EventOverride = EventOverride(

@@ -57,4 +57,8 @@ data class CalendarEventEntity(
     val notes: String? = null,
     val createdAtMillis: Long,
     val updatedAtMillis: Long,
+    /** v10: `calendar:<name>` for events the calendar import wrote; `null` otherwise. */
+    val externalSource: String? = null,
+    /** v10: the entry's identity inside [externalSource]. */
+    val externalId: String? = null,
 )

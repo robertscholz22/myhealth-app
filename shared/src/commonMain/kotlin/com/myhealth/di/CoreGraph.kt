@@ -2,7 +2,9 @@ package com.myhealth.di
 
 import com.myhealth.data.backup.BackupContentSource
 import com.myhealth.data.backup.BackupService
+import com.myhealth.data.calendarimport.CalendarImportService
 import com.myhealth.data.db.MyHealthDatabase
+import com.myhealth.domain.device.DeviceCalendarReader
 import com.myhealth.data.fit.GarminCsvParser
 import com.myhealth.data.off.OffClient
 import com.myhealth.data.off.OffThrottle
@@ -97,6 +99,9 @@ abstract class CoreGraph : UiGraph {
     /** Reads and writes backup documents (SAF on Android). */
     protected abstract val backupContent: BackupContentSource
 
+    /** The device's calendar store (Android); `NoDeviceCalendarReader` where there is none yet. */
+    protected abstract val deviceCalendars: DeviceCalendarReader
+
     /** Written into every backup's header. */
     protected abstract val appVersion: String
 
@@ -126,7 +131,23 @@ abstract class CoreGraph : UiGraph {
         // any stored row that disagrees (zero-seeded rows from ≤ 0.9.0), so a training plan generated
         // right after an update already sees the right CTL. Cheap: one pass over the daily sums.
         syncScheduler.requestLoadRecompute(clock.todayEpochDay())
+
+        // Calendar import: pick up new, moved and cancelled appointments of the chosen calendars.
+        appScope.launch { calendarImportService.sync() }
     }
+
+    /** The calendar import (v10); also run by the background sync on Android. */
+    val calendarImportService: CalendarImportService by lazy {
+        CalendarImportService(
+            reader = deviceCalendars,
+            calendarRepo = calendarRepo,
+            settings = settings,
+            clock = clock,
+            onEventsChanged = { suggestionRepo.markProposedStale() },
+        )
+    }
+
+    override val calendarImport: CalendarImport get() = calendarImportService
 
     override val profileRepo: ProfileRepository by lazy { RoomProfileRepository(db.profileDao()) }
 

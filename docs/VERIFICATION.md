@@ -943,3 +943,30 @@ Notes:
 - NOTE-43: after the restored backup's first sync nearly all Health Connect rows disappeared from the app (activities, sleep, weights). The published 0.9.5 does exactly the same with the same backup: the emulator's Health Connect records had been deleted and re-created in session 30, and the sync follows those deletions. Emulator state, not a regression; the seeder was run again (from its own screen — the broadcast hit Health Connect's background quota) and a sync restored the data.
 - NOTE-44: the instrumented `IngredientTest` was updated: with a search term still set, the empty list now reads "No matching ingredients".
 
+## Session 32 — 2026-11-11 (emulator, debug build after 0.9.6: calendar import, schema 10)
+
+New: More → Calendar import. The app reads calendars of the phone (read-only, `READ_CALENDAR`),
+groups a chosen calendar's entries by title (fixtures of one team, repeated titles, the rest) and
+imports the groups that are switched on as calendar events, with per-group defaults (event type,
+duration, key event). Imported events carry `externalSource` / `externalId` (schema 10).
+
+Test data: a synthetic device-only calendar written with `content insert` on the emulator: a weekly
+practice (each written three times, two copies marked deleted, as a team app was seen to do),
+four fixtures of one team against changing opponents, one single entry.
+
+| Check | Result |
+|---|---|
+| Upgrade 0.9.6 → this build over existing data (migration 9 → 10) | PASS, app opens with its data |
+| CI1–CI8 of `docs/WORKFLOWS.md` §18a | PASS |
+| Soft-deleted copies are not counted or imported (10 upcoming entries, 9 imported, the single entry stays off) | PASS |
+| Group settings survive unticking and re-ticking the calendar | PASS |
+
+Not tested: denying the permission twice (system settings path), a calendar that disappears while
+chosen (unit-tested in `CalendarImportPlannerTest` only), the background worker path (it calls the
+same `sync()` as the app start, which was tested), iOS (no reader yet; the screen says so).
+
+NOTE-45: an imported event follows its calendar entry; an edit made to it in MyHealth (time,
+duration, type) is overwritten at the next check. Notes and a linked activity are kept.
+NOTE-46: hand-made events or planned sessions for the same appointments are not recognised as
+duplicates; they have to be removed by hand once.
+

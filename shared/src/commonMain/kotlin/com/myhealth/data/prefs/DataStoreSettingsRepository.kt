@@ -41,6 +41,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
         suggestionsStale = this[SettingsKeys.SUGGESTIONS_STALE] ?: defaults.suggestionsStale,
         cycleTrackingEnabled = this[SettingsKeys.CYCLE_TRACKING_ENABLED] ?: defaults.cycleTrackingEnabled,
         settledLinkKeys = this[SettingsKeys.SETTLED_LINK_KEYS].orEmpty(),
+        calendarImportJson = this[SettingsKeys.CALENDAR_IMPORT] ?: defaults.calendarImportJson,
     )
 
     override suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -60,6 +61,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             prefs[SettingsKeys.SUGGESTIONS_STALE] = next.suggestionsStale
             prefs[SettingsKeys.CYCLE_TRACKING_ENABLED] = next.cycleTrackingEnabled
             prefs[SettingsKeys.SETTLED_LINK_KEYS] = next.settledLinkKeys
+            prefs[SettingsKeys.CALENDAR_IMPORT] = next.calendarImportJson
         }
     }
 

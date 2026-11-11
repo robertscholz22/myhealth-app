@@ -51,6 +51,7 @@ import com.myhealth.ui.nutrition.NutritionScreen
 import com.myhealth.ui.onboarding.OnboardingScreen
 import com.myhealth.ui.running.RunningPrsScreen
 import com.myhealth.ui.settings.BackupScreen
+import com.myhealth.ui.settings.CalendarImportScreen
 import com.myhealth.ui.settings.IntegrationsScreen
 import com.myhealth.ui.settings.SettingsScreen
 import com.myhealth.ui.strength.ExerciseDetailScreen
@@ -344,6 +345,7 @@ fun MyHealthNavHost(
                     // ---- system ---------------------------------------------------------------
                     composable<SettingsRoute> { BackBar(Res.string.settings_title, onBack = { navController.popBackStack() }) { SettingsScreen() } }
                     composable<IntegrationsRoute> { BackBar(Res.string.more_entry_integrations, onBack = { navController.popBackStack() }) { IntegrationsScreen() } }
+                    composable<CalendarImportRoute> { BackBar(Res.string.calendar_import_title, onBack = { navController.popBackStack() }) { CalendarImportScreen() } }
                     composable<ImportRoute> { BackBar(Res.string.more_entry_import, onBack = { navController.popBackStack() }) { ImportScreen() } }
                     composable<BackupRoute> { BackBar(Res.string.more_entry_backup, onBack = { navController.popBackStack() }) { BackupScreen() } }
                     composable<GarminDirectRoute> {

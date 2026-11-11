@@ -73,6 +73,10 @@ class IosAppGraph : CoreGraph() {
 
     override val backupContent: BackupContentSource get() = files
 
+    /** No EventKit reader yet: the calendar import says so on the iPhone. */
+    override val deviceCalendars: com.myhealth.domain.device.DeviceCalendarReader =
+        com.myhealth.domain.device.NoDeviceCalendarReader
+
     override val appVersion: String =
         NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String ?: "0.0.0"
 

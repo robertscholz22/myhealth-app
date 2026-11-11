@@ -266,6 +266,12 @@ object Migrations {
         db.execSQL("ALTER TABLE `meal_template` ADD COLUMN `servings` REAL NOT NULL DEFAULT 1")
     }
 
+    /** v10: imported calendar entries remember where they came from (calendar import). */
+    private val MIGRATION_9_10 = MigrationStep(9, 10) { db ->
+        db.execSQL("ALTER TABLE `calendar_event` ADD COLUMN `externalSource` TEXT")
+        db.execSQL("ALTER TABLE `calendar_event` ADD COLUMN `externalId` TEXT")
+    }
+
     /**
      * Every migration, oldest first. `.addMigrations(*ALL)` is the only call site, in each
      * platform's database builder, so adding a migration never changes it.
@@ -284,6 +290,7 @@ object Migrations {
             MIGRATION_6_7,
             MIGRATION_7_8,
             MIGRATION_8_9,
+            MIGRATION_9_10,
         )
 }
 

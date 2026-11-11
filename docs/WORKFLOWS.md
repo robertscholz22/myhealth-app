@@ -241,6 +241,21 @@ the Result column below is still the 0.9.5 run of session 30.
 | HC7 | Optional power permission | Grant cycling power later | Recent rides are re-read with power; nothing duplicated | PASS (BUG-25) |
 | HC8 | New data arrives | New workout and weight in Health Connect → Sync now | Activity, load and weight update | PASS |
 
+## 18a. Calendar import
+
+Added after 0.9.6 (schema 10). Results are from VERIFICATION session 32 (emulator, synthetic calendar).
+
+| ID | Workflow | Steps | Expected | Result |
+|---|---|---|---|---|
+| CI1 | Allow access | More → Calendar import → Allow calendar access | System prompt; afterwards the phone's calendars are listed with their upcoming count | PASS |
+| CI2 | Choose a calendar | Tick a calendar | Its entries are grouped (matches of a team, repeated titles, other); match and practice groups are switched on and imported at once | PASS |
+| CI3 | Group defaults | Change "Import as", duration, key event | The upcoming events of that group change in place | PASS |
+| CI4 | Switch a group off / on | Toggle the group | Its upcoming events are removed / come back | PASS |
+| CI5 | Cancelled entry | The calendar's app deletes an entry → Check now | The event disappears from MyHealth | PASS |
+| CI6 | Delete in MyHealth | Delete an imported event in the day view | It is not imported again; "Bring back" restores it | PASS |
+| CI7 | Untick the calendar | Untick → tick | All its upcoming events are removed → imported again with the stored group settings | PASS |
+| CI8 | Sync without the screen | Entry added in the calendar → restart the app | The event is there after the start-up sync | PASS |
+
 ## 19. Settings
 
 | ID | Workflow | Steps | Expected | Result |

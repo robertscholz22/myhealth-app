@@ -20,6 +20,10 @@ data class CalendarEvent(
     val notes: String?,
     val createdAtMillis: Long,
     val updatedAtMillis: Long,
+    /** Where an imported event came from (`calendar:<name>`); `null` for events made in the app. */
+    val externalSource: String? = null,
+    /** The entry's identity inside [externalSource]; the calendar import matches on it. */
+    val externalId: String? = null,
 )
 
 /**

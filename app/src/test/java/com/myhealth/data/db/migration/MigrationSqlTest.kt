@@ -136,11 +136,24 @@ class MigrationSqlTest {
         assertThat(createSqlOf(exportedEntities(8), "meal_template")).doesNotContain("servings")
     }
 
+    /** Calendar import: two nullable columns, so every existing event stays "made in the app". */
     @Test
-    fun the_exported_schema_is_version_nine_and_the_older_ones_are_untouched() {
-        val latest = Json.parseToJsonElement(schemaFile(9).readText()).jsonObject.getValue("database")
-        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("9")
-        (1..8).forEach { assertThat(schemaFile(it).isFile).isTrue() }
+    fun migration_9_to_10_adds_the_external_source_of_an_event() {
+        val v10 = createSqlOf(exportedEntities(10), "calendar_event")
+        assertThat(v10).contains("`externalSource` TEXT")
+        assertThat(v10).contains("`externalId` TEXT")
+        listOf(
+            "ALTER TABLE `calendar_event` ADD COLUMN `externalSource` TEXT",
+            "ALTER TABLE `calendar_event` ADD COLUMN `externalId` TEXT",
+        ).forEach { assertThat(flattenedMigrationSource()).contains(it) }
+        assertThat(createSqlOf(exportedEntities(9), "calendar_event")).doesNotContain("externalSource")
+    }
+
+    @Test
+    fun the_exported_schema_is_version_ten_and_the_older_ones_are_untouched() {
+        val latest = Json.parseToJsonElement(schemaFile(10).readText()).jsonObject.getValue("database")
+        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("10")
+        (1..9).forEach { assertThat(schemaFile(it).isFile).isTrue() }
         // `strength_*` exists only from v6 on: v5 must not have grown a table retroactively.
         assertThat(schemaFile(5).readText()).doesNotContain("strength_workout")
         // … and `exercise_progress` only from v7 on.
@@ -175,8 +188,8 @@ class MigrationSqlTest {
         entities.getValue(table).indices
 
     @Test
-    fun p20_2_the_steps_chain_1_to_9_and_each_platform_migration_runs_exactly_their_sql() {
-        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..8).map { it to it + 1 })
+    fun p20_2_the_steps_chain_1_to_10_and_each_platform_migration_runs_exactly_their_sql() {
+        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..9).map { it to it + 1 })
         val source = flattenedMigrationSource()
         Migrations.STEPS.flatMap { it.statements }.forEach { assertThat(source).contains(it) }
 

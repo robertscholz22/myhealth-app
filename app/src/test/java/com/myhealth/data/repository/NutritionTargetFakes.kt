@@ -125,6 +125,8 @@ internal class FakeTargetPlanRepository : PlanRepository {
 
 internal class FakeTargetCalendarRepository : CalendarRepository {
 
+    override suspend fun importedEvents(): List<CalendarEvent> = emptyList()
+
     var occurrences: List<EventOccurrence> = emptyList()
 
     override fun observeOccurrences(fromDay: Long, toDay: Long): Flow<List<EventOccurrence>> =

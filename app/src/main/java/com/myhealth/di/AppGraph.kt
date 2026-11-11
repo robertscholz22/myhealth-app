@@ -3,6 +3,8 @@ package com.myhealth.di
 import android.app.Application
 import androidx.work.WorkManager
 import com.myhealth.BuildConfig
+import com.myhealth.data.calendar.AndroidDeviceCalendarReader
+import com.myhealth.domain.device.DeviceCalendarReader
 import com.myhealth.data.backup.AndroidBackupContentSource
 import com.myhealth.data.backup.BackupContentSource
 import com.myhealth.data.db.MyHealthDatabase
@@ -54,6 +56,8 @@ class AppGraph(private val app: Application) : CoreGraph() {
     override val backupContent: BackupContentSource by lazy { AndroidBackupContentSource(app) }
 
     override val appVersion: String = BuildConfig.VERSION_NAME
+
+    override val deviceCalendars: DeviceCalendarReader by lazy { AndroidDeviceCalendarReader(app) }
 
     override val settings: SettingsRepository by lazy { DataStoreSettingsRepository(app) }
 

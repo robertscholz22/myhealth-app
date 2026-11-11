@@ -32,6 +32,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class GoalEditRoute(val id: Long = -1)
 @Serializable data object SettingsRoute
 @Serializable data object IntegrationsRoute
+@Serializable data object CalendarImportRoute
 @Serializable data object ImportRoute
 @Serializable data object BackupRoute
 @Serializable data object OnboardingRoute

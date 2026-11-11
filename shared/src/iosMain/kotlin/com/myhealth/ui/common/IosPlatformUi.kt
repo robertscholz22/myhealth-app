@@ -37,6 +37,10 @@ class IosPlatformUi(private val graph: IosAppGraph) : PlatformUi {
         }
     }
 
+    /** No calendar reader on iOS yet (`NoDeviceCalendarReader`), so there is nothing to ask for. */
+    @Composable
+    override fun rememberCalendarAccessRequest(onResult: (granted: Boolean) -> Unit): () -> Unit = { onResult(false) }
+
     /** iOS has no store page for Apple Health: it is part of the system. */
     override fun openHealthAppStore() = Unit
 

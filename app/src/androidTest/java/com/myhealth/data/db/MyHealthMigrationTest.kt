@@ -586,6 +586,37 @@ class MyHealthMigrationTest {
         }
     }
 
+    /** Calendar import: an event made before v10 has no external source and is still readable. */
+    @Test
+    fun migration_9_to_10_leaves_existing_events_without_an_external_source() {
+        migrations.createDatabase(MIGRATION_DB, 9).use { v9 ->
+            v9.execSQL(
+                "INSERT INTO calendar_event (id, type, title, startDay, isKeyEvent, createdAtMillis, updatedAtMillis) " +
+                    "VALUES (1, 'SOCCER_TRAINING', 'Practice', 20000, 0, 1, 1)",
+            )
+        }
+
+        migrations.runMigrationsAndValidate(MIGRATION_DB, 10, true, *Migrations.ALL)
+
+        val migrated = Room.databaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            MyHealthDatabase::class.java,
+            MIGRATION_DB,
+        ).addMigrations(*Migrations.ALL).build()
+        try {
+            runTest {
+                val dao = migrated.eventDao()
+                val event = checkNotNull(dao.getById(1L))
+                assertThat(event.externalSource).isNull()
+                assertThat(dao.getImported()).isEmpty()
+                dao.upsert(event.copy(id = 0, externalSource = "calendar:Team", externalId = "1|practice"))
+                assertThat(dao.getImported().map { it.externalId }).containsExactly("1|practice")
+            }
+        } finally {
+            migrated.close()
+        }
+    }
+
     private companion object {
         const val MIGRATION_DB = "migration-test.db"
     }

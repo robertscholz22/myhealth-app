@@ -20,6 +20,10 @@ interface PlatformUi {
     @Composable
     fun rememberHealthPermissionRequest(onResult: (granted: Set<String>) -> Unit): (permissions: Set<String>) -> Unit
 
+    /** Remembers the request for read access to the device's calendars; the result says whether it was granted. */
+    @Composable
+    fun rememberCalendarAccessRequest(onResult: (granted: Boolean) -> Unit): () -> Unit
+
     /** Opens the store page of the health-data app (install or update). */
     fun openHealthAppStore()
 

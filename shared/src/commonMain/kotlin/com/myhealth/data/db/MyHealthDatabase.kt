@@ -118,7 +118,7 @@ import com.myhealth.data.db.entity.WaterLogEntity
         // §P16 P16.1 per-exercise load progression
         ExerciseProgressEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

@@ -23,6 +23,7 @@ import com.myhealth.ui.nav.CycleRoute
 import com.myhealth.ui.nav.GoalsRoute
 import com.myhealth.ui.nav.ImportRoute
 import com.myhealth.ui.nav.IngredientsRoute
+import com.myhealth.ui.nav.CalendarImportRoute
 import com.myhealth.ui.nav.IntegrationsRoute
 import com.myhealth.ui.nav.LoadRoute
 import com.myhealth.ui.nav.MealTemplatesRoute
@@ -56,6 +57,7 @@ fun moreEntries(cycleTrackingEnabled: Boolean): List<MoreEntry> = buildList {
     add(MoreEntry(Res.string.more_entry_backup, BackupRoute))
     add(MoreEntry(Res.string.settings_title, SettingsRoute))
     add(MoreEntry(Res.string.more_entry_integrations, IntegrationsRoute))
+    add(MoreEntry(Res.string.calendar_import_title, CalendarImportRoute))
 }
 
 @Composable

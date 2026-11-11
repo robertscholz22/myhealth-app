@@ -29,6 +29,9 @@ class HealthSyncWorker(
 
         val rereadDays = inputData.getLong(KEY_REREAD_DAYS, NO_BACKFILL).takeIf { it >= 0 }
 
+        // The calendar import rides along with every sync; it needs no Health Connect.
+        if (backfillFromDay == null && rereadDays == null) graph.calendarImportService.sync()
+
         val outcome: Outcome<*> = if (backfillFromDay != null) {
             val backfill = graph.hcBackfill
                 ?: return Result.failure(failureData("Health Connect unavailable"))

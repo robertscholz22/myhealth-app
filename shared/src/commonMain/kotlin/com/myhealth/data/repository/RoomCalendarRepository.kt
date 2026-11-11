@@ -135,6 +135,9 @@ class RoomCalendarRepository(
     override suspend fun getEvent(id: Long): CalendarEvent? =
         withContext(ioDispatcher) { eventDao.getById(id)?.toDomain() }
 
+    override suspend fun importedEvents(): List<CalendarEvent> =
+        withContext(ioDispatcher) { eventDao.getImported().map { it.toDomain() } }
+
     /** Timestamps and the denormalized `recurrenceUntilDay` are maintained here, not by callers. */
     override suspend fun upsertEvent(event: CalendarEvent): Outcome<Long> =
         withContext(ioDispatcher) {

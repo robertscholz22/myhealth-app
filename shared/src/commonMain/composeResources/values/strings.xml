@@ -1201,4 +1201,39 @@
 
     <!-- ===== Load progression (ui/training/TrainingViewModel.kt, P16.2) ===== -->
     <string name="training_next_time_format">Next time: %1$s</string>
+
+    <!-- ===== Calendar import (ui/settings/CalendarImportScreen.kt) ===== -->
+    <string name="calendar_import_title">Calendar import</string>
+    <string name="calendar_import_intro">MyHealth reads the calendars you choose and keeps upcoming entries up to date: new ones are added, moved ones follow, cancelled ones disappear. Your phone's calendar is never changed.</string>
+    <string name="calendar_import_unsupported">Calendar import is not available on this device yet.</string>
+    <string name="calendar_import_access_needed">MyHealth needs permission to read your calendars.</string>
+    <string name="calendar_import_access_denied">Access was not granted. If the request no longer appears, allow Calendar for MyHealth in the system settings.</string>
+    <string name="calendar_import_action_allow">Allow calendar access</string>
+    <string name="calendar_import_calendars_title">Calendars</string>
+    <string name="calendar_import_calendars_empty">This phone has no calendars.</string>
+    <string name="calendar_import_calendar_local">On this phone only</string>
+    <string name="calendar_import_calendar_account">Account calendar</string>
+    <string name="calendar_import_calendar_summary">%1$s · upcoming: %2$d</string>
+    <string name="calendar_import_groups_hint">MyHealth sorted the entries of this calendar into groups. Choose for each group whether and how it is imported.</string>
+    <string name="calendar_import_groups_empty">No entries in this calendar.</string>
+    <string name="calendar_import_group_fixtures">Matches of %1$s</string>
+    <string name="calendar_import_group_other">Other entries</string>
+    <string name="calendar_import_group_upcoming">Upcoming: %1$d · next %2$s</string>
+    <string name="calendar_import_group_none_upcoming">None upcoming</string>
+    <string name="calendar_import_group_examples">For example: %1$s</string>
+    <string name="calendar_import_group_switch">Import %1$s</string>
+    <string name="calendar_import_rule_type">Import as</string>
+    <string name="calendar_import_rule_duration">Duration (min)</string>
+    <string name="calendar_import_rule_duration_from_calendar">Empty: as in the calendar (usually %1$d min)</string>
+    <string name="calendar_import_rule_duration_from_calendar_plain">Empty: as in the calendar</string>
+    <string name="calendar_import_rule_key">Key event</string>
+    <string name="calendar_import_rule_key_hint">The training plan tapers towards key events.</string>
+    <string name="calendar_import_status_title">Status</string>
+    <string name="calendar_import_status_count">Upcoming entries in your MyHealth calendar: %1$d</string>
+    <string name="calendar_import_status_checked">Last checked %1$s</string>
+    <string name="calendar_import_status_removed">Removed by you in MyHealth and not imported again: %1$d</string>
+    <string name="calendar_import_action_restore">Bring back</string>
+    <string name="calendar_import_status_missing">Not found on this phone any more: %1$s. Its entries stay as they are.</string>
+    <string name="calendar_import_action_check">Check now</string>
+    <string name="calendar_import_error">The calendars could not be read. Try again.</string>
 </resources>

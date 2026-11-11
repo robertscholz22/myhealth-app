@@ -96,6 +96,8 @@ data class AppSettings(
      * rather than in `suggestion_batch.status` so the fix needs no schema migration.
      */
     val suggestionsStale: Boolean = false,
+    /** The calendar import's `CalendarImportConfig` as JSON; empty until calendars are chosen. */
+    val calendarImportJson: String = "",
     /**
      * Event ↔ activity link suggestions that are settled (POLISH-48, POLISH-25): dismissed by the
      * user or linked automatically once. Keys are `eventId|occurrenceDay|activityId`; a settled

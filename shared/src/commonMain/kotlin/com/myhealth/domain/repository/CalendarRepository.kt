@@ -35,6 +35,9 @@ interface CalendarRepository {
 
     suspend fun getEvent(id: Long): CalendarEvent?
 
+    /** The events that came from an outside calendar (`externalSource` set), past ones included. */
+    suspend fun importedEvents(): List<CalendarEvent>
+
     suspend fun upsertEvent(event: CalendarEvent): Outcome<Long>
 
     suspend fun deleteEvent(id: Long): Outcome<Unit>

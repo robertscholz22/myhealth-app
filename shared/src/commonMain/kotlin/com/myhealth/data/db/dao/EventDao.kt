@@ -39,6 +39,10 @@ interface EventDao {
     @Query("SELECT * FROM calendar_event WHERE isKeyEvent = 1 AND startDay >= :fromDay ORDER BY startDay ASC")
     fun observeKeyEvents(fromDay: Long): Flow<List<CalendarEventEntity>>
 
+    /** Every event the calendar import wrote (v10). */
+    @Query("SELECT * FROM calendar_event WHERE externalSource IS NOT NULL")
+    suspend fun getImported(): List<CalendarEventEntity>
+
     @Query("SELECT * FROM calendar_event WHERE linkedActivityId = :activityId")
     suspend fun getByLinkedActivity(activityId: Long): List<CalendarEventEntity>
 

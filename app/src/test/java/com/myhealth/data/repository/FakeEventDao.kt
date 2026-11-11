@@ -29,6 +29,9 @@ class FakeEventDao : EventDao {
 
     override suspend fun getById(id: Long): CalendarEventEntity? = events.value[id]
 
+    override suspend fun getImported(): List<CalendarEventEntity> =
+        events.value.values.filter { it.externalSource != null }
+
     override suspend fun deleteById(id: Long) {
         events.value = events.value - id
         overrides.value = overrides.value.filterValues { it.eventId != id }
