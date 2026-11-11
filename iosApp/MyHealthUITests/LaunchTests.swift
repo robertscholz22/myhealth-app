@@ -238,9 +238,16 @@ final class LaunchTests: XCTestCase {
             swipes += 1
         }
         expect(add, app, "41_nutrition")
-        add.tap()
+        // A tap while the list is still settling after a swipe is swallowed (seen on 0.10.2: the
+        // list had moved 2.7 pt between the two captures and the screen never opened).
+        let recents = app.staticTexts["Recents"].firstMatch
+        for _ in 0..<3 {
+            sleep(1)
+            add.tap()
+            if recents.waitForExistence(timeout: 5) { break }
+        }
         // "Scan" is the last tab of a scrolling tab row.
-        expect(app.staticTexts["Recents"].firstMatch, app, "42_add_food")
+        expect(recents, app, "42_add_food")
         let scanTab = app.descendants(matching: .any)["Scan"].firstMatch
         var tabSwipes = 0
         while !(scanTab.exists && scanTab.isHittable) && tabSwipes < 3 {
