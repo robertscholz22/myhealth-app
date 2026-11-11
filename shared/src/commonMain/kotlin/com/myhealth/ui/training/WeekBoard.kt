@@ -1,5 +1,6 @@
 package com.myhealth.ui.training
 
+import com.myhealth.domain.engine.suggest.SessionCatalog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -125,6 +126,8 @@ private fun FixedEventRow(event: EventOccurrence) {
                     event.type.displayName(),
                     formatMinuteOfDay(event.effectiveStartMinuteOfDay) ?: stringResource(Res.string.training_all_day),
                     event.effectiveDurationMin?.let { "$it min" },
+                    // The expected load the plan counts for it (same estimate as the suggester).
+                    SessionCatalog.estTrimpForEvent(event.type, event.effectiveDurationMin)?.let { "${mathRound(it)} AU" },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

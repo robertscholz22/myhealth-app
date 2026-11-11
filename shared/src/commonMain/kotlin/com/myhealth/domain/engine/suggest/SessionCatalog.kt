@@ -106,6 +106,14 @@ object SessionCatalog {
         else -> null
     }
 
+    /**
+     * The load a fixed event is expected to bring, exactly as the suggester seeds it: the catalog
+     * row's RPE over the event's own length (the row's default when it has none). `null` for
+     * events that are not training.
+     */
+    fun estTrimpForEvent(eventType: EventType, durationMin: Int?): Double? =
+        forEvent(eventType)?.let { it.estTrimpFor(durationMin ?: it.defaultMin) }
+
     /** See [forEvent]: the synthetic race row (not part of [ALL], never suggested). */
     val RACE_ENTRY: CatalogEntry = CatalogEntry(
         sessionType = SessionType.TEMPO_RUN,

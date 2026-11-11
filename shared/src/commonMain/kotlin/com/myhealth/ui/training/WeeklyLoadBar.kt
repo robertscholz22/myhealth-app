@@ -1,5 +1,7 @@
 package com.myhealth.ui.training
 
+import com.myhealth.domain.engine.suggest.SessionCatalog
+import com.myhealth.domain.model.EventOccurrence
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -60,6 +62,9 @@ data class WeeklyLoadSums(
  * - **planned** sums `estimatedTrimp` over the sessions still outstanding (`PLANNED`): a session
  *   that was completed has already turned into real load and would otherwise be counted twice,
  *   and a `SKIPPED`/`MOVED` one will never happen at all.
+ * - **events** add what the fixed events still to come (matches, soccer trainings, races from
+ *   [today] on, without a linked activity) are expected to bring — the same estimate the
+ *   suggester plans around, so the bar and the proposal agree.
  * - **actual** sums `daily_load.trimp`, i.e. what the load engine (§3.2) actually measured.
  * - **target** is the suggester's weekly AU budget (§3.5.2), passed through unchanged.
  */
@@ -67,10 +72,15 @@ fun weeklyLoadSums(
     planned: List<PlannedSession>,
     target: Double,
     actual: List<DailyLoad>,
+    events: List<EventOccurrence> = emptyList(),
+    today: Long = Long.MIN_VALUE,
 ): WeeklyLoadSums = WeeklyLoadSums(
     planned = planned
         .filter { it.status == PlannedStatus.PLANNED }
-        .sumOf { it.estimatedTrimp ?: 0.0 },
+        .sumOf { it.estimatedTrimp ?: 0.0 } +
+        events
+            .filter { it.occurrenceDay >= today && it.linkedActivityId == null }
+            .sumOf { SessionCatalog.estTrimpForEvent(it.type, it.effectiveDurationMin) ?: 0.0 },
     target = target.coerceAtLeast(0.0),
     actual = actual.sumOf { it.trimp },
 )

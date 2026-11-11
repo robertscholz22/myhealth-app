@@ -1,5 +1,8 @@
 package com.myhealth.ui.training
 
+import com.myhealth.domain.engine.suggest.SessionCatalog
+import com.myhealth.domain.model.EventOccurrence
+import com.myhealth.domain.model.EventType
 import com.google.common.truth.Truth.assertThat
 import com.myhealth.domain.model.DailyLoad
 import com.myhealth.domain.model.Intensity
@@ -38,6 +41,34 @@ class WeeklyLoadBarTest {
         assertThat(sums.target).isWithin(1e-9).of(620.0)
         assertThat(sums.actual).isWithin(1e-9).of(140.5)
         assertThat(sums.onTarget).isFalse()
+    }
+
+    @Test
+    fun fixed_events_still_to_come_count_as_planned_load() {
+        fun event(day: Long, type: EventType, minutes: Int?, linked: Long? = null) = EventOccurrence(
+            eventId = day, occurrenceDay = day, type = type, effectiveTitle = "x",
+            effectiveStartMinuteOfDay = null, effectiveDurationMin = minutes, isOverride = false,
+            linkedActivityId = linked, sportType = null, targetDistanceMeters = null, isKeyEvent = false,
+        )
+        val match = SessionCatalog.estTrimpForEvent(EventType.SOCCER_MATCH, 90)!!
+        val practice = SessionCatalog.estTrimpForEvent(EventType.SOCCER_TRAINING, null)!!
+        assertThat(match).isGreaterThan(0.0)
+
+        val sums = weeklyLoadSums(
+            planned = listOf(session(id = 1L, trimp = 50.0, status = PlannedStatus.PLANNED)),
+            target = 300.0,
+            actual = emptyList(),
+            events = listOf(
+                event(monday, EventType.SOCCER_TRAINING, 90),          // before today: not outstanding
+                event(monday + 2, EventType.SOCCER_MATCH, 90),
+                event(monday + 3, EventType.SOCCER_TRAINING, null),    // no length: the catalog default
+                event(monday + 4, EventType.SOCCER_MATCH, 90, linked = 7L), // played: in `actual`
+                event(monday + 5, EventType.APPOINTMENT, 60),          // not training
+            ),
+            today = monday + 1,
+        )
+
+        assertThat(sums.planned).isWithin(1e-9).of(50.0 + match + practice)
     }
 
     @Test

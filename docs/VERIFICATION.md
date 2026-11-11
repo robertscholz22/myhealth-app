@@ -970,3 +970,13 @@ duration, type) is overwritten at the next check. Notes and a linked activity ar
 NOTE-46: hand-made events or planned sessions for the same appointments are not recognised as
 duplicates; they have to be removed by hand once.
 
+## Session 33 — 2026-11-11 (emulator, 0.10.1: expected load of calendar events on the Training screen)
+
+BUG-31: a match, soccer training or race from the calendar showed no AU on the Training screen and
+was left out of the week's "Planned" total, although the suggester already counted it with the
+catalog estimate. Fixed: the event row shows that estimate (`SessionCatalog.estTrimpForEvent`), and
+"Planned" adds the events from today on that have no linked activity (`WeeklyLoadBarTest`).
+
+Emulator (synthetic calendar from session 32): a 90 min practice reads "176 AU", an 80 min match
+"204 AU", "Planned" 380 AU for the week holding both. PASS.
+
