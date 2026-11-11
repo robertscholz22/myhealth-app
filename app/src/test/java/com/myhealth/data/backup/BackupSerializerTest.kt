@@ -113,4 +113,26 @@ class BackupSerializerTest {
         assertThat(decoded).isInstanceOf(Outcome.Err::class.java)
         assertThat((decoded as Outcome.Err).error).isInstanceOf(AppError.Parse::class.java)
     }
+
+    @Test
+    fun bug29_json_that_is_not_a_backup_is_refused() {
+        // Every field of the document has a default and unknown keys are ignored, so a foreign
+        // JSON object used to decode as an empty backup — and Replace then wiped the device.
+        listOf("{}", """{"name":"something","items":[1,2,3]}""", """{"schemaVersion":9}""").forEach { foreign ->
+            val decoded = BackupSerializer.decodeFromString(foreign)
+
+            assertThat(decoded).isInstanceOf(Outcome.Err::class.java)
+            assertThat((decoded as Outcome.Err).error).isInstanceOf(AppError.Parse::class.java)
+        }
+    }
+
+    @Test
+    fun bug29_an_export_of_an_empty_device_still_decodes() {
+        // It is stamped with its time and app version, which is what tells it from foreign JSON.
+        val empty = BackupFile(exportedAtMillis = 1_700_000_000_000L, appVersion = "0.9.6")
+
+        val decoded = BackupSerializer.decodeFromString(BackupSerializer.encodeToString(empty))
+
+        assertThat(decoded).isInstanceOf(Outcome.Ok::class.java)
+    }
 }

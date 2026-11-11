@@ -128,6 +128,8 @@ fun MyHealthNavHost(
                             onOpenTraining = { navController.navigate(TrainingRoute) },
                             onReviewSuggestions = { navController.navigate(SuggestionReviewRoute) },
                             onOpenCycle = { navController.navigate(CycleRoute) },
+                            onOpenBody = { navController.navigate(BodyRoute) },
+                            onOpenIntegrations = { navController.navigate(IntegrationsRoute) },
                         )
                     }
                     composable<CalendarRoute> {

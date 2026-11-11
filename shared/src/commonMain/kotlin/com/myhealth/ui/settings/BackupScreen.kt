@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
@@ -16,6 +18,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.myhealth.data.time.systemClock
 import com.myhealth.data.time.today
@@ -53,10 +58,32 @@ fun BackupScreen(modifier: Modifier = Modifier) {
     val exportDocument = rememberDocumentCreator(BACKUP_MIME) { uri -> vm.export(uri) }
     val importDocument = rememberDocumentOpener(persistReadAccess = false) { uri -> vm.import(uri) }
 
+    // POLISH-40: REPLACE wipes the device, so it asks before the picker opens.
+    var confirmReplace by remember { mutableStateOf(false) }
+    if (confirmReplace) {
+        AlertDialog(
+            onDismissRequest = { confirmReplace = false },
+            title = { Text(stringResource(Res.string.backup_replace_confirm_title)) },
+            text = { Text(stringResource(Res.string.backup_replace_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmReplace = false
+                    importDocument(listOf(BACKUP_MIME, "*/*"))
+                }) { Text(stringResource(Res.string.backup_replace_confirm_action)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmReplace = false }) { Text(stringResource(Res.string.action_cancel)) }
+            },
+        )
+    }
+
     BackupContent(
         state = state,
         onExport = { exportDocument(defaultBackupFileName(systemClock().today())) },
-        onImport = { importDocument(listOf(BACKUP_MIME, "*/*")) },
+        onImport = {
+            if (state.importMode == BackupMode.REPLACE) confirmReplace = true
+            else importDocument(listOf(BACKUP_MIME, "*/*"))
+        },
         onMode = vm::setImportMode,
         onDismissError = vm::dismissError,
         modifier = modifier.fillMaxSize(),

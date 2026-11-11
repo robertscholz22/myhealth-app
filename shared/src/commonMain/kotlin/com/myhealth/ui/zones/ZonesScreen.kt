@@ -32,7 +32,7 @@ import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVm
+import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.engine.load.HrBounds
 import com.myhealth.domain.engine.load.HrZone
 import com.myhealth.domain.engine.load.HrZoneModel
@@ -54,7 +54,7 @@ import com.myhealth.ui.training.formatPaceSecPerKm
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ZonesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
-    val vm = rememberVm { graph ->
+    val vm = rememberDayVm { graph ->
         ZonesViewModel(
             graph.profileRepo,
             graph.activityRepo,

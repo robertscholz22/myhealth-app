@@ -3,6 +3,7 @@ package com.myhealth.domain.engine.suggest
 import com.myhealth.domain.model.EventType
 import com.myhealth.domain.model.Intensity
 import com.myhealth.domain.model.PlannedSession
+import com.myhealth.domain.model.PlannedStatus
 import com.myhealth.domain.model.RationaleEntry
 import com.myhealth.domain.model.SessionType
 import com.myhealth.domain.model.SportGroup
@@ -137,8 +138,11 @@ data class SuggestionGrid(val startDay: Long, val endDayExclusive: Long, val day
                 val eventItems = input.events
                     .filter { it.occurrenceDay == day }
                     .mapNotNull { occurrence -> eventItem(occurrence.type, occurrence.effectiveDurationMin) }
+                // BUG-24: every session in `lockedPlanned` is fixed — locked, planned by hand or
+                // already completed — and occupies its day. Only locked ones were seeded, so a
+                // hand-planned long run got a second long run next to it. A skipped one frees its day.
                 val lockedItems = input.lockedPlanned
-                    .filter { it.day == day && it.locked }
+                    .filter { it.day == day && it.status != PlannedStatus.SKIPPED }
                     .map(::lockedItem)
                 DayPlan(day = day, items = eventItems + lockedItems)
             }

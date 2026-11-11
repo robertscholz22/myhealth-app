@@ -113,6 +113,12 @@ object EventActivityLinker {
     fun confidence(occurrence: EventOccurrence, activity: ActivitySummary, zone: TimeZone): Double {
         if (activity.day != occurrence.occurrenceDay) return 0.0
         val sportScore = sportScore(occurrence, activity)
+        // POLISH-26: an all-day event has no time to match on, so a wrong-sport activity on the
+        // same day says nothing (an all-day soccer event reached 60 % with an indoor ride). A
+        // *timed* overlap still counts: a match recorded as a run is a real case.
+        if (occurrence.effectiveStartMinuteOfDay == null && occurrence.sportType != null && sportScore == 0.0) {
+            return 0.0
+        }
         val startMinute = occurrence.effectiveStartMinuteOfDay
         val (overlapRatio, startScore) = if (startMinute == null) {
             1.0 to 0.5

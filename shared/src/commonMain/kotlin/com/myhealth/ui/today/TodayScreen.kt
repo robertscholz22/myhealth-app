@@ -25,7 +25,7 @@ import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVm
+import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.engine.calendar.LinkProposal
 import com.myhealth.domain.model.ActivitySource
 import com.myhealth.domain.model.ActivitySummary
@@ -63,8 +63,10 @@ fun TodayScreen(
     onReviewSuggestions: () -> Unit,
     onOpenCycle: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenBody: () -> Unit = {},
+    onOpenIntegrations: () -> Unit = {},
 ) {
-    val vm = rememberVm { graph ->
+    val vm = rememberDayVm { graph ->
         TodayViewModel(
             graph.activityRepo,
             graph.bodyRepo,
@@ -81,6 +83,7 @@ fun TodayScreen(
             graph.cycleRepo,
             graph.strengthRepo,
             graph.clock,
+            graph.settings,
         )
     }
     val state by vm.state.collectAsStateWithLifecycle()
@@ -98,6 +101,8 @@ fun TodayScreen(
         onOpenTraining = onOpenTraining,
         onReviewSuggestions = onReviewSuggestions,
         onOpenCycle = onOpenCycle,
+        onOpenBody = onOpenBody,
+        onOpenIntegrations = onOpenIntegrations,
         modifier = modifier,
     )
 }
@@ -118,6 +123,8 @@ internal fun TodayContent(
     onReviewSuggestions: () -> Unit,
     onOpenCycle: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenBody: () -> Unit = {},
+    onOpenIntegrations: () -> Unit = {},
 ) {
     // P8.6 — pull down anywhere on Today to run the same sync as the banner's "Sync now".
     PullToRefreshBox(
@@ -138,6 +145,8 @@ internal fun TodayContent(
             onOpenTraining = onOpenTraining,
             onReviewSuggestions = onReviewSuggestions,
             onOpenCycle = onOpenCycle,
+            onOpenBody = onOpenBody,
+            onOpenIntegrations = onOpenIntegrations,
         )
     }
 }
@@ -157,13 +166,15 @@ private fun TodayList(
     onReviewSuggestions: () -> Unit,
     onOpenCycle: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenBody: () -> Unit = {},
+    onOpenIntegrations: () -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(SCREEN_PADDING),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item { SyncStatusBanner(state, onSyncNow) }
+        item { SyncStatusBanner(state, onSyncNow, onOpenIntegrations) }
         if (state.linkSuggestions.isNotEmpty()) {
             item { SuggestedLinksCard(state.linkSuggestions, onAcceptSuggestion, onDismissSuggestion) }
         }
@@ -185,8 +196,9 @@ private fun TodayList(
             item { TodayCycleCard(state.cycleStatus, onOpenCycle) }
         }
         item { TodayActivitiesSection(state.activities, onOpenActivity) { onOpenDay(state.day) } }
-        item { BodyChip(state.weightChipText) }
-        item { SleepTile(state.sleep) }
+        // POLISH-23: both open the Body screen (weight, resting HR and sleep history).
+        item { BodyChip(state.weightChipText, onOpenBody) }
+        item { SleepTile(state.sleep, onOpenBody) }
     }
 }
 
@@ -279,9 +291,15 @@ private fun NutritionCard(
 }
 
 @Composable
-private fun SyncStatusBanner(state: TodayUiState, onSyncNow: () -> Unit) {
+private fun SyncStatusBanner(state: TodayUiState, onSyncNow: () -> Unit, onOpenIntegrations: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (state.lastSyncError != null) {
+        if (state.lastSyncError != null && state.lastSyncError.contains("permission", ignoreCase = true)) {
+            // POLISH-22: a new user has not granted Health Connect access yet. Retrying cannot fix
+            // that; the banner says where the access is given and leads there.
+            // Retry stays: once access is granted, it is the way out of this banner.
+            ErrorBanner(message = stringResource(Res.string.today_sync_needs_permission), onRetry = onSyncNow)
+            Button(onClick = onOpenIntegrations) { Text(stringResource(Res.string.today_open_integrations)) }
+        } else if (state.lastSyncError != null) {
             ErrorBanner(message = stringResource(Res.string.today_sync_failed, state.lastSyncError), onRetry = onSyncNow)
         } else {
             Row(
@@ -335,15 +353,21 @@ private fun TodayActivitiesSection(
 }
 
 @Composable
-private fun BodyChip(weightChipText: String?) {
-    SectionCard(title = stringResource(Res.string.today_body_title)) {
+private fun BodyChip(weightChipText: String?, onOpen: () -> Unit) {
+    SectionCard(
+        title = stringResource(Res.string.today_body_title),
+        modifier = Modifier.clickable(onClick = onOpen),
+    ) {
         Text(weightChipText ?: stringResource(Res.string.today_no_weight), style = MaterialTheme.typography.bodyMedium)
     }
 }
 
 @Composable
-private fun SleepTile(sleep: SleepRecord?) {
-    SectionCard(title = stringResource(Res.string.today_sleep_title)) {
+private fun SleepTile(sleep: SleepRecord?, onOpen: () -> Unit) {
+    SectionCard(
+        title = stringResource(Res.string.today_sleep_title),
+        modifier = Modifier.clickable(onClick = onOpen),
+    ) {
         if (sleep == null) {
             Text(stringResource(Res.string.today_no_sleep), style = MaterialTheme.typography.bodyMedium)
         } else {

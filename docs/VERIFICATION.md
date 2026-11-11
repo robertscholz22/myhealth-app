@@ -834,3 +834,112 @@ Notes:
 - NOTE-37: Running PRs and Load & Recovery have no top bar or back arrow; Bike & power and Zones & paces do.
 - NOTE-38: two workflows could only be checked in part with this data: the seeder writes no treadmill runs (the PR toggle saves but changes nothing visible), and in a recovery week with the late-luteal spin preference a run cap of 1 and of 3 produce the same proposal.
 - NOTE-39: WorkManager refuses a forced periodic run before its period ("Delaying execution … before schedule"), so X6 moved the emulator clock 6 h ahead (adb root), force-ran the job with the launcher in front ("Worker result SUCCESS", "Last synced" advanced), then restored automatic time and ran Sync now.
+
+## Session 30 — 2026-11-10 (emulator, published v0.9.5 APK: workflow list completed and rerun)
+Second, independent pass over `docs/WORKFLOWS.md`. The list was first checked against the screens, routes, dialogs and settings in the source: 39 workflows were missing (onboarding Back and Health Connect step, all-day and multi-day events, races, event validation, day-detail sleep and cycle, session steps, activity fulfilling a plan, set feedback and progression, equipment and mobility settings, diary edge cases, unit conversion, camera permission, archive handling, barcode on file, same-day weight, cycle across the app, broken and unsupported import files, import history, wrong and older backups, revoked and optional Health Connect permissions, new data arriving, HR overrides, German locale, large font, update over the previous release, reboot, day rollover). The list now has 156 rows. Every row was then run again on `myhealth_api35` with the release APK, a synthetic profile, seeder data and generated files (`run_5k.fit`, `ride_power.fit`, `garmin_en.csv` from the test fixtures, a truncated `.fit`, a `.txt`, a foreign `.json`). Result: 118 PASS, 28 PART, 6 FAIL, 4 N/T (iOS rows: simulator CI of session 29, not rerun).
+
+| Area | Result | Evidence |
+|---|---|---|
+| First start (ON1–ON5) | PASS, POLISH-22 | Range texts per field; Back keeps the input; relaunch skips onboarding; still no Health Connect step |
+| Health Connect (HC1–HC8) | PASS / PART | Grant, sync, backfill as in session 29. Sleep revoked → row "Not granted", the other streams still sync, "Grant permissions" lists only the missing type. Power granted later → rides re-read, power bests appear, nothing duplicated. Re-seeded data arrives on the next sync |
+| Today (TD1–TD7) | PASS / PART / **FAIL** | Cards, links (POLISH-25, 26, 48), Done on the plan card; **BUG-30** day rollover |
+| Calendar, day detail (CA1–CA11, DD1–DD5) | PASS / PART | All-day, multi-day, race with target distance, recurring with "This occurrence"; BUG-23, POLISH-24, 31, 47, 58 |
+| Training plan (TR1–TR12) | PASS / PART / **FAIL** | Proposal, accept, lock, hand sessions, week browsing; a synced run marks the planned run "Completed · Linked" and the week's Actual follows; **BUG-24** reproduced; POLISH-49, 50, 62 |
+| Strength and mobility (ST1–ST14) | PASS / PART | Set log with feedback → next time "10 reps", "Last: Too easy on 10 Nov"; equipment filter and mobility switch; POLISH-28, 29, 30, 51, 53 |
+| Goals (GO1–GO6) | PASS | As in session 29; POLISH-32 |
+| Activities (AC1–AC6) | PASS except AC5 | **BUG-25** reproduced in both halves (stale load after delete; the deleted ride returns on a re-read); POLISH-46 |
+| Performance (PF1–PF5) | PASS / PART | POLISH-33, 34, 54 |
+| Nutrition (NU1–NU8, AF1–AF6) | PASS / PART | Unit conversion g / serving / piece; BUG-28 reproduced; POLISH-36 widened (a day with calendar soccer training and a completed strength session is typed Rest) |
+| Ingredients and scanning (IN1–IN14) | PASS / PART / N/T | Open Food Facts lookup, archive instead of delete; camera denied → clean message with Open settings; OCR and barcode-from-photo N/T (model cannot download on this image); POLISH-55, 56, 57 |
+| Meal templates (MT1–MT7) | PASS | BUG-22 fix holds; a template with an archived ingredient still logs |
+| Body, cycle (BO1–BO4, CY1–CY5) | PASS / PART | Second weight on a day becomes current; phase on Today, Calendar, Day detail and in the plan rationale ("Follicular phase: …"); POLISH-39 |
+| Import (IM1–IM7) | PASS / PART / **FAIL** | FIT, CSV, ZIP, duplicate detection across files, `.txt` refused by name, truncated `.fit` "0 parsed · 1 errors"; **BUG-26** reproduced; POLISH-59 |
+| Backup (BK1–BK5) | PASS / **FAIL** | Export 30 tables; Merge "0 merged" / "1 merged"; Replace restores; a "Schema 8 · app 0.9.4" backup merges into 0.9.5; **BUG-29** |
+| Settings (SE1–SE8) | PART / **FAIL** | **BUG-27** reproduced on Name, the contact field and the HR overrides; zones, caps, FTP, maintenance work; POLISH-41, 43 (in part), 44 |
+| Cross-cutting (X1–X10) | PASS / PART | Rotation with a half-filled form, offline lookup message, dark mode, process death, periodic sync running by itself after a clock jump, 0.9.4 → 0.9.5 over existing data (schema 8 → 9), jobs rescheduled after a reboot; POLISH-60, 61 |
+
+New bugs:
+- BUG-29: Backup › Import accepts any JSON object as a backup. Every field of the backup model has a default and `BackupSerializer` sets `ignoreUnknownKeys`, so `{"hello":"world"}` decodes to an empty backup ("Import finished · 0 rows over 0 tables · Schema 9 · app unknown build · unknown date"). With Replace selected the device is wiped without a confirmation (POLISH-40) and the user lands in onboarding. Non-JSON files are refused correctly. Fix: require a marker (app id / schema version present in the file, at least one known table) before any delete, and confirm Replace.
+- BUG-30: Today does not follow the date. With the process kept in memory while the date moved on, Today still showed the earlier day's diary total, plan card and cycle day — after Home and reopening and after switching tabs — while the Nutrition tab showed the new day. Only a restart corrected it. Reproduced with a clock jump; leaving the app open overnight takes the same path. Fix: derive "today" on resume / from a date-change tick instead of once per ViewModel.
+
+Session 29 bugs: BUG-23, BUG-24, BUG-25, BUG-26, BUG-27 and BUG-28 all reproduce. BUG-27 is wider than recorded: "190" typed quickly into Max HR override was saved as "19", the override fields have no range check, and the zones were then computed from it without a message.
+
+New polish items (POLISH-22 to POLISH-45 of session 29 were re-checked; 22, 24–26, 28–34, 36, 37, 39–41, 44 reproduce, 43 in part, the others were not re-triggered):
+- POLISH-46: Activity detail › RPE chips are one horizontally scrolling row; the higher values are cut off at the edge with no hint.
+- POLISH-47: errors under date fields (birth date, Until) are drawn grey like a disabled field instead of red and are not exposed to accessibility.
+- POLISH-48: Suggested links › Dismiss is not remembered; after an app restart the dismissed suggestion is back.
+- POLISH-49: the session editor saves a session with no duration, distance or load ("Interval run · Planned").
+- POLISH-50: the session row menu's Delete has no confirmation.
+- POLISH-51: the set log prefills the progression engine's value, not the workout's prescription (workout "3 × 12" → form 8 reps); the "Moderate" chip wraps.
+- POLISH-53: Settings says "Exercises and workouts only use what you select here", but built-in workouts are adapted only when first created (`StrengthWorkoutSeeder` is idempotent per template); restricting equipment later leaves barbell workouts unchanged, unmarked and suggested.
+- POLISH-54: Settings › Heart-rate zones preview starts Z1 at 60 bpm while Zones & paces and the plan use the measured resting HR (56); the bounds differ by one or two beats throughout.
+- POLISH-55: the ingredient editor's energy-mismatch banner is the first row of the form, off-screen while the macros are typed; macros summing to more than 100 g per 100 g are not flagged.
+- POLISH-56: after one camera denial there is no in-app retry, and after granting in Android settings the scanner still says "Camera access is off" until it is reopened.
+- POLISH-57: an archived ingredient cannot be restored and is not marked as archived in "Show archived" or its editor.
+- POLISH-58: Day detail › Load prints the raw flag "SLEEP_DEBT".
+- POLISH-59: import history and Undo follow the last import of a file's content: "Import anyway" overwrites the first row's counts, the Undo dialog then says "Removes the 0 activities" and removes one; with a CSV and a ZIP of the same CSV the CSV row promised 5 and removed 0, the ZIP row promised 0 and removed 4 (1 kept). The dialog also says "health sync" for activities kept because of another file.
+- POLISH-60: under a German locale number formats are mixed on one line ("62,0 kg · 2,0 kg above your 60.0 kg goal"; "3.0 h/week" next to "2,2 l"); date formats differ between screens in every locale ("2026-05-10", "10 Nov 2026", "17 Oct").
+- POLISH-61: at font scale 2.0 the bottom-bar labels break mid-word, the intensity chip in the Training week is squeezed to one letter per line, and "… kcal left" on Today wraps into three lines.
+- POLISH-62: in a recovery week the engine can still place a "High" interval run ("51 min · Z5"); `IntervalBuilder.templateFor` returns no structure for that phase, so the card has a title and a pace but no steps. Either no interval session in a recovery week or a reduced structure.
+- Small: Body › an empty Save says nothing and a weight is deleted without confirmation; Cycle › an older start without an end reads "Ongoing · 41 day cycle"; a failed backup import prints the raw parser text including binary bytes; "Remove orphaned import data" refers to "version 1.0.2"; "Allow destructive DB migration (debug builds only)" is shown in the release build; a planned session on a future day can be marked completed; a mobility session carries a heart-rate zone chip; three different 10 km predictions appear (Running PRs, goal card, plan rationale); after re-granting a permission the "Last error" line stays until the next sync.
+
+Notes:
+- NOTE-40: differences from session 29 — POLISH-42 (recovery fillers above the cap) and the job loss of POLISH-43 did not occur in this run; TR9 (session steps) could not be shown because the accepted recovery week stayed active; IN7, IN8, IN10, IN13 remain N/T on this emulator image.
+- NOTE-41: Health Connect records dated in the future (left by seeding during the clock jump) made the Workouts and Daily activity streams fail with "unexpected: Record start time must not be in the future"; clock artefact, but one unreadable record stops the whole stream.
+- NOTE-42: the German check used the per-app language setting, not the system language. X6 used a two-day clock jump (adb root) with the app in the background; the clock, locale, font scale, dark mode and rotation were restored and the seeder data re-created afterwards.
+
+## Session 31 — 2026-11-11 (emulator, release build 0.9.6: fixes for the findings of sessions 29 and 30)
+
+Scope: the bugs and polish items of sessions 29 and 30 were fixed in the source and re-checked one by one
+on the emulator with the synthetic profile, the synthetic backup and the seeder's Health Connect data.
+This was a targeted re-check, not a full workflow run. Build under test: `app-release.apk` 0.9.6
+(versionCode 196, database still v9), installed over the published 0.9.5 with data in place.
+
+Automated: `tools/verify.sh` (assembleDebug, unit tests, lint, minified release) and
+`tools/connected.sh emulator-5554` (31 instrumented tests) — results in the table at the end.
+
+Bugs:
+
+| Id | Fix | Re-check |
+|---|---|---|
+| BUG-23 | Weekday chips wrap (`FlowRow`) | PASS — all seven chips visible, "Su" on a second row |
+| BUG-24 | Hand-planned, locked and completed sessions occupy the grid and count towards caps and load | PASS — with a hand-planned long run in the week the proposal adds no second one; the day reads "Already planned: Long run. Nothing was added." (POLISH-27) |
+| BUG-25 | Deleting an activity recomputes load and targets; its source record stays as a tombstone so a sync does not bring it back | PASS — ATL changed at once without a sync; a deleted Health Connect ride was still gone after a full sync (one source record without activity). The re-grant path (`rereadExerciseDetail`) is covered by a unit test only |
+| BUG-26 | `image/fits` in the VIEW and SEND filters | PASS — the package manager now resolves MyHealth for both; opening a file from Files was not repeated |
+| BUG-27 | Settings fields keep a local buffer while focused, writes are ordered; resting HR 30–110 and max HR 120–230 with a message | PASS — typed name saved in order, "20" in resting HR shows "Enter 30–110 bpm, or leave it empty." and is not saved |
+| BUG-28 | Stored target warnings get their text back per warning code | Unit level only — no clamped target in the synthetic data |
+| BUG-29 | A JSON file without MyHealth's tables or export stamp is refused; Replace asks first and refuses an empty backup | PASS — confirmation dialog, then "That file is not a MyHealth backup … Nothing was changed.", data intact; four new unit tests |
+| BUG-30 | Screens re-read the date on resume and once a minute | PASS — clock moved one day with the app in the background: Today showed the new day's plan and diary without a restart |
+
+Polish, fixed and re-checked on the emulator: 22 (the "no Health Connect access" banner names Integrations
+and leads there, Retry kept), 23 (Today's Body card opens Body), 24 (Day detail offers "This occurrence"),
+27, 28 ("Add at least one exercise."), 31 (the first form error is repeated above Save), 32 and 50 and the
+weight list (delete confirmations), 39 (weight and body-fat charts span the selected range), 40, 43 (sync
+interval 1–24, horizon 1–28), 44, 45 in part (plurals, search empty state, "Show archived" row, weight
+range hint), 46 (RPE chips wrap), 48 (dismissed link suggestions stay dismissed), 53 (wording), 54 (the
+Settings zone preview uses the measured resting heart rate), 55 (warnings under the macros; macro sum
+above 100 g), 57 (archived notice with Restore), goal summaries with units ("80 kg", "10 matches").
+
+Polish, fixed in code and covered by unit tests or compile only (not re-triggered on the emulator): 25, 26
+(narrowed: an all-day event with a named sport no longer proposes an activity of another sport; a timed
+overlap still does, as test `link03` requires), 29, 30, 33, 34, 35, 36, 37, 38, 41, 42 (narrowed: fillers
+per sport are limited to that sport's cap; fillers on top of regular sessions remain, as the golden weeks
+require), 47, 51 ("Moderate" label only), 56, 58, 59 (wording only), 61 (bottom bar and intensity chip
+only), 62.
+
+Left as designed:
+- POLISH-49: a session without a duration stays allowed (`PlannedSessionDraftTest` documents "an easy run, no numbers attached").
+- POLISH-51 (prefill): the set log is filled from the progression engine by design (P16).
+- The Z1 chip on a mobility session is documented as advisory in `SessionZoneTargets`.
+
+Still open: POLISH-59 (import history counts follow the last import of the same content), POLISH-60 (mixed
+number and date formats; only the Body goal line was aligned), POLISH-61 ("… kcal left" at font scale 2.0),
+the remaining small items of POLISH-45 and of session 30 (barcode plausibility, goal pace rounding to
+"0.3 kg/week", landscape event editor, cycle "Ongoing" wording, completing a future session, three 10 km
+predictions, stale "Last error", a reactivated goal does not become primary again), NOTE-41. OCR and
+barcode-from-photo remain N/T on this emulator image.
+
+Notes:
+- NOTE-43: after the restored backup's first sync nearly all Health Connect rows disappeared from the app (activities, sleep, weights). The published 0.9.5 does exactly the same with the same backup: the emulator's Health Connect records had been deleted and re-created in session 30, and the sync follows those deletions. Emulator state, not a regression; the seeder was run again (from its own screen — the broadcast hit Health Connect's background quota) and a sync restored the data.
+- NOTE-44: the instrumented `IngredientTest` was updated: with a search term still set, the empty list now reads "No matching ingredients".
+

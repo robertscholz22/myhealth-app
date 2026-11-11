@@ -168,8 +168,12 @@ class ActivityDetailViewModel(
     }
 
     fun confirmDelete() {
+        val day = state.value.activity?.day
         viewModelScope.launch {
             activityRepo.delete(activityId)
+            // BUG-25: the load curve and the day's nutrition target both counted this activity.
+            day?.let { syncScheduler.requestLoadRecompute(it) }
+            syncScheduler.requestTargetRecompute()
             showDeleteConfirm.value = false
             deleted.value = true
         }

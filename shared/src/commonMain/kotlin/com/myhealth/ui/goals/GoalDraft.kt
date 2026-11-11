@@ -195,9 +195,16 @@ fun goalHeadline(goal: Goal): String {
             val time = goal.targetTimeSec?.let { " in ${GoalProgress.formatTime(it)}" } ?: ""
             "$distance$time$by"
         }
-        GoalType.STRENGTH_LIFT, GoalType.SOCCER_AVAILABILITY ->
-            "${goalTypeLabel(goal.type)}: ${goal.targetValue ?: 0.0}$by"
+        // Session 30: "Soccer availability: 10.0" / "Strength lift: 80.0" had no unit.
+        GoalType.STRENGTH_LIFT -> "${goalTypeLabel(goal.type)}: ${trimmedNumber(goal.targetValue)} kg$by"
+        GoalType.SOCCER_AVAILABILITY -> "${goalTypeLabel(goal.type)}: ${wholeNumber(goal.targetValue)} matches$by"
     }
+}
+
+/** `80` for 80.0, `82.5` for 82.5. */
+private fun trimmedNumber(value: Double?): String {
+    val v = value ?: 0.0
+    return if (v == mathRound(v).toDouble()) mathRound(v).toString() else v.toString()
 }
 
 /** Watts and session counts are whole numbers; `300.0 W` reads wrong. */

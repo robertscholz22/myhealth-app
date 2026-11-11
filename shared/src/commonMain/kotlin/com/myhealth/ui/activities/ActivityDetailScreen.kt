@@ -1,6 +1,7 @@
 package com.myhealth.ui.activities
 
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -349,9 +349,11 @@ private fun RpeCard(rpe: Int?, loadMethod: LoadMethod?, onSaveRpe: (Int) -> Unit
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun FlowRowRpeSelector(selected: Int?, onSelect: (Int) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+    // POLISH-46: all ten values are visible; a scrolling row hid 8–10 past the edge.
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         (1..10).forEach { value ->

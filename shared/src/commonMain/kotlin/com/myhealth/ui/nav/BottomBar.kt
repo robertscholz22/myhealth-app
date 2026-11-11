@@ -1,5 +1,6 @@
 package com.myhealth.ui.nav
 
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -53,7 +54,15 @@ fun MyHealthBottomBar(navController: NavHostController) {
                     }
                 },
                 icon = { Icon(destination.icon, contentDescription = null) },
-                label = { Text(stringResource(destination.labelRes)) },
+                // POLISH-61: at a large font scale a label broke in the middle of the word.
+                label = {
+                    Text(
+                        text = stringResource(destination.labelRes),
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
             )
         }
     }

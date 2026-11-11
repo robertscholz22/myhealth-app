@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import com.myhealth.data.time.PlatformClock
 import kotlinx.datetime.LocalDate
 
@@ -64,18 +66,39 @@ class SettingsViewModel(
         )
     }
 
+    /**
+     * BUG-27: the edit the user just made, shown at once and until the store has caught up. The
+     * sections build their next change with `profile.copy(…)` / `settings.copy(…)` from the state
+     * they were composed with; without this, two quick edits each start from the stored value and
+     * the second undoes the first.
+     */
+    private val pendingProfile = MutableStateFlow<Profile?>(null)
+    private val pendingSettings = MutableStateFlow<AppSettings?>(null)
+
+    /** Writes go to the stores one at a time, in the order they were made. */
+    private val writes = Mutex()
+
     val state: StateFlow<SettingsUiState> = combine(
         profileRepo.observeProfile(),
         settingsRepo.settings,
         ftpEstimate,
-    ) { profile, settings, ftp ->
-        SettingsUiState(isLoading = false, profile = profile, settings = settings, ftpEstimate = ftp)
+        pendingProfile,
+        pendingSettings,
+    ) { profile, settings, ftp, localProfile, localSettings ->
+        SettingsUiState(
+            isLoading = false,
+            profile = localProfile ?: profile,
+            settings = localSettings ?: settings,
+            ftpEstimate = ftp,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
     fun onProfileChange(profile: Profile) {
+        val previous = pendingProfile.value ?: state.value.profile
+        pendingProfile.value = profile
         viewModelScope.launch {
-            val previous = state.value.profile
-            profileRepo.upsert(profile.copy(updatedAtMillis = clock.millis()))
+            writes.withLock { profileRepo.upsert(profile.copy(updatedAtMillis = clock.millis())) }
+            pendingProfile.compareAndSet(profile, null)
             // P11.1: switching the profile to FEMALE turns the cycle tracker on once. It is not
             // turned back off here — a user who switched it off in Settings keeps it off.
             if (profile.sex == Sex.FEMALE && previous?.sex != Sex.FEMALE) {
@@ -87,7 +110,21 @@ class SettingsViewModel(
     }
 
     fun onSettingsChange(settings: AppSettings) {
-        viewModelScope.launch { settingsRepo.update { settings } }
+        pendingSettings.value = settings
+        viewModelScope.launch {
+            // Only what the Settings screen edits is taken from its snapshot; the flags other parts
+            // of the app maintain keep their stored value.
+            writes.withLock {
+                settingsRepo.update { stored ->
+                    settings.copy(
+                        hasCompletedOnboarding = stored.hasCompletedOnboarding,
+                        suggestionsStale = stored.suggestionsStale,
+                        settledLinkKeys = stored.settledLinkKeys,
+                    )
+                }
+            }
+            pendingSettings.compareAndSet(settings, null)
+        }
     }
 
     /**

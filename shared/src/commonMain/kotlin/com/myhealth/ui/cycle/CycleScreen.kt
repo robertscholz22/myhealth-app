@@ -44,7 +44,7 @@ import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVm
+import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.model.CycleForecast
 import com.myhealth.domain.model.CycleStatus
 import com.myhealth.domain.util.epochDayDate
@@ -62,7 +62,7 @@ import kotlinx.datetime.TimeZone
  * [com.myhealth.domain.repository.CycleRepository.isTrackingEnabled] is true. */
 @Composable
 fun CycleScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
-    val vm = rememberVm { graph -> CycleViewModel(graph.cycleRepo, graph.clock) }
+    val vm = rememberDayVm { graph -> CycleViewModel(graph.cycleRepo, graph.clock) }
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 

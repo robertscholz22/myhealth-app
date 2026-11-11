@@ -233,9 +233,9 @@ fun MealLogWithItems.toSummary(): MealLogSummary = MealLogSummary(
 
 /**
  * The cache row only stores [EngineWarningCode] names (§2.2.5 comment on `warningsCsv`) — the
- * human-readable [EngineWarning.message] is not persisted, so it decodes back as an empty string.
- * This is a deliberate, documented lossy edge (the cache is for display; the engine recomputes the
- * full warning list on demand), not covered by the mapper round-trip test.
+ * engine's own [EngineWarning.message] (with its numbers) is not persisted. A decoded warning gets
+ * the general sentence for its code instead (BUG-28: it used to decode as an empty string, and
+ * the diary showed a bare "!" with no text).
  */
 private fun List<EngineWarning>.toWarningsCsv(): String = joinToString(",") { it.code.name }
 
@@ -245,8 +245,19 @@ private fun String.toWarnings(): List<EngineWarning> =
     } else {
         split(",").map { it.trim() }.filter { it.isNotEmpty() }
             .mapNotNull { name -> EngineWarningCode.entries.firstOrNull { it.name == name } }
-            .map { EngineWarning(it, "") }
+            .map { EngineWarning(it, it.cachedTargetMessage()) }
     }
+
+private fun EngineWarningCode.cachedTargetMessage(): String = when (this) {
+    EngineWarningCode.MISSING_WEIGHT ->
+        "No weight measured in the last 30 days — the target uses an older or assumed weight."
+    EngineWarningCode.CLAMPED_TO_FLOOR -> "The calculated target was below the safety floor and was raised to it."
+    EngineWarningCode.CLAMPED_TO_CEILING -> "The calculated target was above the safety ceiling and was capped."
+    EngineWarningCode.MISSING_HR -> "No heart-rate data — training energy is estimated."
+    EngineWarningCode.ESTIMATED_LOAD -> "Training energy is estimated from the planned sessions."
+    EngineWarningCode.INSUFFICIENT_HISTORY -> "Not enough history yet — the target uses defaults."
+    else -> "The target was adjusted (${name.lowercase().replace('_', ' ')})."
+}
 
 fun NutritionTargetSnapshotEntity.toDomain(): NutritionTarget = NutritionTarget(
     day = day,

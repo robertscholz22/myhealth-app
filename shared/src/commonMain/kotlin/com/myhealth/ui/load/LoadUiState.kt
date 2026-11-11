@@ -53,12 +53,33 @@ fun acwrZoneOf(acwr: Double?): AcwrZone? = acwr?.let { LoadSeriesEngine.acwrZone
 fun flagExplanation(flag: String): String = when (flag) {
     LoadFlags.RAMP_HIGH -> "Weekly training load rose more than 15% versus the week before."
     LoadFlags.HIGH_MONOTONY -> "Training has been very repetitive this week, with little day-to-day variation."
-    LoadFlags.HIGH_STRAIN -> "Weekly strain (load x monotony) is unusually high."
+    LoadFlags.HIGH_STRAIN -> "Weekly strain (load × monotony) is unusually high."
     LoadFlags.NO_REST_DAY_7D -> "No full rest day in the last 7 days."
     LoadFlags.INSUFFICIENT_HISTORY -> "Not enough training history yet for a reliable ACWR."
     RecoveryFlags.SLEEP_DEBT -> "Sleep has been running well below your target lately."
     else -> flag
 }
+
+/** A flag as a few words (POLISH-58: the day detail printed the raw `SLEEP_DEBT`). */
+fun flagShortLabel(flag: String): String = when (flag) {
+    LoadFlags.RAMP_HIGH -> "Load rising fast"
+    LoadFlags.HIGH_MONOTONY -> "Monotonous week"
+    LoadFlags.HIGH_STRAIN -> "High strain"
+    LoadFlags.NO_REST_DAY_7D -> "No rest day in 7 days"
+    LoadFlags.INSUFFICIENT_HISTORY -> "Little history yet"
+    RecoveryFlags.SLEEP_DEBT -> "Sleep debt"
+    else -> flag.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }
+}
+
+/** POLISH-35: "RESTING_HR" → "Resting HR", "HRV" stays an abbreviation. */
+fun componentName(raw: String): String = raw.lowercase().split('_', ' ').filter { it.isNotEmpty() }
+    .mapIndexed { index, word ->
+        when {
+            word == "hr" || word == "hrv" -> word.uppercase()
+            index == 0 -> word.replaceFirstChar { it.uppercase() }
+            else -> word
+        }
+    }.joinToString(" ")
 
 /** Recovery band label for the score chip (§3.3); `null` reads as "not enough data yet". */
 fun recoveryBandLabel(band: RecoveryBand?): String = when (band) {
@@ -72,7 +93,7 @@ fun recoveryBandLabel(band: RecoveryBand?): String = when (band) {
 
 /** "Sleep 32/40" — one recovery-component row (§3.3). */
 fun componentLabel(component: RecoveryComponent): String =
-    "${component.name.lowercase().replaceFirstChar { it.uppercase() }} " +
+    "${componentName(component.name)} " +
         "${fmtInt(component.points.roundToInt())}/${fmtInt(component.maxPoints.roundToInt())}"
 
 /** "62% confidence" for the recovery card's footnote. */

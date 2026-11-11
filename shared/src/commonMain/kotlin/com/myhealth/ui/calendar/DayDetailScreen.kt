@@ -73,16 +73,11 @@ fun DayDetailScreen(
     )
 
     if (state.pendingDeleteEventId != null) {
-        AlertDialog(
-            onDismissRequest = vm::cancelDeleteEvent,
-            title = { Text(stringResource(Res.string.event_dialog_delete_title)) },
-            text = { Text(stringResource(Res.string.daydetail_dialog_delete_event_text)) },
-            confirmButton = {
-                TextButton(onClick = vm::confirmDeleteEvent) { Text(stringResource(Res.string.action_delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = vm::cancelDeleteEvent) { Text(stringResource(Res.string.action_cancel)) }
-            },
+        DeleteEventDialog(
+            isRecurring = state.pendingDeleteIsRecurring,
+            onDeleteOccurrence = vm::confirmDeleteOccurrence,
+            onDeleteSeries = vm::confirmDeleteEvent,
+            onCancel = vm::cancelDeleteEvent,
         )
     }
 

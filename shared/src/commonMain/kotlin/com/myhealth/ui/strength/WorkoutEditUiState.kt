@@ -87,8 +87,13 @@ data class WorkoutEditDraft(
 }
 
 /** Row-level and name errors (§4.2); an empty, `false` result means the draft can be saved. */
-data class WorkoutValidation(val nameError: Boolean = false, val rowErrors: Map<Int, UiMessage> = emptyMap()) {
-    val isValid: Boolean get() = !nameError && rowErrors.isEmpty()
+data class WorkoutValidation(
+    val nameError: Boolean = false,
+    val rowErrors: Map<Int, UiMessage> = emptyMap(),
+    /** POLISH-28: a workout without exercises is nothing to train or to suggest. */
+    val noExercises: Boolean = false,
+) {
+    val isValid: Boolean get() = !nameError && rowErrors.isEmpty() && !noExercises
 }
 
 /** Blocking errors only (mirrors `validateGoal`/`validatePlannedSession`, §4.2). */
@@ -99,12 +104,17 @@ fun validateWorkoutDraft(draft: WorkoutEditDraft): WorkoutValidation {
         val held = row.seconds != null
         val error = when {
             row.sets < 1 -> UiMessage.of(Res.string.workout_edit_error_sets)
-            counted == held -> UiMessage.of(Res.string.workout_edit_error_reps_xor_seconds)
+            !counted && !held -> UiMessage.of(Res.string.workout_edit_error_reps_or_seconds_missing)
+            counted && held -> UiMessage.of(Res.string.workout_edit_error_reps_xor_seconds)
             else -> null
         }
         if (error != null) rowErrors[index] = error
     }
-    return WorkoutValidation(nameError = draft.name.isBlank(), rowErrors = rowErrors)
+    return WorkoutValidation(
+        nameError = draft.name.isBlank(),
+        rowErrors = rowErrors,
+        noExercises = draft.exercises.isEmpty(),
+    )
 }
 
 /** Appends [exerciseId] as a new last row, defaulting to a hold for a timed exercise and to the

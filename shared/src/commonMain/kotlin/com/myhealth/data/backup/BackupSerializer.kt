@@ -54,8 +54,15 @@ object BackupSerializer {
     private inline fun decodeCatching(read: () -> BackupFile): Outcome<BackupFile> {
         val file = try {
             read()
-        } catch (e: Exception) {
-            return Outcome.Err(AppError.Parse("backup", e.message ?: "The backup file could not be read."))
+        } catch (_: Exception) {
+            // The parser's own message quotes the input, which for a binary file is unreadable bytes.
+            return Outcome.Err(AppError.Parse("backup", "It is not a JSON backup document."))
+        }
+        // BUG-29: every field has a default and unknown keys are ignored, so any JSON object decodes.
+        // A real export always stamps its time and app version; a file with neither and no rows
+        // is somebody else's JSON, not an empty backup.
+        if (file.totalRows == 0 && (file.exportedAtMillis <= 0L || file.appVersion.isBlank())) {
+            return Outcome.Err(AppError.Parse("backup", "It contains none of MyHealth's tables."))
         }
         if (file.schemaVersion > BackupFile.CURRENT_SCHEMA_VERSION) {
             return Outcome.Err(

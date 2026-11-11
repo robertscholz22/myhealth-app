@@ -178,6 +178,30 @@ class ActivityIngestorTest {
         assertThat(dao.rows()).hasSize(1)
     }
 
+    @Test
+    fun a_sync_does_not_bring_back_an_activity_the_user_deleted() = runTest {
+        ingestor.ingest(listOf(hc))
+        dao.deleteById(dao.rows().single().id)
+
+        val result = ingestor.ingest(listOf(hc))
+
+        assertThat(dao.rows()).isEmpty()
+        assertThat(result.inserted).isEqualTo(0)
+        assertThat(result.duplicate).isEqualTo(1)
+        assertThat(dao.sourceRecords.single().activityId).isNull()
+    }
+
+    @Test
+    fun a_file_import_re_creates_an_activity_the_user_deleted() = runTest {
+        ingestor.ingest(listOf(fit))
+        dao.deleteById(dao.rows().single().id)
+
+        ingestor.ingest(listOf(fit.copy(record = fit.record.copy(importRecordId = 7L))))
+
+        assertThat(dao.rows()).hasSize(1)
+        assertThat(dao.sourceRecords.single().activityId).isEqualTo(dao.rows().single().id)
+    }
+
     private fun item(
         session: ActivitySession,
         source: ActivitySource,

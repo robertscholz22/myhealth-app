@@ -18,6 +18,11 @@
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>
+    <string name="body_weight_range_hint">30–250 kg</string>
+    <string name="body_fat_range_hint">Optional, 3–60 %</string>
+    <string name="body_delete_confirm">Delete this measurement?</string>
+    <string name="goals_delete_confirm">Delete this goal? Its history is removed with it.</string>
+    <string name="training_session_delete_confirm">Delete this session from the plan?</string>
 
     <!-- Onboarding -->
     <string name="onboarding_step_identity">About you</string>
@@ -245,6 +250,8 @@
     <string name="addfood_kcal_value">%1$d kcal</string>
     <string name="addfood_empty_templates_title">No meal templates yet</string>
     <string name="addfood_empty_templates_message">Create one from More → Meal Templates to log a whole meal at once.</string>
+    <string name="addfood_template_item_count_one">1 ingredient</string>
+    <string name="addfood_template_item_count_one_servings">1 ingredient · makes %1$s servings</string>
     <string name="addfood_template_item_count">%1$d ingredients</string>
     <string name="addfood_template_item_count_servings">%1$d ingredients · makes %2$s servings</string>
     <string name="addfood_tab_recents">Recents</string>
@@ -609,7 +616,11 @@
     <string name="ingredients_title">Ingredients</string>
     <string name="ingredients_new_content_description">New ingredient</string>
     <string name="ingredients_search_label">Search ingredients</string>
+    <string name="ingredient_archived_notice">Archived: hidden from search and Add food, kept for the meals that used it.</string>
+    <string name="ingredient_action_restore">Restore</string>
     <string name="ingredients_show_archived">Show archived</string>
+    <string name="ingredients_empty_search_title">No matching ingredients</string>
+    <string name="ingredients_empty_search_message">Nothing matches that search. Check the spelling or add it with +.</string>
     <string name="ingredients_empty_title">No ingredients yet</string>
     <string name="ingredients_empty_archived_title">No archived ingredients</string>
     <string name="ingredients_empty_message">Add an ingredient with the + button, or scan a label.</string>
@@ -732,12 +743,19 @@
     <string name="backup_unknown_date">unknown date</string>
     <string name="backup_unknown_build">unknown build</string>
     <string name="backup_row_count_format">%1$s: %2$d</string>
-    <string name="backup_error_parse_format">That file is not a MyHealth backup (%1$s).</string>
+    <string name="backup_error_parse_format">That file is not a MyHealth backup. %1$s Nothing was changed.</string>
+    <string name="backup_replace_confirm_title">Replace everything on this device?</string>
+    <string name="backup_replace_confirm_body">All data in the app is deleted and then restored from the file you pick next. This cannot be undone. Export a backup first if you are not sure.</string>
+    <string name="backup_replace_confirm_action">Choose file and replace</string>
     <string name="backup_error_storage">The backup file could not be read or written. Check the storage and try again.</string>
     <string name="backup_error_generic">The backup did not finish. Nothing was changed.</string>
     <string name="backup_error_dynamic_format">%1$s</string>
     <!-- Settings screen: profile (ui/settings/SettingsScreen.kt) -->
     <string name="settings_no_profile">No profile yet.</string>
+    <string name="settings_profile_resting_hr_range">Enter 30–110 bpm, or leave it empty.</string>
+    <string name="settings_profile_max_hr_range">Enter 120–230 bpm, or leave it empty.</string>
+    <string name="settings_sync_interval_hint">1–24 hours. An empty field keeps the last value.</string>
+    <string name="settings_suggestion_horizon_hint">Enter 1–28 days.</string>
     <string name="settings_profile_name_label">Name</string>
     <string name="settings_profile_sex_label">Sex</string>
     <string name="settings_profile_birth_date_label">Birth date</string>
@@ -773,7 +791,7 @@
     <string name="settings_allow_destructive_migration_label">Allow destructive DB migration (debug builds only)</string>
     <string name="settings_orphan_cleanup_button">Remove orphaned import data</string>
     <string name="settings_orphan_cleanup_dialog_title">Remove orphaned import data?</string>
-    <string name="settings_orphan_cleanup_dialog_message">Removes activities imported from files before version 1.0.2 that can no longer be undone individually. Activities that also came from the health sync are kept.</string>
+    <string name="settings_orphan_cleanup_dialog_message">Removes activities imported from files by an early version of the app that can no longer be undone individually. Activities that also came from the health sync are kept.</string>
     <string name="settings_orphan_cleanup_result_format">Removed %1$d activities, %2$d kept</string>
     <string name="settings_orphan_cleanup_failed">Orphaned import data could not be removed.</string>
     <string name="settings_recompute_load_button">Recompute training load</string>
@@ -802,7 +820,7 @@
     <string name="import_action_undo">Undo import</string>
     <string name="import_history_row_menu_cd">More actions for %1$s</string>
     <string name="import_undo_dialog_title">Undo this import?</string>
-    <string name="import_undo_dialog_message_format">Removes the %1$d activities that only came from this file; activities that also came from the health sync are kept. %2$s can be imported again afterwards.</string>
+    <string name="import_undo_dialog_message_format">Removes the activities that only came from this import. Activities that also came from the health sync or from another file are kept. %1$s can be imported again afterwards.</string>
     <string name="import_undo_result_format">Import undone · %1$d activities removed, %2$d kept</string>
     <string name="import_undo_failed">The import could not be undone.</string>
     <string name="import_kind_fit_file">FIT file</string>
@@ -872,6 +890,7 @@
     <string name="review_selected_summary">%1$d of %2$d selected · %3$d AU</string>
     <string name="review_accept_selected">Accept selected</string>
     <string name="review_rest_day_message">Rest — kept free so the week's hard days can be absorbed.</string>
+    <string name="review_fixed_day_message">Already planned: %1$s. Nothing was added.</string>
     <string name="review_save_error">Could not save the review. Please try again.</string>
     <string name="review_generate_error">Could not generate suggestions. Please try again.</string>
     <!-- ui/training/TrainingScreen.kt, TrainingViewModel.kt -->
@@ -915,6 +934,8 @@
     <string name="today_accept">Accept</string>
     <string name="today_nutrition_title">Nutrition</string>
     <string name="today_diary">Diary</string>
+    <string name="today_sync_needs_permission">MyHealth has no access to Health Connect yet, so nothing can be synced. Grant it under More › Integrations.</string>
+    <string name="today_open_integrations">Open Integrations</string>
     <string name="today_sync_failed">Sync failed: %1$s</string>
     <string name="today_sync_now">Sync now</string>
     <string name="today_activities_title">Today's activities</string>
@@ -1063,7 +1084,7 @@
 
     <!-- ===== Settings: Strength / my equipment (ui/settings/SettingsSections.kt, P16.2) ===== -->
     <string name="settings_section_strength">Strength</string>
-    <string name="settings_my_equipment_explanation">Exercises and workouts only use what you select here. Select everything to turn this off.</string>
+    <string name="settings_my_equipment_explanation">Exercise suggestions and newly added built-in workouts only use what you select here. Workouts you already have are not changed. Select everything to turn this off.</string>
     <string name="settings_hr_scheme_format">Current scheme: %1$s</string>
     <string name="settings_hr_lthr_label">Lactate-threshold heart rate</string>
     <string name="settings_hr_bound_z2_label">Zone 2 starts at</string>
@@ -1157,6 +1178,8 @@
     <string name="workout_edit_rest_label">Rest (s)</string>
     <string name="workout_edit_bodyweight_label">Bodyweight</string>
     <string name="workout_edit_note_label">Note</string>
+    <string name="workout_edit_error_no_exercises">Add at least one exercise.</string>
+    <string name="workout_edit_error_reps_or_seconds_missing">Enter a rep count or a hold in seconds.</string>
     <string name="workout_edit_error_sets">Needs at least one set.</string>
     <string name="workout_edit_error_reps_xor_seconds">Needs either a rep count or a hold in seconds, not both.</string>
     <string name="workout_edit_load_error">Could not load this workout.</string>

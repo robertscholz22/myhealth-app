@@ -54,7 +54,11 @@ object ScanMessages {
         error is AppError.Network && error.code == OffClient.THROTTLED ->
             "Too many Open Food Facts lookups in the last minute. Wait a moment and try again."
         error is AppError.Network -> "No connection to Open Food Facts. Check your network."
-        error is AppError.Parse -> "Open Food Facts sent a response this app could not read."
+        // POLISH-38: only an Open Food Facts answer is an Open Food Facts problem; a picture that
+        // cannot be opened said the same thing.
+        error is AppError.Parse && error.what == OFF_PRODUCT ->
+            "Open Food Facts sent a response this app could not read."
+        error is AppError.Parse -> "That picture could not be opened. Pick another one."
         error is AppError.Validation -> error.message
         else -> "Something went wrong. Please try again."
     }
@@ -70,4 +74,5 @@ object ScanMessages {
     )
 
     private const val MANUAL_SOURCE = "MANUAL"
+    private const val OFF_PRODUCT = "off-product"
 }

@@ -290,6 +290,16 @@ class PaceZoneEngineTest {
     // ---- recommendation + windowing ----------------------------------------------------------
 
     @Test
+    fun a_recommended_pace_is_never_slower_than_a_lower_zones_pace() {
+        fun band(zone: Int, centre: Int) = PaceZoneBand(zone, centre, centre - 5, centre + 5, PaceConfidence.MEDIUM, 600.0, 3)
+        val bands = listOf(band(1, 380), band(2, 314), band(3, 320), band(4, 318), band(5, 325))
+
+        assertThat(PaceZoneEngine.recommendedPaceFor(SessionType.EASY_RUN, bands)?.centreSecPerKm).isEqualTo(314)
+        assertThat(PaceZoneEngine.recommendedPaceFor(SessionType.TEMPO_RUN, bands)?.centreSecPerKm).isEqualTo(314)
+        assertThat(PaceZoneEngine.recommendedPaceFor(SessionType.INTERVAL_RUN, bands)?.centreSecPerKm).isEqualTo(314)
+    }
+
+    @Test
     fun recommended_pace_takes_the_first_zone_of_the_target_except_tempo_and_intervals() {
         val bands = PaceZoneEngine.compute(input(runs = emptyList(), vdot = 50.0))
 

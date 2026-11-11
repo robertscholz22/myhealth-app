@@ -51,6 +51,15 @@ class EventActivityLinkerTest {
     }
 
     @Test
+    fun an_all_day_event_is_not_matched_with_another_sports_activity() {
+        val allDay = occurrence(startMinuteOfDay = null, durationMin = null)
+        val run = CalendarFixtures.activity(id = 9, startIso = "${day}T10:00:00Z", durationMin = 60, sportType = SportType.RUN_OUTDOOR)
+
+        assertThat(EventActivityLinker.confidence(allDay, run, Fixtures.TZ)).isEqualTo(0.0)
+        assertThat(EventActivityLinker.propose(listOf(allDay), listOf(run), Fixtures.TZ)).isEmpty()
+    }
+
+    @Test
     fun link03_wrong_sport_group_not_linked() {
         val occurrence = occurrence(startMinuteOfDay = 18 * 60, durationMin = 90)
         val run = CalendarFixtures.activity(

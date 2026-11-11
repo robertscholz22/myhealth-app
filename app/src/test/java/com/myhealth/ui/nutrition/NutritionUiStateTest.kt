@@ -125,7 +125,9 @@ class NutritionUiStateTest {
     @Test
     fun quantity_labels_drop_a_trailing_zero_decimal() {
         assertThat(quantityLabel(100.0, QuantityUnit.G)).isEqualTo("100 g")
-        assertThat(quantityLabel(1.5, QuantityUnit.PIECE)).isEqualTo("1.5 piece")
+        assertThat(quantityLabel(1.5, QuantityUnit.PIECE)).isEqualTo("1.5 pieces")
+        assertThat(quantityLabel(1.0, QuantityUnit.PIECE)).isEqualTo("1 piece")
+        assertThat(quantityLabel(2.0, QuantityUnit.SERVING)).isEqualTo("2 servings")
         assertThat(quantityLabel(250.0, QuantityUnit.ML)).isEqualTo("250 ml")
     }
 

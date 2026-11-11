@@ -1,5 +1,6 @@
 package com.myhealth.ui.ingredients
 
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -138,8 +139,21 @@ private fun IngredientEditBody(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             val banners = (state.scanWarnings + state.warnings).distinctBy { it.message }
-            if (banners.isNotEmpty()) {
-                item { WarningsBanner(banners) }
+            if (draft.archived) {
+                // POLISH-57: an archived ingredient said nowhere that it is archived, and could
+                // not be brought back.
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = stringResource(Res.string.ingredient_archived_notice),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        OutlinedButton(onClick = { onDraftChange { it.copy(archived = false) } }) {
+                            Text(stringResource(Res.string.ingredient_action_restore))
+                        }
+                    }
+                }
             }
             state.lookupError?.let { message ->
                 item { ErrorBanner(message = message, onRetry = onLookUp) }
@@ -156,6 +170,11 @@ private fun IngredientEditBody(
             item { IdentityCard(draft, state.errors, state.isLookingUp, onDraftChange, onScan, onLookUp) }
             item { BasisCard(draft, state.errors, onDraftChange) }
             item { EnergyMacrosCard(draft, state.errors, onDraftChange) }
+            // POLISH-55: the warnings sit under the numbers they are about, where they are seen
+            // while typing; as the form's first row they were off-screen.
+            if (banners.isNotEmpty()) {
+                item { WarningsBanner(banners) }
+            }
             item { MoreNutrientsCard(draft, state.errors, onDraftChange) }
             state.saveError?.let { message ->
                 item { Text(message.resolve(), color = MaterialTheme.colorScheme.error) }

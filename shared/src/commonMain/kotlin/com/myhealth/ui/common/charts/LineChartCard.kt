@@ -54,6 +54,12 @@ fun LineChartCard(
     /** Forces the legend on for a single-series chart whose title does not name the series. */
     alwaysShowLegend: Boolean = false,
     action: @Composable (() -> Unit)? = null,
+    /**
+     * The x values the axis labels stand for. Without it the plot spans its own first to last
+     * point, which is wrong for a series with gaps removed (POLISH-39: three months of weigh-ins
+     * drawn across a 365-day axis).
+     */
+    xRange: ClosedFloatingPointRange<Double>? = null,
 ) {
     SectionCard(title = title, modifier = modifier, action = action) {
         val drawable = series.filter { s -> s.points.any { it.y.isPlottable() } }
@@ -91,6 +97,7 @@ fun LineChartCard(
                 measurer = measurer,
                 labelStyle = labelStyle,
                 gridColor = gridColor,
+                xRange = xRange,
             )
         }
     }
@@ -110,6 +117,7 @@ private fun DrawScope.drawLineChart(
     measurer: TextMeasurer,
     labelStyle: TextStyle,
     gridColor: Color,
+    xRange: ClosedFloatingPointRange<Double>? = null,
 ) {
     val values = series.flatMap { s -> s.points.mapNotNull { it.y } }.filter { it.isFinite() }
     if (values.isEmpty()) return
@@ -130,8 +138,8 @@ private fun DrawScope.drawLineChart(
     if (plot.width <= 0f || plot.height <= 0f) return
 
     val xs = series.flatMap { s -> s.points.map { it.x } }.filter { it.isFinite() }
-    val xMin = xs.min()
-    val xMax = xs.max()
+    val xMin = min(xs.min(), xRange?.start ?: xs.min())
+    val xMax = max(xs.max(), xRange?.endInclusive ?: xs.max())
 
     drawBands(bands, plot, range)
     drawYAxis(plot, range, yFormatter, measurer, labelStyle, gridColor, gap)

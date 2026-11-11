@@ -12,8 +12,16 @@ import com.myhealth.ui.common.UiMessage
  * (PLAN §4.2 "Suggestion review" — a rest day is a deliberate output of §3.5.3's C3, so it is
  * shown as a row rather than as a gap the reader has to notice).
  */
-data class SuggestionRow(val day: Long, val session: SuggestedSession?) {
-    val isRest: Boolean get() = session == null
+data class SuggestionRow(
+    val day: Long,
+    val session: SuggestedSession?,
+    /**
+     * POLISH-27: what already stands on a day that got no suggestion — a match, a locked or
+     * hand-planned session. Such a day is not a rest day and must not be labelled as one.
+     */
+    val fixed: List<String> = emptyList(),
+) {
+    val isRest: Boolean get() = session == null && fixed.isEmpty()
 }
 
 /** ViewModel state for [SuggestionReviewScreen]. */
@@ -70,7 +78,11 @@ data class SuggestionReviewUiState(
  * Sessions the reviewer already rejected are dropped, so rejecting the only session on a day turns
  * it back into the rest day it effectively is.
  */
-fun suggestionRows(batch: SuggestionBatch?, sessions: List<SuggestedSession>): List<SuggestionRow> {
+fun suggestionRows(
+    batch: SuggestionBatch?,
+    sessions: List<SuggestedSession>,
+    fixedByDay: Map<Long, List<String>> = emptyMap(),
+): List<SuggestionRow> {
     if (batch == null) return emptyList()
     val open = sessions.filter { it.status != SuggestionStatus.REJECTED }
     val byDay = open.groupBy { it.day }
@@ -79,7 +91,7 @@ fun suggestionRows(batch: SuggestionBatch?, sessions: List<SuggestedSession>): L
             ?.sortedWith(compareByDescending<SuggestedSession> { it.score }.thenBy { it.sessionType.ordinal })
             .orEmpty()
         if (forDay.isEmpty()) {
-            listOf(SuggestionRow(day = day, session = null))
+            listOf(SuggestionRow(day = day, session = null, fixed = fixedByDay[day].orEmpty()))
         } else {
             forDay.map { SuggestionRow(day = day, session = it) }
         }

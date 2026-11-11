@@ -27,7 +27,7 @@ import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVm
+import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.engine.bike.FtpEstimate
 import com.myhealth.domain.engine.bike.FtpSource
 import com.myhealth.domain.model.RideBest
@@ -42,7 +42,7 @@ import kotlinx.datetime.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BikeScreen(onBack: () -> Unit, onOpenActivity: (Long) -> Unit, modifier: Modifier = Modifier) {
-    val vm = rememberVm { graph -> BikeViewModel(graph.rideBestRepo, graph.profileRepo, graph.activityRepo, graph.clock) }
+    val vm = rememberDayVm { graph -> BikeViewModel(graph.rideBestRepo, graph.profileRepo, graph.activityRepo, graph.clock) }
     val state by vm.state.collectAsStateWithLifecycle()
 
     Scaffold(

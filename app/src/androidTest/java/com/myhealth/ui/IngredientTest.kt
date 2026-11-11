@@ -92,6 +92,8 @@ class IngredientTest {
             .performClick()
         composeTestRule.onNodeWithText(str(Res.string.action_delete)).performClick()
 
-        composeTestRule.waitUntilTextExists(str(Res.string.ingredients_empty_title))
+        // The search is still set, so the list says nothing matches it (POLISH-45) rather than
+        // "No ingredients yet".
+        composeTestRule.waitUntilTextExists(str(Res.string.ingredients_empty_search_title))
     }
 }

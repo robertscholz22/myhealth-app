@@ -130,7 +130,12 @@ fun sessionZoneRows(model: HrZoneModel?, bands: List<PaceZoneBand>): List<Sessio
         val idx = targetZoneIndexFor(type)
         val zone = idx?.let { i -> model?.zones?.firstOrNull { it.index == i } }
         val zoneLabel = zone?.let { "Z${it.index} · ${bpmRangeText(it)}" }
-        val paceLabel = PaceZoneEngine.recommendedPaceFor(type, bands)?.centreSecPerKm?.let(::formatPaceSecPerKm)
+        // POLISH-33: a pace per km only means something for a run.
+        val paceLabel = if (type.isRun()) {
+            PaceZoneEngine.recommendedPaceFor(type, bands)?.centreSecPerKm?.let(::formatPaceSecPerKm)
+        } else {
+            null
+        }
         SessionZoneRow(type, zoneLabel, paceLabel)
     }
 
@@ -177,3 +182,5 @@ suspend fun resolveHrZoneModel(
     )
     return HrZoneModel.resolve(profile, bounds)
 }
+
+private fun SessionType.isRun(): Boolean = name.endsWith("_RUN") || this == SessionType.TIME_TRIAL

@@ -66,6 +66,18 @@ object NutritionValidator {
             }
         }
 
+        if (facts.basis == MeasureBasis.PER_100G) {
+            // POLISH-55: each macro may be under 100 g while together they are not.
+            val macroSum = (facts.proteinG ?: 0.0) + (facts.carbsG ?: 0.0) + (facts.fatG ?: 0.0) + (facts.fiberG ?: 0.0)
+            val eachPlausible = listOf(facts.proteinG, facts.carbsG, facts.fatG, facts.fiberG).all { it == null || it <= 100.0 }
+            if (eachPlausible && macroSum > MACRO_SUM_LIMIT_G) {
+                warnings += EngineWarning(
+                    EngineWarningCode.IMPLAUSIBLE_VALUE,
+                    "Protein, carbohydrate, fat and fiber add up to more than 100 g per 100 g.",
+                )
+            }
+        }
+
         val kcal = facts.kcal
         if (kcal != null) {
             val protein = facts.proteinG ?: 0.0
@@ -89,4 +101,7 @@ object NutritionValidator {
 
         return warnings
     }
+
+    /** A little over 100 g, so rounded label values (33.4 + 33.3 + 33.4) do not trip it. */
+    private const val MACRO_SUM_LIMIT_G = 101.0
 }

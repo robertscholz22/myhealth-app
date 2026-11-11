@@ -13,7 +13,8 @@ import kotlinx.serialization.Serializable
  *
  * `uq_asr (source, externalId)` is **the idempotency key for sync and import**: re-running either
  * never creates duplicates. The link to the canonical row is soft (`SET_NULL`) so deleting a
- * merged activity keeps the raw arrivals for a later re-merge.
+ * merged activity keeps the raw arrivals: a record with `activityId = NULL` is the tombstone that
+ * stops a later sync from re-creating the deleted activity (BUG-25, `ActivityIngestor`).
  */
 @Serializable
 @Entity(

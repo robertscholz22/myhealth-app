@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -66,7 +67,7 @@ import com.myhealth.ui.theme.MyHealthTheme
 @Composable
 fun SuggestionReviewScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val vm = rememberVm { graph ->
-        SuggestionReviewViewModel(graph.suggestionRepo, graph.settings, graph.profileRepo, graph.clock, graph.planRepo, graph.healthRepo, graph.activityRepo)
+        SuggestionReviewViewModel(graph.suggestionRepo, graph.settings, graph.profileRepo, graph.clock, graph.planRepo, graph.healthRepo, graph.activityRepo, graph.calendarRepo)
     }
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
@@ -143,7 +144,7 @@ internal fun SuggestionReviewContent(
         items(state.rows, key = { row -> row.session?.id ?: -row.day }) { row ->
             val session = row.session
             if (session == null) {
-                RestDayCard(day = row.day)
+                RestDayCard(day = row.day, fixed = row.fixed)
             } else {
                 SuggestionCard(
                     day = row.day,
@@ -250,20 +251,24 @@ private fun SuggestionCard(
 }
 
 @Composable
-private fun RestDayCard(day: Long) {
+private fun RestDayCard(day: Long, fixed: List<String> = emptyList()) {
     SectionCard(title = dayHeaderLabel(day)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(
-                Icons.Filled.Bedtime,
+                if (fixed.isEmpty()) Icons.Filled.Bedtime else Icons.Filled.EventAvailable,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
             Text(
-                text = stringResource(Res.string.review_rest_day_message),
+                text = if (fixed.isEmpty()) {
+                    stringResource(Res.string.review_rest_day_message)
+                } else {
+                    stringResource(Res.string.review_fixed_day_message, fixed.joinToString(", "))
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

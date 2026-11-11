@@ -53,7 +53,7 @@ enum class BmrMethod(val label: String) {
 enum class TdeeSource(val label: String) {
     MEASURED_TOTAL("measured (Health Connect total)"),
     MEASURED_ACTIVE("BMR + measured active kcal"),
-    ESTIMATED("estimated (BMR x NEAT + training)"),
+    ESTIMATED("estimated (BMR × NEAT + training)"),
 }
 
 /**
@@ -349,9 +349,9 @@ class NutritionTargetEngine(private val zone: TimeZone) {
                     "${input.profile.ageYears(input.date)} y)",
             )
             appendLine("TDEE ${fmt0(energy.tdeeKcal)} kcal (${energy.tdeeSource.label})")
-            appendLine("Day type: ${input.dayType.name}$eventSuffix")
+            appendLine("Day type: ${dayTypeLabel(input.dayType)}$eventSuffix")
             appendLine(
-                "Goal: ${goal.label} (${fmt1(goal.paceKgPerWeek)} kg/week) -> " +
+                "Goal: ${goal.label} (${fmt1(goal.paceKgPerWeek)} kg/week) → " +
                     "${signed(deltaKcal)} kcal/day",
             )
             appendLine("Target: ${fmt0(targetKcal)} kcal$clampNote")
@@ -378,6 +378,18 @@ class NutritionTargetEngine(private val zone: TimeZone) {
                 "the target is unchanged, listen to hunger."
 
         fun asInt(value: Double): Int = D.roundTo(value, 1.0).toInt()
+
+        /** POLISH-37: "MATCH_DAY" → "Match day". */
+        fun dayTypeLabel(type: DayType): String = when (type) {
+            DayType.REST -> "Rest day"
+            DayType.TRAINING -> "Training day"
+            DayType.HARD_TRAINING -> "Hard training day"
+            DayType.MATCH_DAY -> "Match day"
+            DayType.PRE_MATCH -> "Day before a match"
+            DayType.RACE_DAY -> "Race day"
+            DayType.PRE_RACE -> "Day before a race"
+            DayType.RECOVERY -> "Recovery day"
+        }
 
         fun fmt0(value: Double): String = asInt(value).toString()
 

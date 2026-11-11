@@ -1,5 +1,7 @@
 package com.myhealth.ui.today
 
+import kotlinx.coroutines.flow.distinctUntilChanged
+import com.myhealth.domain.repository.SettingsRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myhealth.data.time.today
@@ -127,6 +129,7 @@ class TodayViewModel(
     private val cycleRepo: CycleRepository,
     private val strengthRepo: StrengthRepository,
     clock: PlatformClock,
+    private val settingsRepo: SettingsRepository? = null,
 ) : ViewModel() {
 
     private val today = clock.today().toEpochDays()
@@ -135,17 +138,60 @@ class TodayViewModel(
         viewModelScope.launch { nutritionRepo.ensureTarget(today) }
     }
 
-    /** Dismissals are VM-only (not persisted): a re-open of the app shows the suggestion again. */
+    /** Dismissals of this session; with a settings store they are also persisted (POLISH-48). */
     private val dismissed = MutableStateFlow<Set<String>>(emptySet())
+
+    private val settledKeys: Flow<Set<String>> =
+        settingsRepo?.settings?.map { it.settledLinkKeys }?.distinctUntilChanged() ?: flowOf(emptySet())
 
     private val linkSuggestions = combine(
         calendarRepo.observeLinkProposals(today - 7, today),
         dismissed,
-    ) { proposals, dismissedKeys ->
+        settledKeys,
+    ) { proposals, dismissedKeys, settled ->
         proposals.filter {
-            it.confidence >= EventActivityLinker.PROPOSE_THRESHOLD && linkProposalKey(it) !in dismissedKeys
+            val key = linkProposalKey(it)
+            it.confidence >= EventActivityLinker.PROPOSE_THRESHOLD && key !in dismissedKeys && key !in settled &&
+                // An auto-apply match is linked by [autoLink] and never shown as a question.
+                !(it.autoApply && settingsRepo != null)
         }
     }
+
+    init {
+        autoLink()
+    }
+
+    /**
+     * POLISH-25 (PLAN P3.3): a unique best match at or above
+     * [EventActivityLinker.AUTO_APPLY_THRESHOLD] is linked without asking — once. The key is
+     * settled first, so unlinking it by hand later does not bring the link back.
+     */
+    private fun autoLink() {
+        val settings = settingsRepo ?: return
+        viewModelScope.launch {
+            combine(calendarRepo.observeLinkProposals(today - 7, today), settledKeys) { proposals, settled ->
+                proposals.filter { it.autoApply && linkProposalKey(it) !in settled }
+            }.collect { pending ->
+                pending.forEach { proposal ->
+                    settle(settings, linkProposalKey(proposal))
+                    calendarRepo.linkActivity(
+                        proposal.eventOccurrence.eventId,
+                        proposal.activity.id,
+                        LinkMethod.AUTO_TIME_OVERLAP,
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun settle(settings: SettingsRepository, key: String) {
+        settings.update { it.copy(settledLinkKeys = (it.settledLinkKeys + key).keepNewest()) }
+    }
+
+    /** Keys start with the event id and day; the newest [MAX_SETTLED_LINK_KEYS] by day are kept. */
+    private fun Set<String>.keepNewest(): Set<String> =
+        if (size <= MAX_SETTLED_LINK_KEYS) this
+        else sortedByDescending { it.split('|').getOrNull(1)?.toLongOrNull() ?: 0L }.take(MAX_SETTLED_LINK_KEYS).toSet()
 
     private val core = combine(
         activityRepo.observeRange(today, today),
@@ -269,5 +315,9 @@ class TodayViewModel(
 
     fun dismissSuggestion(proposal: LinkProposal) {
         dismissed.update { it + linkProposalKey(proposal) }
+        val settings = settingsRepo ?: return
+        viewModelScope.launch { settle(settings, linkProposalKey(proposal)) }
     }
 }
+
+private const val MAX_SETTLED_LINK_KEYS = 300

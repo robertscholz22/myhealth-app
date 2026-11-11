@@ -60,10 +60,14 @@ object ActiveRecovery {
         var lastFiller: SessionType? = null
         for (day in restDays) {
             if (day == trueRestDay) { lastFiller = null; continue }
-            val type = choose(day, runAllowed, spinAllowed, lastFiller, cycleStatusByDay[day])
+            // POLISH-42: fillers do not count against the planned sessions' cap (C10) — that is the
+            // pinned pre-0.3.0 behaviour — but a sport gets no more fillers a week than its cap.
+            val runFits = runAllowed && !capReached(current, day, SportGroup.RUN, ctx)
+            val spinFits = spinAllowed && !capReached(current, day, SportGroup.CYCLE, ctx)
+            val type = choose(day, runFits, spinFits, lastFiller, cycleStatusByDay[day])
             if (type == null || adjacentHasSameType(current, day, type)) { lastFiller = null; continue }
             val entry = SessionCatalog.entryFor(type) ?: continue
-            val cycleDriven = type == SessionType.RECOVERY_SPIN && runAllowed &&
+            val cycleDriven = type == SessionType.RECOVERY_SPIN && runFits &&
                 prefersSpin(cycleStatusByDay[day])
             current = current.place(
                 day,
@@ -81,6 +85,14 @@ object ActiveRecovery {
             lastFiller = type
         }
         return current
+    }
+
+    /** True when one more [group] filler would exceed that sport's configured weekly cap. */
+    private fun capReached(grid: SuggestionGrid, day: Long, group: SportGroup, ctx: ConstraintContext): Boolean {
+        val cap = ctx.weeklyCaps[group]?.takeIf { it > 0 } ?: return false
+        return grid.rollingWindows().filter { day in it }.any { window ->
+            grid.days.filter { it.day in window }.sumOf { plan -> plan.sessions.count { it.isActiveRecovery && it.sportGroup == group } } + 1 > cap
+        }
     }
 
     /** Which filler a day gets, or null when nothing fits. */

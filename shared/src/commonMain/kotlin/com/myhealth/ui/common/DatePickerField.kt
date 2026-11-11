@@ -1,5 +1,9 @@
 package com.myhealth.ui.common
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.error
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +49,18 @@ fun DatePickerField(
     supportingText: String? = null,
 ) {
     var showDialog by remember { mutableStateOf(false) }
+    // POLISH-47: the text field is disabled only so that the whole box takes the tap. It must not
+    // *look* disabled — a grey error under a grey field read as "not applicable" — and the error
+    // has to reach accessibility services, which skip a disabled field's supporting text.
+    val scheme = MaterialTheme.colorScheme
+    val accent = if (isError) scheme.error else scheme.onSurfaceVariant
+    val colors = OutlinedTextFieldDefaults.colors(
+        disabledTextColor = scheme.onSurface,
+        disabledBorderColor = if (isError) scheme.error else scheme.outline,
+        disabledLabelColor = accent,
+        disabledSupportingTextColor = accent,
+        disabledTrailingIconColor = accent,
+    )
 
     Box(modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(
@@ -55,13 +71,16 @@ fun DatePickerField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text(label) },
             isError = isError,
+            colors = colors,
             supportingText = supportingText?.let { { Text(it) } },
             trailingIcon = { Icon(Icons.Filled.CalendarMonth, contentDescription = null) },
         )
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .clickable { showDialog = true },
+                .clickable { showDialog = true }
+                // The tap target is what a screen reader lands on: it carries the field's error.
+                .semantics { if (isError && supportingText != null) error(supportingText) },
         ) {}
     }
 

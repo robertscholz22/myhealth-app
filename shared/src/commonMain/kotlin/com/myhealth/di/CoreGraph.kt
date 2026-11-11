@@ -65,6 +65,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -99,6 +101,7 @@ abstract class CoreGraph : UiGraph {
     protected abstract val appVersion: String
 
     /** App-start work, run once per process by the platform shell before the first screen. */
+    @OptIn(FlowPreview::class)
     fun start() {
         // BUG-19: shrink oversized import error lists (≤ 0.9.1) before any screen reads them.
         appScope.launch { importRepo.repairOversizedErrors() }
@@ -108,6 +111,8 @@ abstract class CoreGraph : UiGraph {
         settings.settings
             .map { it.syncIntervalHours }
             .distinctUntilChanged()
+            // POLISH-43: typing "12" passes through "1"; only the value that stays is scheduled.
+            .debounce(SYNC_INTERVAL_SETTLE_MILLIS)
             .onEach { hours -> syncScheduler.schedulePeriodic(hours) }
             .launchIn(appScope)
 
@@ -372,3 +377,6 @@ abstract class CoreGraph : UiGraph {
     /** Barcode → prefilled draft, shared by the scan path and the editor's manual lookup (P4.10). */
     override val offLookup: OffLookup by lazy { OffProductLookup(offClient) }
 }
+
+/** How long the sync interval must stay unchanged before the periodic sync is re-scheduled. */
+private const val SYNC_INTERVAL_SETTLE_MILLIS = 2_000L

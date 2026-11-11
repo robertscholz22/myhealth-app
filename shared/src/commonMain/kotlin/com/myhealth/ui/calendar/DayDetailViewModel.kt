@@ -1,5 +1,6 @@
 package com.myhealth.ui.calendar
 
+import com.myhealth.domain.model.EventOverride
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -48,6 +49,7 @@ class DayDetailViewModel(
 
     private val dayFlow: StateFlow<Long> = savedState.getStateFlow(KEY_DAY, initialDay)
     private val pendingDelete = MutableStateFlow<Long?>(null)
+    private val pendingDeleteRecurring = MutableStateFlow(false)
     private val linkSheetOccurrence = MutableStateFlow<EventOccurrence?>(null)
     private val message = MutableStateFlow<UiMessage?>(null)
 
@@ -78,6 +80,7 @@ class DayDetailViewModel(
                 isLoading = false,
                 data = data,
                 pendingDeleteEventId = extra.pendingDelete,
+                pendingDeleteIsRecurring = pendingDeleteRecurring.value,
                 linkSheetOccurrence = extra.linkSheetOccurrence,
                 linkProposals = props,
                 message = extra.message,
@@ -99,7 +102,36 @@ class DayDetailViewModel(
     }
 
     fun requestDeleteEvent(eventId: Long) {
-        pendingDelete.value = eventId
+        viewModelScope.launch {
+            // Read before the dialog opens, so it opens with the right buttons.
+            pendingDeleteRecurring.value = calendarRepo.getEvent(eventId)?.recurrenceRule != null
+            pendingDelete.value = eventId
+        }
+    }
+
+    /** POLISH-24: removes only the shown day's occurrence of a recurring event (a `SKIP` override). */
+    fun confirmDeleteOccurrence() {
+        val eventId = pendingDelete.value ?: return
+        pendingDelete.value = null
+        val override = EventOverride(
+            id = 0L,
+            eventId = eventId,
+            occurrenceDay = dayFlow.value,
+            action = "SKIP",
+            newStartDay = null,
+            newStartMinuteOfDay = null,
+            newDurationMin = null,
+            newTitle = null,
+        )
+        viewModelScope.launch {
+            when (calendarRepo.upsertOverride(override)) {
+                is Outcome.Ok -> {
+                    syncScheduler.requestTargetRecompute()
+                    message.value = UiMessage.of(Res.string.daydetail_msg_event_deleted)
+                }
+                is Outcome.Err -> message.value = UiMessage.of(Res.string.daydetail_msg_event_delete_failed)
+            }
+        }
     }
 
     fun cancelDeleteEvent() {

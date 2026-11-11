@@ -5,6 +5,7 @@ import com.myhealth.data.time.PlatformClock
 import com.myhealth.domain.repository.BackupMode
 import com.myhealth.domain.repository.BackupRepository
 import com.myhealth.domain.repository.BackupSummary
+import com.myhealth.domain.util.AppError
 import com.myhealth.domain.util.Outcome
 import com.myhealth.domain.util.runCatchingApp
 import kotlinx.coroutines.CoroutineDispatcher
@@ -57,6 +58,15 @@ class BackupService(
                     is Outcome.Err -> return@withContext inner
                     is Outcome.Ok -> inner.value
                 }
+            }
+            // BUG-29: REPLACE with nothing to restore would only delete.
+            if (mode == BackupMode.REPLACE && file.totalRows == 0) {
+                return@withContext Outcome.Err(
+                    AppError.Validation(
+                        "backup",
+                        "This backup is empty. Replace would delete everything on this device, so nothing was changed.",
+                    ),
+                )
             }
             runCatchingApp {
                 val written = transaction {

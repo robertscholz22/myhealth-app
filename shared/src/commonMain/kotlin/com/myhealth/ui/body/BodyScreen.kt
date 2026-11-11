@@ -1,5 +1,6 @@
 package com.myhealth.ui.body
 
+import com.myhealth.ui.common.rememberDeleteConfirmation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,7 +38,7 @@ import com.myhealth.resources.*
 import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVm
+import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.model.ActivitySource
 import com.myhealth.domain.model.BodyMeasurement
 import com.myhealth.ui.common.NumberField
@@ -56,10 +57,12 @@ import com.myhealth.domain.util.epochDayDate
 
 @Composable
 fun BodyScreen(modifier: Modifier = Modifier) {
-    val vm = rememberVm { graph ->
+    val vm = rememberDayVm { graph ->
         BodyViewModel(graph.profileRepo, graph.bodyRepo, graph.healthRepo, graph.syncScheduler, graph.clock)
     }
     val state by vm.state.collectAsStateWithLifecycle()
+
+    val confirmDelete = rememberDeleteConfirmation(stringResource(Res.string.body_delete_confirm), vm::delete)
 
     BodyContent(
         state = state,
@@ -67,7 +70,7 @@ fun BodyScreen(modifier: Modifier = Modifier) {
         onLogWeightClick = vm::openLogDialog,
         onDismissDialog = vm::dismissLogDialog,
         onSaveWeight = vm::logWeight,
-        onDelete = vm::delete,
+        onDelete = confirmDelete,
         modifier = modifier,
     )
 }
@@ -169,6 +172,7 @@ private fun WeightChartCard(state: BodyUiState) {
         yFormatter = { fmtDecimal(it, 1) },
         goalLine = state.goalWeightKg,
         emptyMessage = stringResource(Res.string.body_chart_weight_empty),
+        xRange = state.fromDay.toDouble()..state.today.toDouble(),
     )
 }
 
@@ -185,6 +189,7 @@ private fun BodyFatChartCard(state: BodyUiState) {
         xLabels = dayAxisLabels(state.fromDay, state.today),
         yFormatter = { fmtDecimal(it, 1) },
         emptyMessage = stringResource(Res.string.body_chart_body_fat_empty),
+        xRange = state.fromDay.toDouble()..state.today.toDouble(),
     )
 }
 
@@ -231,8 +236,8 @@ private fun CurrentWeightCard(latest: BodyMeasurement?, goalWeightKg: Double?, d
                 val delta = fmtDecimal(kotlin.math.abs(deltaToGoalKg), 1)
                 val message = when {
                     kotlin.math.abs(deltaToGoalKg) < 0.05 -> stringResource(Res.string.body_goal_reached_message)
-                    deltaToGoalKg > 0 -> stringResource(Res.string.body_above_goal_message, delta, goalWeightKg)
-                    else -> stringResource(Res.string.body_below_goal_message, delta, goalWeightKg)
+                    deltaToGoalKg > 0 -> stringResource(Res.string.body_above_goal_message, delta, fmtDecimal(goalWeightKg, 1))
+                    else -> stringResource(Res.string.body_below_goal_message, delta, fmtDecimal(goalWeightKg, 1))
                 }
                 Text(text = message, style = MaterialTheme.typography.bodyMedium)
             }
@@ -275,6 +280,9 @@ private fun LogWeightDialog(onDismiss: () -> Unit, onSave: (Double, Double?) -> 
                     onValueChange = { weightKg = it },
                     suffix = "kg",
                     decimals = 1,
+                    min = 30.0,
+                    max = 250.0,
+                    supportingText = stringResource(Res.string.body_weight_range_hint),
                 )
                 NumberField(
                     label = stringResource(Res.string.body_body_fat_field),
@@ -282,6 +290,9 @@ private fun LogWeightDialog(onDismiss: () -> Unit, onSave: (Double, Double?) -> 
                     onValueChange = { bodyFatPercent = it },
                     suffix = "%",
                     decimals = 1,
+                    min = 3.0,
+                    max = 60.0,
+                    supportingText = stringResource(Res.string.body_fat_range_hint),
                 )
             }
         },

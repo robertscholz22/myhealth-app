@@ -1,5 +1,6 @@
 package com.myhealth.ui.goals
 
+import com.myhealth.ui.common.rememberDeleteConfirmation
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,7 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVm
+import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.engine.goal.GoalProgress
 import com.myhealth.domain.model.GoalStatus
 import com.myhealth.domain.model.GoalType
@@ -68,7 +69,7 @@ fun GoalsScreen(
     onNewGoal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val vm = rememberVm { graph ->
+    val vm = rememberDayVm { graph ->
         GoalsViewModel(
             goalRepo = graph.goalRepo,
             runningBestRepo = graph.runningBestRepo,
@@ -88,6 +89,8 @@ fun GoalsScreen(
             vm.consumeMessage()
         }
     }
+
+    val confirmDelete = rememberDeleteConfirmation(stringResource(Res.string.goals_delete_confirm), vm::delete)
 
     Scaffold(
         modifier = modifier,
@@ -116,7 +119,7 @@ fun GoalsScreen(
                 onAchieved = vm::markAchieved,
                 onAbandoned = vm::markAbandoned,
                 onReactivate = vm::reactivate,
-                onDelete = vm::delete,
+                onDelete = confirmDelete,
             ),
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         )

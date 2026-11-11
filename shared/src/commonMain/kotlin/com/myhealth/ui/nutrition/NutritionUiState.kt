@@ -114,7 +114,9 @@ fun quantityLabel(quantity: Double, unit: QuantityUnit): String {
     } else {
         fmtDecimal(quantity, 1)
     }
-    return "$amount ${unit.label()}"
+    // POLISH-45: "2 piece".
+    val plural = (unit == QuantityUnit.PIECE || unit == QuantityUnit.SERVING) && quantity != 1.0
+    return "$amount ${unit.label()}${if (plural) "s" else ""}"
 }
 
 /**

@@ -140,7 +140,12 @@ object PaceZoneEngine {
             SessionType.TEMPO_RUN -> target.last
             else -> target.first
         }
-        return bands.firstOrNull { it.zone == zone }
+        val band = bands.firstOrNull { it.zone == zone } ?: return null
+        // POLISH-34: with few samples a higher zone can come out slower than a lower one (a tempo
+        // target slower than the easy pace). A target is never slower than a lower zone's pace.
+        val centre = band.centreSecPerKm ?: return band
+        val fastestBelow = bands.filter { it.zone < zone }.mapNotNull { it.centreSecPerKm }.minOrNull()
+        return if (fastestBelow != null && fastestBelow < centre) band.copy(centreSecPerKm = fastestBelow) else band
     }
 
     // ---- eligibility ------------------------------------------------------------------------

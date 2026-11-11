@@ -1,5 +1,9 @@
 package com.myhealth.data.repository
 
+import com.myhealth.domain.model.SportGroup
+import com.myhealth.domain.model.PlannedSession
+import com.myhealth.domain.model.EventOccurrence
+import com.myhealth.domain.engine.suggest.SessionCatalog
 import com.myhealth.data.db.dao.NutritionDao
 import com.myhealth.data.mapper.toDomain
 import com.myhealth.data.mapper.toEntity
@@ -111,8 +115,15 @@ class RoomNutritionRepository(
         val day = date.toEpochDays()
         val window = NutritionDefaults.MEASUREMENT_MAX_AGE_DAYS
         val completed = activityRepo.getByDay(day)
-        val planned = planRepo.getSessions(day, day).filter { it.status == PlannedStatus.PLANNED }
         val events = calendarRepo.observeOccurrences(day - 1, day + 1).first()
+        val doneGroups = completed.map { it.sportGroup }.toSet()
+        // POLISH-36: a session ticked off without a recorded activity was still trained, and a
+        // calendar match / soccer training / race costs energy although it is not a plan session.
+        // Both used to count for nothing: a match day got the rest-day energy.
+        val planned = planRepo.getSessions(day, day).filter {
+            it.status == PlannedStatus.PLANNED ||
+                (it.status == PlannedStatus.COMPLETED && it.linkedActivityId == null && it.sportType.group !in doneGroups)
+        } + eventSessions(day, events, doneGroups)
         val dayType = DayTypeResolver.resolve(
             DayTypeResolver.Input(
                 date = date,
@@ -134,6 +145,43 @@ class RoomNutritionRepository(
             cycleStatus = cycleStatusFor(day),
         )
     }
+
+    /**
+     * The day's match / soccer training / race events as planned sessions with the catalog's
+     * duration and load. An event is left out once an activity of its sport was recorded on the
+     * day: the activity then carries the energy, and counting the event too would count it twice.
+     */
+    private fun eventSessions(
+        day: Long,
+        events: List<EventOccurrence>,
+        doneGroups: Set<SportGroup>,
+    ): List<PlannedSession> =
+        events.filter { it.occurrenceDay == day && it.linkedActivityId == null }.mapNotNull { event ->
+            val entry = SessionCatalog.forEvent(event.type) ?: return@mapNotNull null
+            if (entry.sportType.group in doneGroups) return@mapNotNull null
+            val minutes = event.effectiveDurationMin ?: entry.defaultMin
+            PlannedSession(
+                id = -event.eventId,
+                planId = null,
+                day = day,
+                startMinuteOfDay = event.effectiveStartMinuteOfDay,
+                sportType = entry.sportType,
+                sessionType = entry.sessionType,
+                intensity = entry.intensity,
+                targetDurationMin = minutes,
+                targetDistanceMeters = event.targetDistanceMeters,
+                targetPaceSecPerKm = null,
+                estimatedTrimp = entry.estTrimpFor(minutes),
+                description = event.effectiveTitle,
+                rationale = null,
+                status = PlannedStatus.PLANNED,
+                locked = true,
+                linkedActivityId = null,
+                sourceSuggestionId = null,
+                createdAtMillis = 0L,
+                updatedAtMillis = 0L,
+            )
+        }
 
     /** The day's cycle status, or `null` when there is no tracker or it is switched off (P11.2). */
     private suspend fun cycleStatusFor(day: Long) = cycleRepo

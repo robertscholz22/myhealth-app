@@ -238,7 +238,10 @@ class RoomSuggestionRepository(
         val paces = paceResolver.resolve(profile, todayDay)
         val muscle = muscleResolver.resolve(todayDay, latestLoad?.ctl ?: 0.0)
         val lockedPlanned = planRepo.getSessions(todayDay, horizonEnd - 1)
-            .filter { it.locked || it.sourceSuggestionId == null }
+            // BUG-24: everything a new proposal will not replace (PlanDao.getReplaceableSessions):
+            // locked, planned by hand, or no longer PLANNED. A skipped session frees its day.
+            .filter { it.locked || it.sourceSuggestionId == null || it.status == PlannedStatus.COMPLETED }
+            .filter { it.status != PlannedStatus.SKIPPED }
         return SuggestionInput(
             today = today,
             horizonDays = horizonDays,

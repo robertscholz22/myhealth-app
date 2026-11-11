@@ -1,5 +1,8 @@
 package com.myhealth.ui.training
 
+import com.myhealth.domain.repository.CalendarRepository
+import com.myhealth.domain.model.PlannedStatus
+import com.myhealth.domain.model.EventType
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myhealth.data.time.today
@@ -37,6 +40,12 @@ import kotlinx.coroutines.launch
 import com.myhealth.data.time.PlatformClock
 import kotlinx.datetime.LocalDate
 
+/** What already stands in the proposal's horizon: its load and, per day, what to call it. */
+private data class FixedInHorizon(
+    val load: Double = 0.0,
+    val titlesByDay: Map<Long, List<String>> = emptyMap(),
+)
+
 /** Transient state the review screen owns: per-card toggles plus the in-flight accept/regenerate. */
 private data class ReviewAction(
     val accepted: Map<Long, Boolean> = emptyMap(),
@@ -62,6 +71,7 @@ class SuggestionReviewViewModel(
     private val planRepo: PlanRepository? = null,
     private val healthRepo: HealthRepository? = null,
     private val activityRepo: ActivityRepository? = null,
+    private val calendarRepo: CalendarRepository? = null,
 ) : ViewModel() {
 
     private val action = MutableStateFlow(ReviewAction())
@@ -90,11 +100,23 @@ class SuggestionReviewViewModel(
      * places anything. When it reaches the target the proposal is fillers only, and the header
      * has to say why.
      */
-    private val fixedLoad: Flow<Double> = batch.map { current ->
+    private val fixed: Flow<FixedInHorizon> = batch.map { current ->
         val repo = planRepo
-        if (current == null || repo == null) 0.0 else repo.getSessions(current.horizonStartDay, current.horizonEndDay - 1)
-            .filter { it.locked || it.sourceSuggestionId == null }
-            .sumOf { it.estimatedTrimp ?: 0.0 }
+        if (current == null || repo == null) return@map FixedInHorizon()
+        val from = current.horizonStartDay
+        val to = current.horizonEndDay - 1
+        // The same selection the engine plans around (BUG-24, RoomSuggestionRepository.gatherInput).
+        val sessions = repo.getSessions(from, to)
+            .filter { it.locked || it.sourceSuggestionId == null || it.status == PlannedStatus.COMPLETED }
+            .filter { it.status != PlannedStatus.SKIPPED }
+        val events = calendarRepo?.observeOccurrences(from, to)?.first().orEmpty()
+            .filter { it.type == EventType.SOCCER_MATCH || it.type == EventType.SOCCER_TRAINING || it.type == EventType.RACE }
+        val titles = events.map { it.occurrenceDay to it.effectiveTitle } +
+            sessions.map { it.day to (it.description?.takeIf(String::isNotBlank) ?: it.sessionType.label()) }
+        FixedInHorizon(
+            load = sessions.sumOf { it.estimatedTrimp ?: 0.0 },
+            titlesByDay = titles.groupBy({ it.first }, { it.second }),
+        )
     }
 
     /** NOTE-20/21: the chip's zone model is resolved exactly like the Zones screen's. */
@@ -110,18 +132,18 @@ class SuggestionReviewViewModel(
     }
 
     val state: StateFlow<SuggestionReviewUiState> =
-        combine(batch, sessions, action, replaceable, combine(fixedLoad, zoneModel) { f, z -> f to z }) { current, rows, act, count, extra ->
+        combine(batch, sessions, action, replaceable, combine(fixed, zoneModel) { f, z -> f to z }) { current, rows, act, count, extra ->
             SuggestionReviewUiState(
                 isLoading = false,
                 batch = current,
-                rows = suggestionRows(current, rows),
+                rows = suggestionRows(current, rows, extra.first.titlesByDay),
                 accepted = act.accepted,
                 replaceableCount = count,
                 isWorking = act.isWorking,
                 message = act.message,
                 done = act.done,
                 hrZoneModel = extra.second,
-                fixedLoad = extra.first,
+                fixedLoad = extra.first.load,
             )
         }.stateIn(
             viewModelScope,

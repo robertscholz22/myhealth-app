@@ -116,7 +116,7 @@ private fun UndoDialog(item: ImportHistoryItem, onConfirm: () -> Unit, onDismiss
         onDismissRequest = onDismiss,
         title = { Text(stringResource(Res.string.import_undo_dialog_title)) },
         text = {
-            Text(stringResource(Res.string.import_undo_dialog_message_format, item.inserted, item.fileName))
+            Text(stringResource(Res.string.import_undo_dialog_message_format, item.fileName))
         },
         confirmButton = {
             TextButton(onClick = onConfirm) { Text(stringResource(Res.string.import_action_undo)) }

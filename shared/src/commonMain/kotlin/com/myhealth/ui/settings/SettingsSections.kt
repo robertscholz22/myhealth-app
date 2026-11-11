@@ -1,5 +1,7 @@
 package com.myhealth.ui.settings
 
+import com.myhealth.domain.engine.load.HrZoneModel
+import androidx.compose.runtime.produceState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +35,7 @@ import com.myhealth.domain.model.Equipment
 import com.myhealth.domain.model.Profile
 import com.myhealth.domain.model.ThemeMode
 import com.myhealth.ui.common.DropdownField
+import com.myhealth.ui.common.BufferedTextField
 import com.myhealth.ui.common.NumberField
 import com.myhealth.ui.common.SectionCard
 import com.myhealth.ui.strength.label
@@ -66,6 +69,10 @@ internal fun AppPreferencesSection(settings: AppSettings, onSettingsChange: (App
             onValueChange = { it?.let { v -> onSettingsChange(settings.copy(syncIntervalHours = v.toInt().coerceAtLeast(1))) } },
             suffix = stringResource(Res.string.settings_unit_hours),
             decimals = 0,
+            min = 1.0,
+            max = 24.0,
+            rangeError = stringResource(Res.string.settings_sync_interval_hint),
+            supportingText = stringResource(Res.string.settings_sync_interval_hint),
         )
         NumberField(
             label = stringResource(Res.string.settings_suggestion_horizon_label),
@@ -73,6 +80,9 @@ internal fun AppPreferencesSection(settings: AppSettings, onSettingsChange: (App
             onValueChange = { it?.let { v -> onSettingsChange(settings.copy(suggestionHorizonDays = v.toInt().coerceAtLeast(1))) } },
             suffix = stringResource(Res.string.settings_unit_days),
             decimals = 0,
+            min = 1.0,
+            max = 28.0,
+            rangeError = stringResource(Res.string.settings_suggestion_horizon_hint),
         )
         SwitchRow(
             label = stringResource(Res.string.settings_include_treadmill_prs_label),
@@ -87,12 +97,10 @@ internal fun AppPreferencesSection(settings: AppSettings, onSettingsChange: (App
             onCheckedChange = { onSettingsChange(settings.copy(cycleTrackingEnabled = it)) },
             switchTestTag = "settings_cycle_tracking_switch",
         )
-        OutlinedTextField(
+        BufferedTextField(
             value = settings.offUserAgentContact,
             onValueChange = { onSettingsChange(settings.copy(offUserAgentContact = it)) },
-            label = { Text(stringResource(Res.string.settings_off_contact_label)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            label = stringResource(Res.string.settings_off_contact_label),
         )
     }
 }
@@ -108,19 +116,10 @@ internal fun AdvancedSection(
     var confirmingCleanup by remember { mutableStateOf(false) }
 
     SectionCard(title = stringResource(Res.string.settings_section_advanced)) {
-        SwitchRow(
-            label = stringResource(Res.string.settings_garmin_direct_label),
-            checked = settings.garminDirectEnabled,
-            onCheckedChange = { onSettingsChange(settings.copy(garminDirectEnabled = it)) },
-        )
-        SwitchRow(
-            label = stringResource(Res.string.settings_allow_destructive_migration_label),
-            checked = settings.allowDestructiveMigration,
-            onCheckedChange = { onSettingsChange(settings.copy(allowDestructiveMigration = it)) },
-        )
+        // POLISH-44: the "Garmin direct client" and "destructive migration" switches are gone.
+        // Neither does anything in a release build; the settings stay in the store untouched.
         OutlinedButton(
             onClick = { confirmingCleanup = true },
-            modifier = Modifier.padding(top = 8.dp),
         ) {
             Text(stringResource(Res.string.settings_orphan_cleanup_button))
         }
@@ -204,10 +203,18 @@ fun hrZoneBoundsStatus(slots: List<Int?>): HrZoneBoundsStatus {
  * zones — reusing [ZoneTable], the same composable the Zones & paces screen shows.
  */
 @Composable
-internal fun HeartRateZonesSection(profile: Profile, onProfileChange: (Profile) -> Unit) {
+internal fun HeartRateZonesSection(
+    profile: Profile,
+    onProfileChange: (Profile) -> Unit,
+    /** POLISH-54: the measured model the Zones screen uses; `null` falls back to the profile alone. */
+    resolveModel: (suspend (Profile) -> HrZoneModel?)? = null,
+) {
     val slots = parseHrZoneBoundsSlots(profile.hrZoneBoundsJson)
     val status = hrZoneBoundsStatus(slots)
-    val previewModel = lightweightHrZoneModel(profile, systemClock().today())
+    val profileOnly = lightweightHrZoneModel(profile, systemClock().today())
+    val previewModel by produceState(profileOnly, profile, resolveModel) {
+        value = resolveModel?.invoke(profile) ?: profileOnly
+    }
 
     SectionCard(title = stringResource(Res.string.settings_section_hr_zones)) {
         previewModel?.let {

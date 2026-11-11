@@ -40,6 +40,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
         hasCompletedOnboarding = this[SettingsKeys.HAS_COMPLETED_ONBOARDING] ?: defaults.hasCompletedOnboarding,
         suggestionsStale = this[SettingsKeys.SUGGESTIONS_STALE] ?: defaults.suggestionsStale,
         cycleTrackingEnabled = this[SettingsKeys.CYCLE_TRACKING_ENABLED] ?: defaults.cycleTrackingEnabled,
+        settledLinkKeys = this[SettingsKeys.SETTLED_LINK_KEYS].orEmpty(),
     )
 
     override suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -58,6 +59,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             prefs[SettingsKeys.HAS_COMPLETED_ONBOARDING] = next.hasCompletedOnboarding
             prefs[SettingsKeys.SUGGESTIONS_STALE] = next.suggestionsStale
             prefs[SettingsKeys.CYCLE_TRACKING_ENABLED] = next.cycleTrackingEnabled
+            prefs[SettingsKeys.SETTLED_LINK_KEYS] = next.settledLinkKeys
         }
     }
 

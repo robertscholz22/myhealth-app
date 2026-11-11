@@ -140,7 +140,9 @@ private fun ExerciseFeedbackRow(
                     selected = feedback == selected,
                     onClick = { onSelect(feedback) },
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = Feedback.entries.size),
-                    label = { Text(feedback.label()) },
+                    // POLISH-51: without the check icon the longest label ("Moderate") fits on one line.
+                    icon = {},
+                    label = { Text(feedback.label(), maxLines = 1, softWrap = false) },
                 )
             }
         }

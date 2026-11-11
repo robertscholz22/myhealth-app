@@ -146,6 +146,16 @@ private fun EventEditBody(
                 item { Text(message.resolve(), color = MaterialTheme.colorScheme.error) }
             }
         }
+        // POLISH-31: Save sits outside the list, so an error further down the form was invisible.
+        // The first one is repeated right above the button.
+        state.errors.values.firstOrNull()?.let { firstError ->
+            Text(
+                text = firstError.resolve(),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            )
+        }
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.End) {
             Button(onClick = onSave, enabled = !state.isSaving) { Text(stringResource(Res.string.action_save)) }
         }
@@ -276,7 +286,7 @@ private fun NotesCard(draft: EventDraft, onDraftChange: ((EventDraft) -> EventDr
 }
 
 @Composable
-private fun DeleteEventDialog(
+internal fun DeleteEventDialog(
     isRecurring: Boolean,
     onDeleteOccurrence: () -> Unit,
     onDeleteSeries: () -> Unit,

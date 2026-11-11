@@ -44,7 +44,8 @@ data class SuggestionInput(
     val events: List<EventOccurrence> = emptyList(),
     /**
      * The planned sessions the suggester must treat as fixed: `locked == true` ones and (BUG-15)
-     * sessions the user planned by hand (`sourceSuggestionId == null`). It may not move or overlap
+     * sessions the user planned by hand (`sourceSuggestionId == null`), plus (BUG-24) completed
+     * ones. It may not move or overlap
      * them (C6) and their load counts against the weekly target.
      */
     val lockedPlanned: List<PlannedSession> = emptyList(),

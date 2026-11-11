@@ -76,6 +76,13 @@ class ActivityIngestor(
         val now = clock.millis()
         val record = item.record
         val known = activityDao.getSourceRecord(record.source, record.externalId)
+        // BUG-25: a known record without an activity is one whose activity the user deleted (the
+        // link is SET_NULL on delete). A sync delivering it again — a re-read after a permission
+        // change, a full resync — must not bring the activity back. A file import is the user's
+        // own request and still re-creates it.
+        if (known != null && known.activityId == null && record.importRecordId == null) {
+            return IngestResult(inserted = 0, merged = 0, duplicate = 1)
+        }
         val existing = findExisting(item.session, known?.activityId)
 
         val merged = ActivityMerger.merge(listOf(item.session), existing, now)

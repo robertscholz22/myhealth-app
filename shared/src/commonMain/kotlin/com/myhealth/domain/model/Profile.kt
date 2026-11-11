@@ -96,4 +96,10 @@ data class AppSettings(
      * rather than in `suggestion_batch.status` so the fix needs no schema migration.
      */
     val suggestionsStale: Boolean = false,
+    /**
+     * Event ↔ activity link suggestions that are settled (POLISH-48, POLISH-25): dismissed by the
+     * user or linked automatically once. Keys are `eventId|occurrenceDay|activityId`; a settled
+     * suggestion is neither shown nor auto-linked again, also after an app restart.
+     */
+    val settledLinkKeys: Set<String> = emptySet(),
 )

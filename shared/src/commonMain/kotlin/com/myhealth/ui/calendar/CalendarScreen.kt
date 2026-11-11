@@ -34,7 +34,7 @@ import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVmWithSavedState
+import com.myhealth.di.rememberDayVmWithSavedState
 import com.myhealth.ui.theme.MyHealthTheme
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
@@ -51,7 +51,7 @@ fun CalendarScreen(
     onOpenActivity: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val vm = rememberVmWithSavedState { graph, handle ->
+    val vm = rememberDayVmWithSavedState { graph, handle ->
         CalendarViewModel(graph.calendarRepo, graph.cycleRepo, handle, graph.clock)
     }
     val state by vm.state.collectAsStateWithLifecycle()

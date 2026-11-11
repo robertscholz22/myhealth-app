@@ -175,6 +175,15 @@ internal fun WorkoutEditContent(
                 )
             }
         }
+        if (state.validation.noExercises && draft.exercises.isEmpty()) {
+            item {
+                Text(
+                    text = stringResource(Res.string.workout_edit_error_no_exercises),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
         item {
             OutlinedButton(onClick = onAddExercise, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Add, contentDescription = null)

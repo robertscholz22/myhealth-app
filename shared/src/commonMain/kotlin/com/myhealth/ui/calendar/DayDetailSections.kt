@@ -1,5 +1,6 @@
 package com.myhealth.ui.calendar
 
+import com.myhealth.ui.load.flagShortLabel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -340,7 +341,7 @@ internal fun LoadSection(load: DailyLoad?) {
             )
         }
         if (load.flags.isNotEmpty()) {
-            Text(text = load.flags.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+            Text(text = load.flags.joinToString(" · ") { flagShortLabel(it) }, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

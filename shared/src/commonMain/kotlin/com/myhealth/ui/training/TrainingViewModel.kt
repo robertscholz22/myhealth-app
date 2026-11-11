@@ -277,7 +277,7 @@ class TrainingViewModel(
      */
     private fun phaseOf(ctx: TrainingContext, week: TrainingWeek): TrainingPhase {
         val batch = ctx.batch
-        if (batch != null && batch.status != SuggestionStatus.SUPERSEDED && batch.overlaps(week)) return batch.phase
+        if (batch != null && batch.status != SuggestionStatus.SUPERSEDED && batch.mostlyIn(week)) return batch.phase
         return Periodization.phase(
             daysToRace = Periodization.daysToRace(ctx.goals, todayDay()),
             matchWithin21Days = ctx.matchWithin21Days,
@@ -290,6 +290,19 @@ class TrainingViewModel(
 
     private fun SuggestionBatch.overlaps(week: TrainingWeek): Boolean =
         horizonStartDay < week.startDay + DAYS_PER_WEEK && horizonEndDay > week.startDay
+
+    /**
+     * POLISH-41: a horizon that starts mid-week reaches into the next week. The phase badge belongs
+     * to the week that holds most of the horizon (a tie goes to the earlier week).
+     */
+    private fun SuggestionBatch.mostlyIn(week: TrainingWeek): Boolean {
+        if (!overlaps(week)) return false
+        fun daysIn(start: Long): Long =
+            (minOf(horizonEndDay, start + DAYS_PER_WEEK) - maxOf(horizonStartDay, start)).coerceAtLeast(0)
+        val here = daysIn(week.startDay)
+        return here >= daysIn(week.startDay - DAYS_PER_WEEK) && here > daysIn(week.startDay + DAYS_PER_WEEK) ||
+            here == horizonEndDay - horizonStartDay
+    }
 
     private fun defaultSelectedDay(week: TrainingWeek): Long {
         val today = todayDay()

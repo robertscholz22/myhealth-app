@@ -236,10 +236,17 @@ private fun TemplateList(state: AddFoodUiState, onLogTemplate: (MealTemplate) ->
                 headlineContent = { Text(template.name) },
                 supportingContent = {
                     Text(
-                        if (template.servings == 1.0) {
-                            stringResource(Res.string.addfood_template_item_count, template.items.size)
-                        } else {
-                            stringResource(
+                        // POLISH-45: "1 ingredients".
+                        when {
+                            template.servings == 1.0 && template.items.size == 1 ->
+                                stringResource(Res.string.addfood_template_item_count_one)
+                            template.servings == 1.0 ->
+                                stringResource(Res.string.addfood_template_item_count, template.items.size)
+                            template.items.size == 1 -> stringResource(
+                                Res.string.addfood_template_item_count_one_servings,
+                                fmtServings(template.servings),
+                            )
+                            else -> stringResource(
                                 Res.string.addfood_template_item_count_servings,
                                 template.items.size,
                                 fmtServings(template.servings),

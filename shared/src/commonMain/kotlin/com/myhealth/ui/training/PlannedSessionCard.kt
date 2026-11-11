@@ -95,16 +95,19 @@ fun PlannedSessionCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                // POLISH-61: the title gives way, not the chip — at font scale 2.0 the chip was
+                // squeezed to one letter per line.
                 Text(
                     text = session.sessionType.displayName(),
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
                 AssistChip(
                     onClick = {},
                     enabled = false,
-                    label = { Text(session.intensity.label()) },
+                    label = { Text(session.intensity.label(), maxLines = 1, softWrap = false) },
                 )
             }
             Text(

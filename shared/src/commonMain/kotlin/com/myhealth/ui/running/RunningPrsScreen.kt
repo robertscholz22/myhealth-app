@@ -30,7 +30,7 @@ import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVm
+import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.engine.running.CanonicalDistances
 import com.myhealth.domain.engine.running.RacePrediction
 import com.myhealth.domain.model.RunningBest
@@ -47,7 +47,7 @@ import kotlinx.datetime.LocalDate
 
 @Composable
 fun RunningPrsScreen(onOpenActivity: (Long) -> Unit, modifier: Modifier = Modifier) {
-    val vm = rememberVm { graph -> RunningPrsViewModel(graph.runningBestRepo, graph.clock) }
+    val vm = rememberDayVm { graph -> RunningPrsViewModel(graph.runningBestRepo, graph.clock) }
     val state by vm.state.collectAsStateWithLifecycle()
 
     RunningPrsContent(

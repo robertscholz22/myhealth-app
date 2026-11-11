@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import com.myhealth.ui.theme.MyHealthTheme
@@ -34,9 +35,18 @@ fun NumberField(
     isError: Boolean = false,
     supportingText: String? = null,
     enabled: Boolean = true,
+    /**
+     * Inclusive bounds. A typed number outside them is shown as an error and reported as `null`
+     * ("no valid value"), never as the number — and never silently as the last valid one.
+     */
+    min: Double? = null,
+    max: Double? = null,
+    rangeError: String? = null,
 ) {
     var text by remember { mutableStateOf(value.toDisplayText(decimals)) }
     var clearedByUser by remember { mutableStateOf(false) }
+    var focused by remember { mutableStateOf(false) }
+    val outOfRange = parseDecimal(text)?.let { (min != null && it < min) || (max != null && it > max) } ?: false
     // POLISH-20: the field owns its text while the user types, but an *external* change of
     // [value] (a prescription arriving after the sheet opened, a profile reloaded) must show up —
     // only when it differs from what the current text already parses to, so typing "2." is
@@ -44,8 +54,13 @@ fun NumberField(
     // A field the user has just emptied is left empty even when the caller maps "empty" to a
     // value (onboarding stores 0 sessions): re-filling it put "0" back in front of the cursor,
     // so typing 3 made "30", clamped to 14 (found during P19 verification).
-    LaunchedEffect(value) {
-        if (!clearedByUser && parseDecimal(text) != value) text = value.toDisplayText(decimals)
+    // BUG-27: while the field has the focus its own text wins. A value that arrives then is the
+    // echo of an earlier keystroke coming back from the store ("1" while the text is already
+    // "19"), and writing it into the buffer dropped or reordered what was typed.
+    LaunchedEffect(value, focused) {
+        if (!focused && !clearedByUser && !outOfRange && parseDecimal(text) != value) {
+            text = value.toDisplayText(decimals)
+        }
     }
 
     OutlinedTextField(
@@ -54,15 +69,17 @@ fun NumberField(
             if (candidate.isValidNumberInput(allowNegative)) {
                 text = candidate
                 clearedByUser = candidate.isEmpty()
-                onValueChange(parseDecimal(candidate))
+                val parsed = parseDecimal(candidate)
+                val inRange = parsed == null || ((min == null || parsed >= min) && (max == null || parsed <= max))
+                onValueChange(if (inRange) parsed else null)
             }
         },
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused },
         enabled = enabled,
         label = { Text(label) },
         suffix = suffix?.let { { Text(it) } },
-        isError = isError,
-        supportingText = supportingText?.let { { Text(it) } },
+        isError = isError || outOfRange,
+        supportingText = (if (outOfRange) rangeError ?: supportingText else supportingText)?.let { { Text(it) } },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     )

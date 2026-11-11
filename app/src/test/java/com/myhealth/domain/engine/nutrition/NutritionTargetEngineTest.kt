@@ -306,9 +306,9 @@ class NutritionTargetEngineTest {
         ).explanation
 
         assertThat(explanation).contains("BMR 1780 kcal (Mifflin-St Jeor, 80.0 kg, 180.0 cm, 30 y)")
-        assertThat(explanation).contains("TDEE 2225 kcal (estimated (BMR x NEAT + training))")
-        assertThat(explanation).contains("Day type: REST")
-        assertThat(explanation).contains("Goal: Lose weight (0.5 kg/week) -> -550 kcal/day")
+        assertThat(explanation).contains("TDEE 2225 kcal (estimated (BMR × NEAT + training))")
+        assertThat(explanation).contains("Day type: Rest day")
+        assertThat(explanation).contains("Goal: Lose weight (0.5 kg/week) → -550 kcal/day")
         assertThat(explanation).contains("Target: ")
         assertThat(explanation).contains("Protein ")
         assertThat(explanation).contains("g/kg")

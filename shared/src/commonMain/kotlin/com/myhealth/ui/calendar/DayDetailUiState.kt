@@ -41,6 +41,8 @@ data class DayDetailUiState(
     val data: CalendarDay = CalendarDay.empty(day),
     /** Event id awaiting the delete confirmation dialog, or `null`. */
     val pendingDeleteEventId: Long? = null,
+    /** POLISH-24: a recurring event offers "This occurrence" next to "Whole series". */
+    val pendingDeleteIsRecurring: Boolean = false,
     /** The occurrence whose [LinkActivitySheet] is open, or `null` (P3.7). */
     val linkSheetOccurrence: EventOccurrence? = null,
     /** Auto-link suggestions for the shown day, fed to [LinkActivitySheet] (P3.7). */

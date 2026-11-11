@@ -224,6 +224,32 @@ class BackupServiceTest {
         assertThat(dao.ingredient).hasSize(1)
     }
 
+    @Test
+    fun bug29_replace_with_an_empty_backup_changes_nothing() = runTest {
+        seed()
+        content.bytes = BackupSerializer
+            .encodeToString(BackupFile(exportedAtMillis = 1_700_000_000_000L, appVersion = "0.9.6"))
+            .toByteArray()
+
+        val outcome = service.import(URI, BackupMode.REPLACE)
+
+        assertThat(outcome).isInstanceOf(Outcome.Err::class.java)
+        assertThat(dao.activitySession).hasSize(1)
+        assertThat(dao.ingredient).hasSize(1)
+    }
+
+    @Test
+    fun bug29_replace_with_foreign_json_changes_nothing() = runTest {
+        seed()
+        content.bytes = """{"widgets":[{"id":1}]}""".toByteArray()
+
+        val outcome = service.import(URI, BackupMode.REPLACE)
+
+        assertThat(outcome).isInstanceOf(Outcome.Err::class.java)
+        assertThat(dao.activitySession).hasSize(1)
+        assertThat(dao.ingredient).hasSize(1)
+    }
+
     private fun clearDevice() {
         dao.profile.clear()
         dao.bodyMeasurement.clear()

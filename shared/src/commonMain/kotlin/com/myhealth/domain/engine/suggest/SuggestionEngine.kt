@@ -535,8 +535,15 @@ internal data class WeekShape(
             val longRun = GoalRules.longRunPlan(input, periodization.phase)
             // 0.8.1: the side-goal pre-pass owns the week's interval run; the loop adds no other.
             val sideGoalTypes = if (intervalCtx.sideGoal != null) setOf(SessionType.INTERVAL_RUN) else emptySet()
+            // POLISH-62: a down week carries no interval session. `IntervalBuilder` builds no
+            // structure in that phase, so one placed anyway was a "High" card without steps.
+            val downWeekTypes = if (periodization.phase == TrainingPhase.RECOVERY_WEEK) {
+                setOf(SessionType.INTERVAL_RUN, SessionType.BIKE_INTERVALS)
+            } else {
+                emptySet()
+            }
             return WeekShape(
-                excludedTypes = StrengthRules.excludedTypes(input.strengthPool) + sideGoalTypes,
+                excludedTypes = StrengthRules.excludedTypes(input.strengthPool) + sideGoalTypes + downWeekTypes,
                 longRun = longRun,
                 longRunMinutes = longRun?.let {
                     GoalRules.longRunMinutes(it, IntervalBuilder.targetPaceFor(SessionType.LONG_RUN, intervalCtx))

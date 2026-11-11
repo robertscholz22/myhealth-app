@@ -1,5 +1,9 @@
 package com.myhealth.ui.settings
 
+import com.myhealth.di.appGraph
+import com.myhealth.data.time.todayEpochDay
+import com.myhealth.domain.engine.load.HrZoneModel
+import com.myhealth.ui.zones.resolveHrZoneModel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -36,6 +40,7 @@ import com.myhealth.domain.model.Sex
 import com.myhealth.domain.model.SportGroup
 import com.myhealth.ui.common.DatePickerField
 import com.myhealth.ui.common.DropdownField
+import com.myhealth.ui.common.BufferedTextField
 import com.myhealth.ui.common.NumberField
 import com.myhealth.ui.common.ONBOARDING_SPORT_GROUPS
 import com.myhealth.ui.common.SCREEN_PADDING
@@ -60,6 +65,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             graph.clock,
         )
     }
+    val graph = appGraph()
     val state by vm.state.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
@@ -79,6 +85,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             onSettingsChange = vm::onSettingsChange,
             onRemoveOrphanedImportData = vm::removeOrphanedImportData,
             onRecomputeTrainingLoad = vm::recomputeTrainingLoad,
+            resolveZoneModel = { profile ->
+                resolveHrZoneModel(profile, graph.clock.todayEpochDay(), graph.healthRepo, graph.activityRepo)
+            },
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         )
     }
@@ -92,6 +101,7 @@ private fun SettingsContent(
     onRemoveOrphanedImportData: () -> Unit,
     onRecomputeTrainingLoad: () -> Unit,
     modifier: Modifier = Modifier,
+    resolveZoneModel: (suspend (Profile) -> HrZoneModel?)? = null,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -104,7 +114,7 @@ private fun SettingsContent(
             item {
                 CyclingSection(profile = profile, ftpEstimate = state.ftpEstimate, onProfileChange = onProfileChange)
             }
-            item { HeartRateZonesSection(profile = profile, onProfileChange = onProfileChange) }
+            item { HeartRateZonesSection(profile = profile, onProfileChange = onProfileChange, resolveModel = resolveZoneModel) }
             item { StrengthEquipmentSection(profile = profile, onProfileChange = onProfileChange) }
         } else if (!state.isLoading) {
             item { Text(stringResource(Res.string.settings_no_profile)) }
@@ -121,15 +131,19 @@ private fun SettingsContent(
     }
 }
 
+/** Plausible bounds for the manual heart-rate overrides (BUG-27: "19" was accepted as a max HR). */
+private const val RESTING_HR_MIN = 30.0
+private const val RESTING_HR_MAX = 110.0
+private const val MAX_HR_MIN = 120.0
+private const val MAX_HR_MAX = 230.0
+
 @Composable
 private fun ProfileSection(profile: Profile, onProfileChange: (Profile) -> Unit) {
     SectionCard(title = stringResource(Res.string.settings_section_profile)) {
-        OutlinedTextField(
+        BufferedTextField(
             value = profile.displayName,
             onValueChange = { onProfileChange(profile.copy(displayName = it)) },
-            label = { Text(stringResource(Res.string.settings_profile_name_label)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            label = stringResource(Res.string.settings_profile_name_label),
         )
         DropdownField(
             label = stringResource(Res.string.settings_profile_sex_label),
@@ -178,6 +192,9 @@ private fun ProfileSection(profile: Profile, onProfileChange: (Profile) -> Unit)
             onValueChange = { onProfileChange(profile.copy(restingHrManual = it?.toInt())) },
             suffix = stringResource(Res.string.settings_unit_bpm),
             decimals = 0,
+            min = RESTING_HR_MIN,
+            max = RESTING_HR_MAX,
+            rangeError = stringResource(Res.string.settings_profile_resting_hr_range),
         )
         NumberField(
             label = stringResource(Res.string.settings_profile_max_hr_label),
@@ -185,6 +202,9 @@ private fun ProfileSection(profile: Profile, onProfileChange: (Profile) -> Unit)
             onValueChange = { onProfileChange(profile.copy(maxHrManual = it?.toInt())) },
             suffix = stringResource(Res.string.settings_unit_bpm),
             decimals = 0,
+            min = MAX_HR_MIN,
+            max = MAX_HR_MAX,
+            rangeError = stringResource(Res.string.settings_profile_max_hr_range),
         )
         NumberField(
             label = stringResource(Res.string.settings_profile_sleep_target_label),

@@ -1,5 +1,6 @@
 package com.myhealth.ui.training
 
+import com.myhealth.ui.common.rememberDeleteConfirmation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -44,7 +45,7 @@ import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVm
+import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.model.PlannedSession
 import com.myhealth.domain.model.TrainingPhase
 import com.myhealth.ui.common.EmptyState
@@ -70,7 +71,7 @@ data class TrainingNavActions(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrainingScreen(nav: TrainingNavActions, modifier: Modifier = Modifier) {
-    val vm = rememberVm { graph ->
+    val vm = rememberDayVm { graph ->
         TrainingViewModel(
             planRepo = graph.planRepo,
             suggestionRepo = graph.suggestionRepo,
@@ -99,6 +100,8 @@ fun TrainingScreen(nav: TrainingNavActions, modifier: Modifier = Modifier) {
         }
     }
 
+    val confirmDelete = rememberDeleteConfirmation(stringResource(Res.string.training_session_delete_confirm), vm::delete)
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -121,7 +124,7 @@ fun TrainingScreen(nav: TrainingNavActions, modifier: Modifier = Modifier) {
                 onMarkDone = { id -> onMarkDoneRequested(state, id, vm::markDone) { session -> setLogSession = session } },
                 onSkip = vm::skip,
                 onReopen = vm::reopen,
-                onDelete = vm::delete,
+                onDelete = confirmDelete,
             ),
             nav = nav,
             onPreviousWeek = vm::showPreviousWeek,

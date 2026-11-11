@@ -22,7 +22,7 @@ import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.myhealth.di.rememberVm
+import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.engine.load.AcwrZone
 import com.myhealth.domain.engine.strength.MuscleLoadEngine
 import com.myhealth.domain.engine.strength.MuscleLoadInput
@@ -50,7 +50,7 @@ import com.myhealth.ui.theme.WarningAmber
 
 @Composable
 fun LoadScreen(modifier: Modifier = Modifier) {
-    val vm = rememberVm { graph ->
+    val vm = rememberDayVm { graph ->
         LoadViewModel(
             graph.loadRepo,
             graph.healthRepo,

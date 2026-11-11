@@ -1,5 +1,9 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.data.time.todayEpochDay
+import com.myhealth.domain.model.StrengthWorkout
+import com.myhealth.domain.engine.strength.ExerciseCatalog
+import com.myhealth.domain.engine.suggest.SessionCatalog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myhealth.domain.model.Intensity
@@ -97,7 +101,23 @@ class WorkoutsViewModel(
     fun confirmDelete() {
         val id = action.value.pendingDeleteId ?: return
         action.set { it.copy(pendingDeleteId = null) }
-        viewModelScope.launch { strengthRepo.deleteWorkout(id) }
+        viewModelScope.launch {
+            keepWorkoutOnItsSessions(id)
+            strengthRepo.deleteWorkout(id)
+        }
+    }
+
+    /**
+     * POLISH-30: deleting a workout nulls `workoutId` on its sessions, and they lost their name and
+     * exercise list with it — also the completed ones. The workout is written into each session's
+     * description first (unless the user wrote their own).
+     */
+    private suspend fun keepWorkoutOnItsSessions(workoutId: Long) {
+        val workout = strengthRepo.getById(workoutId) ?: return
+        val summary = workoutSummary(workout)
+        planRepo.getSessions(0L, clock.todayEpochDay() + SESSION_LOOKAHEAD_DAYS)
+            .filter { it.workoutId == workoutId && it.description.isNullOrBlank() }
+            .forEach { planRepo.upsertSession(it.copy(description = summary, updatedAtMillis = clock.millis())) }
     }
 
     fun requestPlanForDay(workoutId: Long) = action.set { it.copy(planForDayId = workoutId) }
@@ -122,7 +142,8 @@ class WorkoutsViewModel(
                 targetDurationMin = workout.estimatedMinutes,
                 targetDistanceMeters = null,
                 targetPaceSecPerKm = null,
-                estimatedTrimp = null,
+                // POLISH-29: the same catalog estimate the session editor shows.
+                estimatedTrimp = SessionCatalog.entryFor(sessionTypeFor(workout.kind))?.estTrimpFor(workout.estimatedMinutes),
                 description = null,
                 rationale = null,
                 status = PlannedStatus.PLANNED,
@@ -178,3 +199,15 @@ private fun MutableStateFlow<WorkoutsAction>.set(transform: (WorkoutsAction) -> 
  * `STRENGTH_FULL` — there is no dedicated core/custom session type (§2.1) — and the three P17
  * `MOBILITY_*` kinds map onto `SessionType.MOBILITY`, which already exists and carries no load. */
 fun sessionTypeFor(kind: StrengthWorkoutKind): SessionType = kind.sessionType
+
+private const val SESSION_LOOKAHEAD_DAYS = 3650L
+
+/** "Upper A: Bench press 3×10, Plank 3×30 s" — what a session keeps of a deleted workout. */
+fun workoutSummary(workout: StrengthWorkout): String {
+    val rows = workout.exercises.joinToString(", ") { row ->
+        val name = ExerciseCatalog.byId(row.exerciseId)?.name ?: row.exerciseId.lowercase().replace('_', ' ')
+        val amount = row.reps?.let { "${row.sets}×$it" } ?: "${row.sets}×${row.seconds ?: 0} s"
+        "$name $amount"
+    }
+    return if (rows.isEmpty()) workout.name else "${workout.name}: $rows"
+}

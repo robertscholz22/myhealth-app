@@ -1,6 +1,8 @@
 package com.myhealth.ui.calendar
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.FilterChip
@@ -45,6 +47,7 @@ private fun DayOfWeek.shortLabel(): String = when (this) {
  * chips]` — "every n weeks" is the same weekly mode with the interval field above 1, per
  * [RecurrenceMode]'s doc — plus an optional "until" date.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RecurrencePicker(
     draft: EventDraft,
@@ -67,7 +70,8 @@ fun RecurrencePicker(
         }
         if (draft.recurrenceMode == RecurrenceMode.WEEKLY) {
             Text(stringResource(Res.string.event_label_repeat_on), style = MaterialTheme.typography.labelLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            // BUG-23: seven chips do not fit one row on a phone; the last one was clipped.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 WEEKDAY_ORDER.forEach { day ->
                     FilterChip(
                         selected = day in draft.recurrenceWeekdays,

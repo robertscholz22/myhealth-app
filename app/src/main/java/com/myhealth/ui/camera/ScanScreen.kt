@@ -1,5 +1,6 @@
 package com.myhealth.ui.camera
 
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -95,6 +96,13 @@ fun ScanScreen(
         )
     }
     var asked by remember { mutableStateOf(false) }
+    // POLISH-56: the permission may have been granted in Android's settings while this screen
+    // was in the background; without the re-check it kept saying "Camera access is off".
+    LifecycleResumeEffect(Unit) {
+        granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+            PackageManager.PERMISSION_GRANTED
+        onPauseOrDispose {}
+    }
     val permissionLauncher = rememberLauncherForActivityResult(RequestPermission()) { result ->
         granted = result
         asked = true

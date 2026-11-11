@@ -36,6 +36,9 @@ import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.SavedStateHandle
+import com.myhealth.di.UiGraph
+import com.myhealth.di.rememberDayVmWithSavedState
 import com.myhealth.di.rememberVmWithSavedState
 import com.myhealth.domain.model.MealSlot
 import com.myhealth.domain.model.QuantityUnit
@@ -59,7 +62,7 @@ fun NutritionScreen(
     onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    val vm = rememberVmWithSavedState { graph, handle ->
+    val create = { graph: UiGraph, handle: SavedStateHandle ->
         NutritionViewModel(
             initialDay = epochDay ?: graph.clock.today().toEpochDays(),
             mealRepo = graph.mealRepo,
@@ -69,6 +72,8 @@ fun NutritionScreen(
             savedState = handle,
         )
     }
+    // BUG-30: the tab's diary (no day in the route) starts over on today when the date changes.
+    val vm = if (epochDay == null) rememberDayVmWithSavedState(create) else rememberVmWithSavedState(create)
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 

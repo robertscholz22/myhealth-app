@@ -1,5 +1,7 @@
 package com.myhealth.ui.ingredients
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -91,21 +93,32 @@ private fun IngredientsContent(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
+            // POLISH-45: the whole row toggles, not only the switch.
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().toggleable(
+                    value = state.showArchived,
+                    role = Role.Switch,
+                    onValueChange = onShowArchivedChange,
+                ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(stringResource(Res.string.ingredients_show_archived), style = MaterialTheme.typography.bodyMedium)
-                Switch(checked = state.showArchived, onCheckedChange = onShowArchivedChange)
+                Switch(checked = state.showArchived, onCheckedChange = null)
             }
         }
         if (state.items.isEmpty()) {
             EmptyState(
                 title = stringResource(
-                    if (state.showArchived) Res.string.ingredients_empty_archived_title else Res.string.ingredients_empty_title,
+                    when {
+                        state.query.isNotBlank() -> Res.string.ingredients_empty_search_title
+                        state.showArchived -> Res.string.ingredients_empty_archived_title
+                        else -> Res.string.ingredients_empty_title
+                    },
                 ),
-                message = stringResource(Res.string.ingredients_empty_message),
+                message = stringResource(
+                    if (state.query.isNotBlank()) Res.string.ingredients_empty_search_message else Res.string.ingredients_empty_message,
+                ),
                 modifier = Modifier.padding(16.dp),
             )
         } else {

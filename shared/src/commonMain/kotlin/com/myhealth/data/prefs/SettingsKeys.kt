@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.myhealth.domain.model.AppSettings
 import com.myhealth.domain.model.ThemeMode
 
@@ -22,6 +23,7 @@ object SettingsKeys {
     val SUGGESTION_HORIZON_DAYS = intPreferencesKey("suggestion_horizon_days")
     val OFF_USER_AGENT_CONTACT = stringPreferencesKey("off_user_agent_contact")
     val GARMIN_DIRECT_ENABLED = booleanPreferencesKey("garmin_direct_enabled")
+    val SETTLED_LINK_KEYS = stringSetPreferencesKey("settled_link_keys")
     val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
     val SUGGESTIONS_STALE = booleanPreferencesKey("suggestions_stale")
     val CYCLE_TRACKING_ENABLED = booleanPreferencesKey("cycle_tracking_enabled")
