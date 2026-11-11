@@ -980,3 +980,33 @@ catalog estimate. Fixed: the event row shows that estimate (`SessionCatalog.estT
 Emulator (synthetic calendar from session 32): a 90 min practice reads "176 AU", an 80 min match
 "204 AU", "Planned" 380 AU for the week holding both. PASS.
 
+## Session 34 — 2026-11-11 (emulator, 0.10.2: intensity of calendar events, schema 11)
+
+A calendar event (match, soccer training, race) can carry its own intensity (`calendar_event.intensity`,
+`NULL` = the usual one of its type; `MIGRATION_10_11`). It is set per group in More → Calendar import
+and per event in the event editor. The load estimate follows it: at the type's usual intensity the
+catalog effort, otherwise the level's typical effort (`SessionCatalog.RPE_BY_INTENSITY`); the same
+rule now applies to planned sessions saved from the session editor. The suggester seeds the event
+with that intensity and estimate.
+
+BUG-32 (since 0.10.0): saving an imported event from the event editor dropped its external source,
+so the import listed it as "removed by you" and stopped following the calendar entry. Fixed: the
+editor carries the source through (`EventDraftImportedTest`).
+
+Emulator, release build installed over the published 0.10.1 with imported events (synthetic calendar):
+- migration 10→11 keeps the events; group cards show "Intensity" at the type's usual level. PASS
+- match group High→Max: 80 min match 204→216 AU; practice group Moderate→Low: 90 min 176→108 AU, on
+  the group card and on the Training screen; kept after a restart. PASS
+- event editor: one practice set to High shows 216 AU; the next import check sets it back to the
+  group's setting, it stays imported (no "removed by you"). PASS
+
+Edit and delete from the Training screen: a match / soccer training / race row opens the event
+editor (tap, or the "Edit event" button), which also deletes. The import now remembers what it last
+wrote per entry (`CalendarImportConfig.written`) and leaves an event alone once the owner changed
+it; group settings still reach the untouched ones. Release build over 0.10.1 on the emulator:
+- tap a practice on Training → editor; save unchanged: not counted as changed. PASS
+- set it to High: 216 AU, kept after an import check and a restart; status "Changed by you…: 1". PASS
+- delete it from the same editor: row gone, status "Removed by you…: 1". PASS
+
+NOTE-45 is replaced: an edit to a single imported event is kept; it no longer follows later changes
+of the group settings (a moved or cancelled calendar entry still replaces or removes it).

@@ -1,5 +1,8 @@
 package com.myhealth.ui.calendar
 
+import com.myhealth.ui.training.label
+import com.myhealth.domain.model.Intensity
+import com.myhealth.domain.engine.suggest.SessionCatalog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -175,9 +178,24 @@ private fun EventTypeCard(
             selected = draft.type,
             optionLabel = { it.displayName() },
             onSelect = { type ->
-                onDraftChange { it.copy(type = type, sportType = it.sportType ?: defaultSportTypeFor(type)) }
+                onDraftChange {
+                    it.copy(
+                        type = type,
+                        sportType = it.sportType ?: defaultSportTypeFor(type),
+                        intensity = it.intensity.takeIf { _ -> type == it.type },
+                    )
+                }
             },
         )
+        SessionCatalog.forEvent(draft.type)?.let { entry ->
+            DropdownField(
+                label = stringResource(Res.string.event_label_intensity),
+                options = Intensity.entries,
+                selected = draft.intensity ?: entry.intensity,
+                optionLabel = { it.label() },
+                onSelect = { chosen -> onDraftChange { it.copy(intensity = chosen.takeIf { c -> c != entry.intensity }) } },
+            )
+        }
         OutlinedTextField(
             value = draft.title,
             onValueChange = { title -> onDraftChange { it.copy(title = title) } },

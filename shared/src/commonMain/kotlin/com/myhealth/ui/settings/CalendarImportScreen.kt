@@ -1,5 +1,9 @@
 package com.myhealth.ui.settings
 
+import com.myhealth.ui.common.mathRound
+import com.myhealth.ui.training.label
+import com.myhealth.domain.model.Intensity
+import com.myhealth.domain.engine.suggest.SessionCatalog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -258,11 +262,30 @@ private fun GroupBlock(group: CalendarGroup, onRule: (CalendarGroup, CalendarClu
         selected = rule.type,
         optionLabel = { it.displayName() },
         onSelect = { type ->
-            onRule(group, rule.copy(type = type, isKeyEvent = rule.isKeyEvent && type == EventType.SOCCER_MATCH))
+            onRule(
+                group,
+                rule.copy(
+                    type = type,
+                    isKeyEvent = rule.isKeyEvent && type == EventType.SOCCER_MATCH,
+                    // Each type starts at its own usual intensity.
+                    intensity = rule.intensity.takeIf { type == rule.type },
+                ),
+            )
         },
         modifier = Modifier.fillMaxWidth(),
     )
     val usual = group.cluster.entries.usualMinutes()
+    val catalogEntry = SessionCatalog.forEvent(rule.type)
+    if (catalogEntry != null) {
+        DropdownField(
+            label = stringResource(Res.string.calendar_import_rule_intensity),
+            options = Intensity.entries,
+            selected = rule.intensity ?: catalogEntry.intensity,
+            optionLabel = { it.label() },
+            onSelect = { chosen -> onRule(group, rule.copy(intensity = chosen.takeIf { it != catalogEntry.intensity })) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
     NumberField(
         label = stringResource(Res.string.calendar_import_rule_duration),
         value = rule.durationMin?.toDouble(),
@@ -277,6 +300,18 @@ private fun GroupBlock(group: CalendarGroup, onRule: (CalendarGroup, CalendarClu
         },
         modifier = Modifier.fillMaxWidth(),
     )
+    if (catalogEntry != null) {
+        val minutes = rule.durationMin ?: usual ?: catalogEntry.defaultMin
+        Text(
+            stringResource(
+                Res.string.calendar_import_rule_load,
+                mathRound(catalogEntry.estTrimpFor(minutes, rule.intensity)).toInt(),
+                minutes,
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
     if (rule.type == EventType.SOCCER_MATCH) {
         val keyLabel = stringResource(Res.string.calendar_import_rule_key)
         Row(
@@ -327,6 +362,12 @@ private fun StatusSection(
                 stringResource(Res.string.calendar_import_status_missing, overview.missingCalendars.joinToString(", ")),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
+            )
+        }
+        if (overview.editedInApp > 0) {
+            Text(
+                stringResource(Res.string.calendar_import_status_edited, overview.editedInApp),
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
         if (overview.removedInApp > 0) {

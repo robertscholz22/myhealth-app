@@ -158,6 +158,7 @@ fun MyHealthNavHost(
                                     navController.navigate(PlannedSessionEditRoute(epochDay = day))
                                 },
                                 onOpenActivity = { id -> navController.navigate(ActivityDetailRoute(id)) },
+                                onEditEvent = { id, day -> navController.navigate(EventEditRoute(id = id, epochDay = day)) },
                             ),
                         )
                     }

@@ -1,5 +1,7 @@
 package com.myhealth.ui.calendar
 
+import com.myhealth.domain.model.Intensity
+import com.myhealth.domain.engine.suggest.SessionCatalog
 import com.myhealth.resources.*
 import com.myhealth.domain.engine.calendar.RecurrenceFreq
 import com.myhealth.domain.engine.calendar.RecurrenceRule
@@ -37,6 +39,11 @@ data class EventDraft(
     val sportType: SportType? = null,
     val targetDistanceKm: Double? = null,
     val isKeyEvent: Boolean = false,
+    /** Only for a match, soccer training or race; `null` is the type's usual intensity. */
+    val intensity: Intensity? = null,
+    /** Carried through unchanged so an imported event stays tied to its calendar entry. */
+    val externalSource: String? = null,
+    val externalId: String? = null,
     val notes: String = "",
     val recurrenceMode: RecurrenceMode = RecurrenceMode.NONE,
     val recurrenceWeekdays: Set<DayOfWeek> = emptySet(),
@@ -134,6 +141,7 @@ fun EventDraft.toCalendarEvent(clock: PlatformClock): CalendarEvent {
         sportType = if (usesSport) sportType ?: defaultSportTypeFor(type) else null,
         targetDistanceMeters = if (type.usesTargetDistance()) targetDistanceKm?.times(1000.0) else null,
         isKeyEvent = isKeyEvent,
+        intensity = intensity.takeIf { SessionCatalog.forEvent(type) != null },
         recurrenceRule = rule?.format(),
         recurrenceUntilDay = rule?.untilDay,
         parentEventId = null,
@@ -142,6 +150,8 @@ fun EventDraft.toCalendarEvent(clock: PlatformClock): CalendarEvent {
         notes = notes.trim().ifBlank { null },
         createdAtMillis = createdAtMillis,
         updatedAtMillis = clock.millis(),
+        externalSource = externalSource,
+        externalId = externalId,
     )
 }
 
@@ -161,6 +171,9 @@ fun eventDraftFrom(event: CalendarEvent): EventDraft {
         sportType = event.sportType,
         targetDistanceKm = event.targetDistanceMeters?.div(1000.0),
         isKeyEvent = event.isKeyEvent,
+        intensity = event.intensity,
+        externalSource = event.externalSource,
+        externalId = event.externalId,
         notes = event.notes.orEmpty(),
         recurrenceMode = if (isWeekly) RecurrenceMode.WEEKLY else RecurrenceMode.NONE,
         recurrenceWeekdays = if (isWeekly) rule.byDay.toSet() else emptySet(),

@@ -136,6 +136,7 @@ object RecurrenceExpander {
         sportType = event.sportType,
         targetDistanceMeters = event.targetDistanceMeters,
         isKeyEvent = event.isKeyEvent,
+        intensity = event.intensity,
     )
 
     private const val ACTION_SKIP = "SKIP"

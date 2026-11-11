@@ -1,5 +1,6 @@
 package com.myhealth.data.db.entity
 
+import com.myhealth.domain.model.Intensity
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -61,4 +62,6 @@ data class CalendarEventEntity(
     val externalSource: String? = null,
     /** v10: the entry's identity inside [externalSource]. */
     val externalId: String? = null,
+    /** v11: expected intensity; `null` means the usual one of [type]. */
+    val intensity: Intensity? = null,
 )

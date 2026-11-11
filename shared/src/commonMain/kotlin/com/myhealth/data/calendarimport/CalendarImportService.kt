@@ -127,6 +127,7 @@ class CalendarImportService(
             todayStartMillis = todayStart,
             todayEpochDay = today,
             zone = zone,
+            written = config.written,
         )
         plan.deleteIds.forEach { calendarRepo.deleteEvent(it) }
         plan.upserts.forEach { calendarRepo.upsertEvent(it) }
@@ -136,6 +137,7 @@ class CalendarImportService(
                 calendars = resolved.map { (chosen, found) -> found?.let { c -> SelectedCalendar(c.id, c.name) } ?: chosen },
                 rules = rules,
                 imported = plan.imported,
+                written = plan.written,
                 lastCheckedAtMillis = now,
             )
         }
@@ -166,6 +168,7 @@ class CalendarImportService(
             missingCalendars = missing,
             importedUpcoming = plan.active,
             removedInApp = plan.removedInApp,
+            editedInApp = plan.editedInApp,
             lastCheckedAtMillis = now,
         )
     }

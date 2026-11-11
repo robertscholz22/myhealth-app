@@ -1,5 +1,6 @@
 package com.myhealth.data.db
 
+import com.myhealth.domain.model.Intensity
 import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
@@ -611,6 +612,37 @@ class MyHealthMigrationTest {
                 assertThat(dao.getImported()).isEmpty()
                 dao.upsert(event.copy(id = 0, externalSource = "calendar:Team", externalId = "1|practice"))
                 assertThat(dao.getImported().map { it.externalId }).containsExactly("1|practice")
+            }
+        } finally {
+            migrated.close()
+        }
+    }
+
+    /** v11: an imported event keeps its source and has no intensity of its own until one is set. */
+    @Test
+    fun migration_10_to_11_leaves_existing_events_at_their_usual_intensity() {
+        migrations.createDatabase(MIGRATION_DB, 10).use { v10 ->
+            v10.execSQL(
+                "INSERT INTO calendar_event (id, type, title, startDay, isKeyEvent, createdAtMillis, updatedAtMillis, " +
+                    "externalSource, externalId) VALUES (1, 'SOCCER_TRAINING', 'Practice', 20000, 0, 1, 1, 'calendar:Team', '1|practice')",
+            )
+        }
+
+        migrations.runMigrationsAndValidate(MIGRATION_DB, 11, true, *Migrations.ALL)
+
+        val migrated = Room.databaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            MyHealthDatabase::class.java,
+            MIGRATION_DB,
+        ).addMigrations(*Migrations.ALL).build()
+        try {
+            runTest {
+                val dao = migrated.eventDao()
+                val event = checkNotNull(dao.getById(1L))
+                assertThat(event.intensity).isNull()
+                assertThat(event.externalId).isEqualTo("1|practice")
+                dao.upsert(event.copy(intensity = Intensity.LOW))
+                assertThat(checkNotNull(dao.getById(1L)).intensity).isEqualTo(Intensity.LOW)
             }
         } finally {
             migrated.close()

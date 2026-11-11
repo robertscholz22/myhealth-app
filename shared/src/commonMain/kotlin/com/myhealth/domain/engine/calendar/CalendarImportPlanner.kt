@@ -1,5 +1,6 @@
 package com.myhealth.domain.engine.calendar
 
+import com.myhealth.domain.engine.suggest.SessionCatalog
 import com.myhealth.domain.model.CalendarClusterRule
 import com.myhealth.domain.model.CalendarEvent
 import com.myhealth.domain.model.CalendarImportConfig
@@ -26,6 +27,10 @@ data class CalendarImportPlan(
     val removedInApp: Int,
     /** Upcoming entries that are events after this run. */
     val active: Int,
+    /** What the import last wrote per entry ([CalendarImportPlanner.signature]). */
+    val written: Map<String, String> = emptyMap(),
+    /** Upcoming events the owner changed in the app; the import leaves them as they are. */
+    val editedInApp: Int = 0,
 ) {
     val isNoop: Boolean get() = upserts.isEmpty() && deleteIds.isEmpty()
 }
@@ -61,6 +66,7 @@ object CalendarImportPlanner {
         todayStartMillis: Long,
         todayEpochDay: Long,
         zone: TimeZone,
+        written: Map<String, String> = emptyMap(),
     ): CalendarImportPlan {
         val desired = LinkedHashMap<String, CalendarEvent>()
         for (calendar in calendars) {
@@ -88,11 +94,21 @@ object CalendarImportPlanner {
         val imported = previouslyImported
             .filter { key -> unavailableSources.any { key.startsWith(it + "\n") } }
             .toMutableSet()
+        val nowWritten = HashMap<String, String>()
+        var editedInApp = 0
         for ((key, wanted) in desired) {
             val current = existingByKey[key]
+            val lastWritten = written[key]
             when {
+                // Changed in MyHealth since the import last wrote it: the owner's version stays.
+                current != null && lastWritten != null && signature(current) != lastWritten -> {
+                    imported += key
+                    nowWritten[key] = lastWritten
+                    editedInApp++
+                }
                 current != null -> {
                     imported += key
+                    nowWritten[key] = signature(wanted)
                     val merged = current.copy(
                         type = wanted.type,
                         title = wanted.title,
@@ -102,6 +118,7 @@ object CalendarImportPlanner {
                         location = wanted.location,
                         sportType = wanted.sportType,
                         isKeyEvent = wanted.isKeyEvent,
+                        intensity = wanted.intensity,
                     )
                     if (merged != current) {
                         upserts += merged
@@ -114,6 +131,7 @@ object CalendarImportPlanner {
                 }
                 else -> {
                     imported += key
+                    nowWritten[key] = signature(wanted)
                     upserts += wanted
                     added++
                 }
@@ -129,8 +147,17 @@ object CalendarImportPlanner {
             }
             .map { it.id }
 
-        return CalendarImportPlan(upserts, deleteIds, imported, added, updated, removedInApp, desired.size - removedInApp)
+        return CalendarImportPlan(
+            upserts, deleteIds, imported, added, updated, removedInApp, desired.size - removedInApp,
+            written = nowWritten, editedInApp = editedInApp,
+        )
     }
+
+    /** The fields the import writes; a stored event that differs from it was edited in the app. */
+    fun signature(event: CalendarEvent): String = listOf(
+        event.type.name, event.title, event.startDay, event.startMinuteOfDay, event.durationMin,
+        event.location, event.sportType?.name, event.isKeyEvent, event.intensity?.name,
+    ).joinToString("\u0001")
 
     private fun eventOf(
         entry: DeviceCalendarEntry,
@@ -162,6 +189,7 @@ object CalendarImportPlanner {
             notes = null,
             createdAtMillis = 0,
             updatedAtMillis = 0,
+            intensity = rule.intensity.takeIf { SessionCatalog.forEvent(rule.type) != null },
             externalSource = source,
             externalId = externalId,
         )

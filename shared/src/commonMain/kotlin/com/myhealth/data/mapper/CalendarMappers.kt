@@ -28,6 +28,7 @@ fun CalendarEventEntity.toDomain(): CalendarEvent = CalendarEvent(
     updatedAtMillis = updatedAtMillis,
     externalSource = externalSource,
     externalId = externalId,
+    intensity = intensity,
 )
 
 fun CalendarEvent.toEntity(): CalendarEventEntity = CalendarEventEntity(
@@ -51,6 +52,7 @@ fun CalendarEvent.toEntity(): CalendarEventEntity = CalendarEventEntity(
     updatedAtMillis = updatedAtMillis,
     externalSource = externalSource,
     externalId = externalId,
+    intensity = intensity,
 )
 
 fun EventOverrideEntity.toDomain(): EventOverride = EventOverride(

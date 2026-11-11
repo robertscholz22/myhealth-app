@@ -146,6 +146,6 @@ data class BackupFile(
          * `exercise_progress`). P24 raises it to **9** (`meal_template.servings`; an older file
          * decodes with the entity's default of one serving).
          */
-        const val CURRENT_SCHEMA_VERSION: Int = 10
+        const val CURRENT_SCHEMA_VERSION: Int = 11
     }
 }

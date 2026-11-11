@@ -24,6 +24,8 @@ data class CalendarEvent(
     val externalSource: String? = null,
     /** The entry's identity inside [externalSource]; the calendar import matches on it. */
     val externalId: String? = null,
+    /** How hard it is expected to be; `null` means the usual intensity of its [type]. */
+    val intensity: Intensity? = null,
 )
 
 /**
@@ -58,6 +60,8 @@ data class EventOccurrence(
     val sportType: SportType?,
     val targetDistanceMeters: Double?,
     val isKeyEvent: Boolean,
+    /** `null` means the usual intensity of [type]. */
+    val intensity: Intensity? = null,
 )
 
 /**

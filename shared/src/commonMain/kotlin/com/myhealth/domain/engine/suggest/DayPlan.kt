@@ -137,7 +137,7 @@ data class SuggestionGrid(val startDay: Long, val endDayExclusive: Long, val day
             val days = (start until end).map { day ->
                 val eventItems = input.events
                     .filter { it.occurrenceDay == day }
-                    .mapNotNull { occurrence -> eventItem(occurrence.type, occurrence.effectiveDurationMin) }
+                    .mapNotNull { eventItem(it.type, it.effectiveDurationMin, it.intensity) }
                 // BUG-24: every session in `lockedPlanned` is fixed — locked, planned by hand or
                 // already completed — and occupies its day. Only locked ones were seeded, so a
                 // hand-planned long run got a second long run next to it. A skipped one frees its day.
@@ -149,7 +149,7 @@ data class SuggestionGrid(val startDay: Long, val endDayExclusive: Long, val day
             return SuggestionGrid(startDay = start, endDayExclusive = end, days = days)
         }
 
-        private fun eventItem(type: EventType, durationMin: Int?): GridItem? {
+        private fun eventItem(type: EventType, durationMin: Int?, intensity: Intensity?): GridItem? {
             if (type == EventType.BLOCKED) {
                 return GridItem(
                     origin = ItemOrigin.BLOCKED,
@@ -167,9 +167,9 @@ data class SuggestionGrid(val startDay: Long, val endDayExclusive: Long, val day
                 origin = ItemOrigin.EVENT,
                 sessionType = entry.sessionType,
                 sportType = entry.sportType,
-                intensity = entry.intensity,
+                intensity = intensity ?: entry.intensity,
                 minutes = minutes,
-                estTrimp = entry.estTrimpFor(minutes),
+                estTrimp = entry.estTrimpFor(minutes, intensity),
                 eventType = type,
             )
         }

@@ -28,6 +28,8 @@ data class CalendarClusterRule(
     /** `null` keeps each entry's own length. */
     val durationMin: Int? = null,
     val isKeyEvent: Boolean = false,
+    /** `null` is the usual intensity of [type]. */
+    val intensity: Intensity? = null,
 )
 
 /** A calendar chosen for the import; [name] finds it again if the device hands out a new [id]. */
@@ -46,6 +48,8 @@ data class CalendarImportConfig(
     val calendars: List<SelectedCalendar> = emptyList(),
     val rules: Map<String, CalendarClusterRule> = emptyMap(),
     val imported: Set<String> = emptySet(),
+    /** Per imported entry, the fields the import last wrote; a differing event was edited in the app. */
+    val written: Map<String, String> = emptyMap(),
     val lastCheckedAtMillis: Long? = null,
 ) {
     companion object {

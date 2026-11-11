@@ -3184,6 +3184,7 @@ If a phase ends below its floor, the lead rejects the phase and orders the missi
 | 8 | P19 (Goal-driven training) | `goal.isRace` (`INTEGER NOT NULL DEFAULT 1`), `strength_workout.useInSuggestions` (`INTEGER NOT NULL DEFAULT 1`), `suggested_session.workoutId` (`INTEGER`); every existing goal stays a race and every workout stays in the pool. `BackupFile.CURRENT_SCHEMA_VERSION` 7 → **8** (row added with v9; the step itself shipped in 0.8.0) | `MIGRATION_7_8` |
 | 9 | P24 (Template servings) | `meal_template.servings` (`REAL NOT NULL DEFAULT 1`): how many servings a template's items make; every existing template stays one serving, so logging it is unchanged. `BackupFile.CURRENT_SCHEMA_VERSION` 8 → **9** | `MIGRATION_8_9` |
 | 10 | P25 (Calendar import) | `calendar_event.externalSource`, `calendar_event.externalId` (both `TEXT`, nullable): set on events the calendar import wrote, `NULL` on events made in the app. `BackupFile.CURRENT_SCHEMA_VERSION` 9 → **10** | `MIGRATION_9_10` |
+| 11 | P25 (event intensity) | `calendar_event.intensity` (`TEXT`, nullable): the expected intensity of a match, soccer training or race; `NULL` means the usual one of its type. | `MIGRATION_10_11`: one `ALTER TABLE … ADD COLUMN`. |
 
 ### 6.5 Manual smoke test (phone attached)
 

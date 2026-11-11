@@ -1,5 +1,7 @@
 package com.myhealth.ui.training
 
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.IconButton
 import com.myhealth.domain.engine.suggest.SessionCatalog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -54,6 +56,7 @@ fun WeekDayRow(
     onSelectDay: (Long) -> Unit,
     onAddSession: (Long) -> Unit,
     onOpenActivity: (Long) -> Unit,
+    onEditEvent: (Long, Long) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
     /** `workoutId -> StrengthWorkout` (P14.7/P16.2) — the source of `PlannedSessionCard`'s
      * `workoutName` and `workoutExercisesLine`. */
@@ -77,7 +80,7 @@ fun WeekDayRow(
             }
         },
     ) {
-        row.events.forEach { FixedEventRow(it) }
+        row.events.forEach { FixedEventRow(it, onEditEvent) }
         row.planned.forEach { session ->
             PlannedSessionCard(
                 session = session,
@@ -102,9 +105,13 @@ fun WeekDayRow(
 
 /** A match, a soccer training or a race: fixed, not movable by the suggester. */
 @Composable
-private fun FixedEventRow(event: EventOccurrence) {
+private fun FixedEventRow(event: EventOccurrence, onEditEvent: (Long, Long) -> Unit) {
+    val editLabel = stringResource(Res.string.training_edit_event)
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        // Opens the event editor, where it can be changed or deleted.
+        modifier = Modifier.fillMaxWidth().clickable(onClickLabel = editLabel) {
+            onEditEvent(event.eventId, event.occurrenceDay)
+        },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -127,11 +134,14 @@ private fun FixedEventRow(event: EventOccurrence) {
                     formatMinuteOfDay(event.effectiveStartMinuteOfDay) ?: stringResource(Res.string.training_all_day),
                     event.effectiveDurationMin?.let { "$it min" },
                     // The expected load the plan counts for it (same estimate as the suggester).
-                    SessionCatalog.estTrimpForEvent(event.type, event.effectiveDurationMin)?.let { "${mathRound(it)} AU" },
+                    SessionCatalog.estTrimpForEvent(event.type, event.effectiveDurationMin, event.intensity)?.let { "${mathRound(it)} AU" },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+        IconButton(onClick = { onEditEvent(event.eventId, event.occurrenceDay) }) {
+            Icon(imageVector = Icons.Filled.Edit, contentDescription = editLabel)
         }
     }
 }

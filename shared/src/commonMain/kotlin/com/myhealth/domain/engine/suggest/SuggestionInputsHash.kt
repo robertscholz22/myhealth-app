@@ -62,7 +62,8 @@ object SuggestionInputsHash {
                     e.eventId.toString(), e.occurrenceDay.toString(), e.type.name,
                     e.effectiveStartMinuteOfDay?.toString() ?: "", e.effectiveDurationMin?.toString() ?: "",
                     e.sportType?.name ?: "", e.isKeyEvent.toString(),
-                ).joinToString("|"),
+                    // Appended only when set, so plans made before v11 keep their hash.
+                ).plus(listOfNotNull(e.intensity?.name)).joinToString("|"),
             )
         }
         input.lockedPlanned.sortedWith(compareBy({ it.day }, { it.id })).forEach { s ->

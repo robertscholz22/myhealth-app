@@ -72,6 +72,22 @@ class WeeklyLoadBarTest {
     }
 
     @Test
+    fun an_events_own_intensity_changes_its_expected_load() {
+        val usual = SessionCatalog.estTrimpForEvent(EventType.SOCCER_TRAINING, 60)!!
+        // The type's usual intensity, spelled out or left open, is the catalog estimate.
+        assertThat(SessionCatalog.estTrimpForEvent(EventType.SOCCER_TRAINING, 60, Intensity.MODERATE)).isEqualTo(usual)
+        val byLevel = Intensity.entries.map { SessionCatalog.estTrimpForEvent(EventType.SOCCER_TRAINING, 60, it)!! }
+        assertThat(byLevel).isInStrictOrder()
+        assertThat(byLevel.first()).isLessThan(usual)
+        assertThat(byLevel.last()).isGreaterThan(usual)
+        // Raising the intensity never lowers the estimate, for any catalog row.
+        SessionCatalog.ALL.forEach { entry ->
+            assertThat(Intensity.entries.map { entry.estTrimpFor(60, it) }).isInOrder()
+        }
+        assertThat(SessionCatalog.estTrimpForEvent(EventType.APPOINTMENT, 60, Intensity.HIGH)).isNull()
+    }
+
+    @Test
     fun bars_are_scaled_to_the_largest_of_the_three() {
         val sums = weeklyLoadSums(
             planned = listOf(session(id = 1L, trimp = 200.0, status = PlannedStatus.PLANNED)),

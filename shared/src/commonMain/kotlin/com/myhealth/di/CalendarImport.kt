@@ -28,6 +28,7 @@ data class CalendarImportOverview(
     val importedUpcoming: Int = 0,
     /** Upcoming entries that stay away because their event was deleted in the app. */
     val removedInApp: Int = 0,
+    val editedInApp: Int = 0,
     val lastCheckedAtMillis: Long? = null,
 )
 

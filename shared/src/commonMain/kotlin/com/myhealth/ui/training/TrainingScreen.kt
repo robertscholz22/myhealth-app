@@ -61,6 +61,8 @@ data class TrainingNavActions(
     val onEditSession: (Long) -> Unit = {},
     val onAddSession: (Long) -> Unit = {},
     val onOpenActivity: (Long) -> Unit = {},
+    /** `(eventId, day)`: the event editor, for a match / training / race row. */
+    val onEditEvent: (Long, Long) -> Unit = { _, _ -> },
 )
 
 /**
@@ -210,6 +212,7 @@ internal fun TrainingContent(
                 onSelectDay = onSelectDay,
                 onAddSession = nav.onAddSession,
                 onOpenActivity = nav.onOpenActivity,
+                onEditEvent = nav.onEditEvent,
                 workouts = state.workoutsById,
             )
         }

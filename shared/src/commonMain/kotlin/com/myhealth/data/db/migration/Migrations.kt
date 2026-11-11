@@ -272,6 +272,11 @@ object Migrations {
         db.execSQL("ALTER TABLE `calendar_event` ADD COLUMN `externalId` TEXT")
     }
 
+    /** v11: an event can carry its own expected intensity (`NULL` = the usual one of its type). */
+    private val MIGRATION_10_11 = MigrationStep(10, 11) { db ->
+        db.execSQL("ALTER TABLE `calendar_event` ADD COLUMN `intensity` TEXT")
+    }
+
     /**
      * Every migration, oldest first. `.addMigrations(*ALL)` is the only call site, in each
      * platform's database builder, so adding a migration never changes it.
@@ -291,6 +296,7 @@ object Migrations {
             MIGRATION_7_8,
             MIGRATION_8_9,
             MIGRATION_9_10,
+            MIGRATION_10_11,
         )
 }
 

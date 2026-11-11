@@ -1,5 +1,6 @@
 package com.myhealth.domain.engine.calendar
 
+import com.myhealth.domain.model.Intensity
 import com.google.common.truth.Truth.assertThat
 import com.myhealth.domain.model.CalendarClusterRule
 import com.myhealth.domain.model.CalendarEvent
@@ -37,7 +38,8 @@ class CalendarImportPlannerTest {
         existing: List<CalendarEvent> = emptyList(),
         imported: Set<String> = emptySet(),
         unavailable: Set<String> = emptySet(),
-    ) = CalendarImportPlanner.plan(calendars, rules, existing, imported, unavailable, todayStart, today, zone)
+        written: Map<String, String> = emptyMap(),
+    ) = CalendarImportPlanner.plan(calendars, rules, existing, imported, unavailable, todayStart, today, zone, written)
 
     /** The events a plan would leave in the database, with ids as Room would hand them out. */
     private fun stored(plan: CalendarImportPlan): List<CalendarEvent> =
@@ -91,6 +93,56 @@ class CalendarImportPlannerTest {
             assertThat(it.durationMin).isEqualTo(120)
             assertThat(it.isKeyEvent).isTrue()
         }
+    }
+
+    @Test
+    fun an_event_edited_in_the_app_is_left_alone_while_the_others_follow_the_rule() {
+        val first = plan()
+        val events = stored(first)
+        // The owner makes the first practice a hard, longer one; notes alone are not an edit.
+        val edited = events[0].copy(durationMin = 100, intensity = Intensity.HIGH)
+        val noted = events[1].copy(notes = "bring bibs")
+
+        val same = plan(existing = listOf(edited, noted), imported = first.imported, written = first.written)
+        assertThat(same.upserts).isEmpty()
+        assertThat(same.deleteIds).isEmpty()
+        assertThat(same.editedInApp).isEqualTo(1)
+        assertThat(same.removedInApp).isEqualTo(0)
+
+        // A new group setting reaches the untouched event only, and keeps its notes.
+        val low = plan(
+            rules = mapOf(practiceKey to on.copy(intensity = Intensity.LOW)),
+            existing = listOf(edited, noted),
+            imported = same.imported,
+            written = same.written,
+        )
+        assertThat(low.upserts.map { it.id }).containsExactly(noted.id)
+        assertThat(low.upserts.single().intensity).isEqualTo(Intensity.LOW)
+        assertThat(low.upserts.single().notes).isEqualTo("bring bibs")
+        assertThat(low.editedInApp).isEqualTo(1)
+
+        // Events written before this was tracked count as untouched and are brought in line once.
+        val legacy = plan(existing = listOf(edited, noted), imported = first.imported)
+        assertThat(legacy.upserts.map { it.id }).containsExactly(edited.id)
+        assertThat(legacy.written.keys).isEqualTo(first.written.keys)
+    }
+
+    @Test
+    fun the_rule_sets_the_intensity_and_only_for_training_types() {
+        val first = plan()
+        assertThat(first.upserts.map { it.intensity }.toSet()).containsExactly(null)
+
+        val easy = plan(
+            rules = mapOf(practiceKey to on.copy(intensity = Intensity.LOW)),
+            existing = stored(first),
+            imported = first.imported,
+        )
+        assertThat(easy.updated).isEqualTo(2)
+        assertThat(easy.upserts.map { it.intensity }.toSet()).containsExactly(Intensity.LOW)
+
+        // An appointment is not training: it carries no intensity whatever the rule still holds.
+        val appointment = plan(rules = mapOf(practiceKey to on.copy(type = EventType.APPOINTMENT, intensity = Intensity.LOW)))
+        assertThat(appointment.upserts.map { it.intensity }.toSet()).containsExactly(null)
     }
 
     @Test

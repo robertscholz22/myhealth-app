@@ -149,11 +149,19 @@ class MigrationSqlTest {
         assertThat(createSqlOf(exportedEntities(9), "calendar_event")).doesNotContain("externalSource")
     }
 
+    /** One nullable column: `NULL` keeps every existing event at its type's usual intensity. */
     @Test
-    fun the_exported_schema_is_version_ten_and_the_older_ones_are_untouched() {
-        val latest = Json.parseToJsonElement(schemaFile(10).readText()).jsonObject.getValue("database")
-        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("10")
-        (1..9).forEach { assertThat(schemaFile(it).isFile).isTrue() }
+    fun migration_10_to_11_adds_the_intensity_of_an_event() {
+        assertThat(createSqlOf(exportedEntities(11), "calendar_event")).contains("`intensity` TEXT")
+        assertThat(flattenedMigrationSource()).contains("ALTER TABLE `calendar_event` ADD COLUMN `intensity` TEXT")
+        assertThat(createSqlOf(exportedEntities(10), "calendar_event")).doesNotContain("`intensity`")
+    }
+
+    @Test
+    fun the_exported_schema_is_version_eleven_and_the_older_ones_are_untouched() {
+        val latest = Json.parseToJsonElement(schemaFile(11).readText()).jsonObject.getValue("database")
+        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("11")
+        (1..10).forEach { assertThat(schemaFile(it).isFile).isTrue() }
         // `strength_*` exists only from v6 on: v5 must not have grown a table retroactively.
         assertThat(schemaFile(5).readText()).doesNotContain("strength_workout")
         // … and `exercise_progress` only from v7 on.
@@ -189,7 +197,7 @@ class MigrationSqlTest {
 
     @Test
     fun p20_2_the_steps_chain_1_to_10_and_each_platform_migration_runs_exactly_their_sql() {
-        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..9).map { it to it + 1 })
+        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..10).map { it to it + 1 })
         val source = flattenedMigrationSource()
         Migrations.STEPS.flatMap { it.statements }.forEach { assertThat(source).contains(it) }
 

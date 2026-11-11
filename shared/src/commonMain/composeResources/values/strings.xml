@@ -1224,6 +1224,9 @@
     <string name="calendar_import_group_switch">Import %1$s</string>
     <string name="calendar_import_rule_type">Import as</string>
     <string name="calendar_import_rule_duration">Duration (min)</string>
+    <string name="calendar_import_rule_intensity">Intensity</string>
+    <string name="calendar_import_rule_load">Counts as about %1$d AU each (%2$d min)</string>
+    <string name="event_label_intensity">Intensity</string>
     <string name="calendar_import_rule_duration_from_calendar">Empty: as in the calendar (usually %1$d min)</string>
     <string name="calendar_import_rule_duration_from_calendar_plain">Empty: as in the calendar</string>
     <string name="calendar_import_rule_key">Key event</string>
@@ -1231,6 +1234,8 @@
     <string name="calendar_import_status_title">Status</string>
     <string name="calendar_import_status_count">Upcoming entries in your MyHealth calendar: %1$d</string>
     <string name="calendar_import_status_checked">Last checked %1$s</string>
+    <string name="calendar_import_status_edited">Changed by you in MyHealth and left as they are: %1$d</string>
+    <string name="training_edit_event">Edit event</string>
     <string name="calendar_import_status_removed">Removed by you in MyHealth and not imported again: %1$d</string>
     <string name="calendar_import_action_restore">Bring back</string>
     <string name="calendar_import_status_missing">Not found on this phone any more: %1$s. Its entries stay as they are.</string>

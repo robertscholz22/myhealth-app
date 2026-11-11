@@ -56,7 +56,8 @@ data class PlannedSessionDraft(
         get() {
             val minutes = durationMin ?: return null
             val entry = SessionCatalog.entryFor(sessionType) ?: return null
-            return entry.estTrimpFor(minutes)
+            // A session set easier or harder than its type usually is counts accordingly.
+            return entry.estTrimpFor(minutes, intensity)
         }
 
     companion object {

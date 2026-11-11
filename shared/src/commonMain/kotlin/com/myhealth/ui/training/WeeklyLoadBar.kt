@@ -80,7 +80,7 @@ fun weeklyLoadSums(
         .sumOf { it.estimatedTrimp ?: 0.0 } +
         events
             .filter { it.occurrenceDay >= today && it.linkedActivityId == null }
-            .sumOf { SessionCatalog.estTrimpForEvent(it.type, it.effectiveDurationMin) ?: 0.0 },
+            .sumOf { SessionCatalog.estTrimpForEvent(it.type, it.effectiveDurationMin, it.intensity) ?: 0.0 },
     target = target.coerceAtLeast(0.0),
     actual = actual.sumOf { it.trimp },
 )

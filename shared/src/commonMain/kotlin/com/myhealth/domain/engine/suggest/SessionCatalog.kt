@@ -29,6 +29,17 @@ data class CatalogEntry(
     /** `0.30 * rpe * minutes` — the §3.2.2 sRPE formula, so budgets stay consistent (§3.5.4). */
     fun estTrimpFor(minutes: Int): Double = TrimpDefaults.RPE_TO_TRIMP * rpe * minutes
 
+    /**
+     * The effort when the session is done at [intensity]: the row's own at its usual intensity
+     * (or `null`), otherwise the typical effort of that level ([SessionCatalog.RPE_BY_INTENSITY]).
+     */
+    fun rpeAt(intensity: Intensity?): Double =
+        if (intensity == null || intensity == this.intensity) rpe else SessionCatalog.RPE_BY_INTENSITY.getValue(intensity)
+
+    /** [estTrimpFor] at a chosen [intensity]. */
+    fun estTrimpFor(minutes: Int, intensity: Intensity?): Double =
+        TrimpDefaults.RPE_TO_TRIMP * rpeAt(intensity) * minutes
+
     /** Estimated load at the default duration. */
     val estTrimp: Double get() = estTrimpFor(defaultMin)
 
@@ -36,6 +47,19 @@ data class CatalogEntry(
 }
 
 object SessionCatalog {
+
+    /**
+     * Typical effort (sRPE) per intensity level, used when a session or event is set to another
+     * intensity than its catalog row's. Each value lies between the catalog rows of the levels
+     * around it, so raising the intensity never lowers the estimate.
+     */
+    val RPE_BY_INTENSITY: Map<Intensity, Double> = mapOf(
+        Intensity.RECOVERY to 3.0,
+        Intensity.LOW to 4.0,
+        Intensity.MODERATE to 6.0,
+        Intensity.HIGH to 8.0,
+        Intensity.MAX to 9.0,
+    )
 
     /** The §3.5.4 table, in the plan's row order. */
     val ALL: List<CatalogEntry> = listOf(
@@ -111,8 +135,8 @@ object SessionCatalog {
      * row's RPE over the event's own length (the row's default when it has none). `null` for
      * events that are not training.
      */
-    fun estTrimpForEvent(eventType: EventType, durationMin: Int?): Double? =
-        forEvent(eventType)?.let { it.estTrimpFor(durationMin ?: it.defaultMin) }
+    fun estTrimpForEvent(eventType: EventType, durationMin: Int?, intensity: Intensity? = null): Double? =
+        forEvent(eventType)?.let { it.estTrimpFor(durationMin ?: it.defaultMin, intensity) }
 
     /** See [forEvent]: the synthetic race row (not part of [ALL], never suggested). */
     val RACE_ENTRY: CatalogEntry = CatalogEntry(
