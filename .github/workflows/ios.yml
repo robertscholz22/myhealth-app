@@ -134,6 +134,7 @@ jobs:
           XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)
           sudo xcode-select -s "$XCODE"
           brew install xcodegen
+          command -v fastlane || brew install fastlane
           echo "VERSION_NAME=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)" >> "$GITHUB_ENV"
           echo "VERSION_CODE=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle.kts)" >> "$GITHUB_ENV"
 
@@ -150,9 +151,19 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_KEY_P8" ] || [ -z "$APPLE_TEAM_ID" ]; then
-            echo "::error::Set the secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8 and APPLE_TEAM_ID first."
-            exit 1
+            # Dry run: the Release build for a real iPhone (Kotlin release framework for iosArm64),
+            # unsigned, so build problems show up before the account is set up. Nothing is uploaded.
+            echo "::warning::App Store Connect secrets missing: Release build for a device without signing, no upload."
+            set -o pipefail
+            xcodebuild build -project MyHealth.xcodeproj -scheme MyHealth -configuration Release \
+              -destination "generic/platform=iOS" CODE_SIGNING_ALLOWED=NO \
+              MARKETING_VERSION="$VERSION_NAME" CURRENT_PROJECT_VERSION="$VERSION_CODE" \
+              2>&1 | tee build-release.log | grep -E "error:|^e: |\*\* "
+            exit 0
           fi
+          # The Kotlin release framework for a device needs more heap than the debug one.
+          mkdir -p ~/.gradle
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8" >> ~/.gradle/gradle.properties
           fastlane beta
 
       - uses: actions/upload-artifact@v4
@@ -162,5 +173,6 @@ jobs:
           path: |
             ~/Library/Logs/gym
             iosApp/fastlane/report.xml
+            iosApp/build-release.log
           retention-days: 14
 

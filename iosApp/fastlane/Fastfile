@@ -22,7 +22,10 @@ platform :ios do
       .select { |c| c.certificate_type.to_s.include?("DISTRIBUTION") }
       .each { |c| UI.message("Revoking #{c.name} (#{c.id})"); c.delete! }
 
-    cert(api_key: api_key, generate_apple_certs: true)
+    # Into setup_ci's temporary keychain (empty password); cert would use the login keychain,
+    # which is locked on a runner, and then not find the identity it just made.
+    keychain = File.expand_path("~/Library/Keychains/fastlane_tmp_keychain-db")
+    cert(api_key: api_key, generate_apple_certs: true, keychain_path: keychain, keychain_password: "")
     sigh(api_key: api_key, app_identifier: BUNDLE_ID, force: true)
     profile = lane_context[SharedValues::SIGH_NAME]
 
