@@ -1,5 +1,6 @@
 package com.myhealth.domain.engine.suggest
 
+import com.myhealth.domain.model.PeriodSessionKind
 import okio.ByteString.Companion.encodeUtf8
 import com.myhealth.domain.util.NumberFormat
 
@@ -103,6 +104,9 @@ object SuggestionInputsHash {
                     status.nextPeriodStart.toString(), status.confidence.name,
                 ).joinToString("|"),
             )
+        }
+        if (input.periodSessionKinds != PeriodSessionKind.ALL) {
+            line("periodKinds", input.periodSessionKinds.map { it.name }.sorted().joinToString("|"))
         }
         input.recentActivities.sortedWith(compareBy({ it.day }, { it.id })).forEach { a ->
             line(

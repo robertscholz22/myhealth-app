@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import com.myhealth.domain.model.AppSettings
+import com.myhealth.domain.model.PeriodSessionKind
 import com.myhealth.domain.model.ThemeMode
 import com.myhealth.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +43,9 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
         cycleTrackingEnabled = this[SettingsKeys.CYCLE_TRACKING_ENABLED] ?: defaults.cycleTrackingEnabled,
         settledLinkKeys = this[SettingsKeys.SETTLED_LINK_KEYS].orEmpty(),
         calendarImportJson = this[SettingsKeys.CALENDAR_IMPORT] ?: defaults.calendarImportJson,
+        periodSessionKinds = this[SettingsKeys.PERIOD_EXCLUDED_KINDS].orEmpty().let { off ->
+            PeriodSessionKind.ALL.filterTo(mutableSetOf()) { it.name !in off }
+        },
     )
 
     override suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -62,6 +66,8 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             prefs[SettingsKeys.CYCLE_TRACKING_ENABLED] = next.cycleTrackingEnabled
             prefs[SettingsKeys.SETTLED_LINK_KEYS] = next.settledLinkKeys
             prefs[SettingsKeys.CALENDAR_IMPORT] = next.calendarImportJson
+            prefs[SettingsKeys.PERIOD_EXCLUDED_KINDS] =
+                (PeriodSessionKind.ALL - next.periodSessionKinds).mapTo(mutableSetOf()) { it.name }
         }
     }
 

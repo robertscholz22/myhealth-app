@@ -68,7 +68,7 @@ class SuggestionEngineCycleTest {
         val menstrual = result.sessions.filter { it.day <= day(4) }.flatMap { it.rationale }
             .filter { it.ruleId == CycleRules.RULE_MENSTRUAL_EARLY }
         assertThat(menstrual).isNotEmpty()
-        menstrual.forEach { assertThat(it.text).contains("log your period to improve this") }
+        menstrual.forEach { assertThat(it.text).contains("assumed to be 28 days until your next period is logged") }
     }
 
     @Test

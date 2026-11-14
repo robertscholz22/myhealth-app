@@ -1,5 +1,6 @@
 package com.myhealth.ui.nav
 
+import com.myhealth.ui.sleep.SleepScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -130,6 +131,7 @@ fun MyHealthNavHost(
                             onReviewSuggestions = { navController.navigate(SuggestionReviewRoute) },
                             onOpenCycle = { navController.navigate(CycleRoute) },
                             onOpenBody = { navController.navigate(BodyRoute) },
+                            onOpenSleep = { navController.navigate(SleepRoute) },
                             onOpenIntegrations = { navController.navigate(IntegrationsRoute) },
                         )
                     }
@@ -297,6 +299,7 @@ fun MyHealthNavHost(
 
                     // ---- body / load / goals -------------------------------------------------
                     composable<BodyRoute> { BackBar(Res.string.body_title, onBack = { navController.popBackStack() }) { BodyScreen() } }
+                    composable<SleepRoute> { BackBar(Res.string.sleep_title, onBack = { navController.popBackStack() }) { SleepScreen() } }
                     composable<LoadRoute> { BackBar(Res.string.more_entry_load_recovery, onBack = { navController.popBackStack() }) { LoadScreen() } }
                     composable<RunningPrsRoute> {
                         BackBar(Res.string.more_entry_running_prs, onBack = { navController.popBackStack() }) {

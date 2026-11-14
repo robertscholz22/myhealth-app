@@ -104,4 +104,9 @@ data class AppSettings(
      * suggestion is neither shown nor auto-linked again, also after an app restart.
      */
     val settledLinkKeys: Set<String> = emptySet(),
+    /**
+     * 0.10.3: which kinds of session the suggester may propose on period days ("During my period,
+     * suggest" on the Cycle screen). Stored as the *excluded* kinds, so a kind added later is on.
+     */
+    val periodSessionKinds: Set<PeriodSessionKind> = PeriodSessionKind.ALL,
 )

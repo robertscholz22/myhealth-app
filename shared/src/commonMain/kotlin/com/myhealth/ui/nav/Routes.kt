@@ -26,6 +26,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class MealTemplateEditRoute(val id: Long = -1)
 @Serializable data class EventEditRoute(val id: Long = -1, val epochDay: Long = -1)
 @Serializable data object BodyRoute
+@Serializable data object SleepRoute
 @Serializable data object LoadRoute
 @Serializable data object RunningPrsRoute
 @Serializable data object GoalsRoute

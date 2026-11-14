@@ -126,3 +126,45 @@ object CycleDefaults {
     /** How many cycles `CycleEngine.forecast` produces by default. */
     const val FORECAST_CYCLES: Int = 6
 }
+
+/**
+ * The four kinds of suggested session the "During my period, suggest" setting switches on and off
+ * (0.10.3, from the first TestFlight feedback). On every menstrual day — logged or predicted — the
+ * suggester only proposes the kinds the user left on; matches, races and sessions planned by hand
+ * are never touched.
+ */
+enum class PeriodSessionKind {
+    STRENGTH,
+    /** Runs, rides, soccer training and other cardio that is not a recovery session. */
+    ENDURANCE,
+    /** `RECOVERY_RUN` and `RECOVERY_SPIN`. */
+    RECOVERY,
+    MOBILITY,
+    ;
+
+    companion object {
+        val ALL: Set<PeriodSessionKind> = entries.toSet()
+
+        /** The kind [type] belongs to; `null` for what the suggester never proposes (match, rest). */
+        fun of(type: SessionType): PeriodSessionKind? = when (type) {
+            SessionType.STRENGTH_FULL, SessionType.STRENGTH_UPPER, SessionType.STRENGTH_LOWER -> STRENGTH
+            SessionType.RECOVERY_RUN, SessionType.RECOVERY_SPIN -> RECOVERY
+            SessionType.MOBILITY -> MOBILITY
+            SessionType.SOCCER_MATCH, SessionType.REST -> null
+            SessionType.EASY_RUN, SessionType.LONG_RUN, SessionType.TEMPO_RUN, SessionType.INTERVAL_RUN,
+            SessionType.SOCCER_TRAINING, SessionType.CROSS_TRAINING, SessionType.ENDURANCE_RIDE,
+            SessionType.BIKE_INTERVALS, SessionType.TRAINER_SESSION, SessionType.TIME_TRIAL,
+            -> ENDURANCE
+        }
+
+        /**
+         * False when [type] may not be suggested on a day with [status]: a menstrual day and a kind
+         * outside [allowed]. Every other day allows everything.
+         */
+        fun excludedOn(status: CycleStatus?, type: SessionType, allowed: Set<PeriodSessionKind>): Boolean {
+            if (status == null || !status.isMenstrual) return false
+            val kind = of(type) ?: return false
+            return kind !in allowed
+        }
+    }
+}

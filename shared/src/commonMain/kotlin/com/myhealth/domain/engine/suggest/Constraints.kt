@@ -1,5 +1,6 @@
 package com.myhealth.domain.engine.suggest
 
+import com.myhealth.domain.model.PeriodSessionKind
 import com.myhealth.domain.model.CycleStatus
 import com.myhealth.domain.model.EventType
 import com.myhealth.domain.model.Intensity
@@ -42,6 +43,9 @@ enum class ConstraintId {
 
     /** P11.2: at most one hard session across the whole late-luteal window. */
     CYCLE_LATE_LUTEAL,
+
+    /** 0.10.3: on a menstrual day only the session kinds the user left on (appended). */
+    CYCLE_PERIOD_KIND,
 }
 
 /** A session the engine is considering for one day (§3.5.6 step 4). */
@@ -77,6 +81,8 @@ data class ConstraintContext(
     val longRunWeekday: DayOfWeek? = null,
     /** P11.2: the horizon's cycle statuses; empty when tracking is off. */
     val cycleStatusByDay: Map<Long, CycleStatus> = emptyMap(),
+    /** 0.10.3: the kinds of session allowed on menstrual days. */
+    val periodSessionKinds: Set<PeriodSessionKind> = PeriodSessionKind.ALL,
     /** P14.5: the muscle-load facts `C15` reads; [MuscleContext.NONE] switches the rule off. */
     val muscle: MuscleContext = MuscleContext.NONE,
 ) {
@@ -100,6 +106,7 @@ data class ConstraintContext(
                 weeklyCaps = SportPreferences.capsOf(input.profile.preferredSportsJson),
                 longRunWeekday = SportPreferences.longRunWeekdayOf(input.profile.preferredSportsJson),
                 cycleStatusByDay = input.cycleStatusByDay,
+                periodSessionKinds = input.periodSessionKinds,
                 muscle = MuscleContext.of(input),
             )
         }
@@ -214,6 +221,9 @@ object Constraints {
         }
         if (lateLutealHardLimitReached(candidate, day, grid, ctx)) {
             broken += ConstraintId.CYCLE_LATE_LUTEAL
+        }
+        if (PeriodSessionKind.excludedOn(ctx.cycleStatusByDay[day], candidate.sessionType, ctx.periodSessionKinds)) {
+            broken += ConstraintId.CYCLE_PERIOD_KIND
         }
         return broken
     }

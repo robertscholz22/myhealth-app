@@ -945,6 +945,13 @@
     <string name="today_body_title">Body</string>
     <string name="today_no_weight">No weight logged yet.</string>
     <string name="today_sleep_title">Sleep</string>
+    <string name="sleep_title">Sleep</string>
+    <string name="sleep_empty_title">No sleep recorded yet</string>
+    <string name="sleep_empty_message">No sleep sessions in the last %1$d nights. Sleep comes from your watch through Health Connect or Apple Health.</string>
+    <string name="sleep_average_title">Average (last %1$d nights)</string>
+    <string name="sleep_hours_format">%1$s h</string>
+    <string name="sleep_average_detail">Target %1$s h · %2$d nights recorded</string>
+    <string name="sleep_nights_title">Nights</string>
     <string name="today_no_sleep">No sleep data for last night.</string>
     <string name="today_last_night_label">Last night</string>
     <!-- ui/today/TodayLoadCards.kt -->
@@ -1003,7 +1010,7 @@
     <string name="cycle_phase_ovulation">Ovulation</string>
     <string name="cycle_phase_luteal">Luteal</string>
     <string name="cycle_late_luteal_chip">Late luteal</string>
-    <string name="cycle_confidence_low">Based on a default 28-day cycle — log your period to improve this.</string>
+    <string name="cycle_confidence_low">Cycle length assumed to be 28 days until your next period is logged.</string>
     <string name="cycle_confidence_based_on_one">Based on 1 logged cycle.</string>
     <string name="cycle_confidence_based_on_many">Based on %1$d logged cycles.</string>
     <string name="cycle_action_log_period_start">Log period start</string>
@@ -1028,6 +1035,12 @@
     <string name="cycle_error_period_end_before_start">The end date can't be before the period started.</string>
     <string name="cycle_msg_period_logged">Period start logged.</string>
     <string name="cycle_msg_period_ended">Period end logged.</string>
+    <string name="cycle_period_sessions_title">During my period, suggest</string>
+    <string name="cycle_period_kind_strength">Strength training</string>
+    <string name="cycle_period_kind_endurance">Endurance training (runs, rides, other cardio)</string>
+    <string name="cycle_period_kind_recovery">Recovery run or spin</string>
+    <string name="cycle_period_kind_mobility">Mobility</string>
+    <string name="cycle_period_sessions_note">Applies to logged and predicted period days. Matches and sessions you planned yourself stay as they are. Tap Regenerate on the suggested week to apply a change.</string>
     <!-- ui/today/TodayCycleCard.kt -->
     <string name="today_cycle_title">Cycle</string>
     <string name="today_cycle_empty">Log your period to see cycle predictions.</string>

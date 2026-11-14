@@ -28,6 +28,8 @@ object SettingsKeys {
     val SUGGESTIONS_STALE = booleanPreferencesKey("suggestions_stale")
     val CYCLE_TRACKING_ENABLED = booleanPreferencesKey("cycle_tracking_enabled")
     val CALENDAR_IMPORT = stringPreferencesKey("calendar_import")
+    /** The [com.myhealth.domain.model.PeriodSessionKind] names switched **off**; unknown names are ignored. */
+    val PERIOD_EXCLUDED_KINDS = stringSetPreferencesKey("period_excluded_kinds")
 
     /** Single source of truth for every key's default — reuses [AppSettings]'s own defaults. */
     val Defaults = AppSettings()

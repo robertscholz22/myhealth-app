@@ -19,6 +19,7 @@ import com.myhealth.ui.nav.ActivitiesRoute
 import com.myhealth.ui.nav.BackupRoute
 import com.myhealth.ui.nav.BikeRoute
 import com.myhealth.ui.nav.BodyRoute
+import com.myhealth.ui.nav.SleepRoute
 import com.myhealth.ui.nav.CycleRoute
 import com.myhealth.ui.nav.GoalsRoute
 import com.myhealth.ui.nav.ImportRoute
@@ -43,6 +44,7 @@ data class MoreEntry(val labelRes: StringResource, val route: Any)
 fun moreEntries(cycleTrackingEnabled: Boolean): List<MoreEntry> = buildList {
     add(MoreEntry(Res.string.more_entry_activities, ActivitiesRoute))
     add(MoreEntry(Res.string.body_title, BodyRoute))
+    add(MoreEntry(Res.string.sleep_title, SleepRoute))
     if (cycleTrackingEnabled) add(MoreEntry(Res.string.more_entry_cycle, CycleRoute))
     add(MoreEntry(Res.string.more_entry_running_prs, RunningPrsRoute))
     add(MoreEntry(Res.string.more_entry_bike, BikeRoute))

@@ -260,6 +260,7 @@ class RoomSuggestionRepository(
                 .first(),
             planStartDay = planRepo.observeActivePlan().first()?.startDay,
             cycleStatusByDay = cycleStatuses(todayDay, horizonEnd),
+            periodSessionKinds = settingsRepo.settings.first().periodSessionKinds,
             vdot = paces.vdot,
             paceBands = paces.paceBands,
             ftpWatts = paces.ftpWatts,

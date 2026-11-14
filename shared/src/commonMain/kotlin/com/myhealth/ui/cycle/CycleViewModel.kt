@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myhealth.data.time.today
 import com.myhealth.domain.model.CycleEntry
+import com.myhealth.domain.model.PeriodSessionKind
+import com.myhealth.domain.repository.SettingsRepository
 import com.myhealth.domain.repository.CycleRepository
 import com.myhealth.domain.util.Outcome
 import com.myhealth.resources.*
@@ -12,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -27,6 +31,7 @@ import kotlinx.datetime.LocalDate
 class CycleViewModel(
     private val cycleRepo: CycleRepository,
     private val clock: PlatformClock,
+    private val settingsRepo: SettingsRepository? = null,
 ) : ViewModel() {
 
     private val today: Long = clock.today().toEpochDays()
@@ -42,13 +47,19 @@ class CycleViewModel(
 
     private val extras = MutableStateFlow(Extras())
 
+    /** The dialogs plus the "During my period, suggest" setting, as one flow for the combine below. */
+    private val extrasAndKinds = combine(
+        extras,
+        settingsRepo?.settings?.map { it.periodSessionKinds } ?: flowOf(PeriodSessionKind.ALL),
+    ) { extra, kinds -> extra to kinds }
+
     val state: StateFlow<CycleUiState> = combine(
         cycleRepo.isTrackingEnabled(),
         cycleRepo.observeAll(),
         cycleRepo.observeStatus(today),
         cycleRepo.observeForecast(today),
-        extras,
-    ) { trackingEnabled, history, status, forecast, extra ->
+        extrasAndKinds,
+    ) { trackingEnabled, history, status, forecast, (extra, kinds) ->
         CycleUiState(
             isLoading = false,
             trackingEnabled = trackingEnabled,
@@ -60,6 +71,7 @@ class CycleViewModel(
             showPeriodEndedDialog = extra.showPeriodEnded,
             pendingDeleteId = extra.pendingDeleteId,
             message = extra.message,
+            periodSessionKinds = kinds,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CycleUiState(today = today))
 
@@ -144,6 +156,16 @@ class CycleViewModel(
                         is Outcome.Err -> UiMessage.of(Res.string.cycle_error_period_end_before_start)
                     },
                 )
+            }
+        }
+    }
+
+    /** Switches one kind of the "During my period, suggest" setting on or off. */
+    fun setPeriodSessionKind(kind: PeriodSessionKind, allowed: Boolean) {
+        val repo = settingsRepo ?: return
+        viewModelScope.launch {
+            repo.update { s ->
+                s.copy(periodSessionKinds = if (allowed) s.periodSessionKinds + kind else s.periodSessionKinds - kind)
             }
         }
     }

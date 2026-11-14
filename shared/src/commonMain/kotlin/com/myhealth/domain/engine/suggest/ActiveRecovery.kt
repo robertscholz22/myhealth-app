@@ -1,5 +1,6 @@
 package com.myhealth.domain.engine.suggest
 
+import com.myhealth.domain.model.PeriodSessionKind
 import com.myhealth.domain.model.CycleStatus
 import com.myhealth.domain.model.RecoveryBand
 import com.myhealth.domain.model.SessionType
@@ -62,8 +63,12 @@ object ActiveRecovery {
             if (day == trueRestDay) { lastFiller = null; continue }
             // POLISH-42: fillers do not count against the planned sessions' cap (C10) — that is the
             // pinned pre-0.3.0 behaviour — but a sport gets no more fillers a week than its cap.
-            val runFits = runAllowed && !capReached(current, day, SportGroup.RUN, ctx)
-            val spinFits = spinAllowed && !capReached(current, day, SportGroup.CYCLE, ctx)
+            // 0.10.3: a period day without "Recovery run/spin" in the user's setting gets no filler.
+            val periodOff = PeriodSessionKind.excludedOn(
+                cycleStatusByDay[day], SessionType.RECOVERY_RUN, ctx.periodSessionKinds,
+            )
+            val runFits = runAllowed && !periodOff && !capReached(current, day, SportGroup.RUN, ctx)
+            val spinFits = spinAllowed && !periodOff && !capReached(current, day, SportGroup.CYCLE, ctx)
             val type = choose(day, runFits, spinFits, lastFiller, cycleStatusByDay[day])
             if (type == null || adjacentHasSameType(current, day, type)) { lastFiller = null; continue }
             val entry = SessionCatalog.entryFor(type) ?: continue

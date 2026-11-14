@@ -1,5 +1,6 @@
 package com.myhealth.domain.engine.suggest
 
+import com.myhealth.domain.model.PeriodSessionKind
 import com.myhealth.domain.engine.running.PaceZoneBand
 import com.myhealth.domain.engine.strength.MuscleLoadState
 import com.myhealth.domain.model.ActivitySummary
@@ -60,6 +61,8 @@ data class SuggestionInput(
      * off, which is exactly what makes the four `CYCLE_*` rules inert for everybody else.
      */
     val cycleStatusByDay: Map<Long, CycleStatus> = emptyMap(),
+    /** 0.10.3: the kinds of session allowed on menstrual days (the Cycle screen's setting). */
+    val periodSessionKinds: Set<PeriodSessionKind> = PeriodSessionKind.ALL,
     /** P14.3: the athlete's VDOT (§3.4), the Daniels anchor of every pace target. */
     val vdot: Double? = null,
     /** P14.3: the measured pace band per heart-rate zone (§3.10.2), Z1…Z5. */

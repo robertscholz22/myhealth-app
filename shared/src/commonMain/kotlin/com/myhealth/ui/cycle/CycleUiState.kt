@@ -5,6 +5,7 @@ import com.myhealth.domain.model.CycleConfidence
 import com.myhealth.domain.model.CycleEntry
 import com.myhealth.domain.model.CycleForecast
 import com.myhealth.domain.model.CyclePhase
+import com.myhealth.domain.model.PeriodSessionKind
 import com.myhealth.domain.model.CycleStatus
 import com.myhealth.domain.util.epochDayDate
 import com.myhealth.resources.*
@@ -29,6 +30,8 @@ data class CycleUiState(
     /** Entry id awaiting the delete confirmation dialog, or `null`. */
     val pendingDeleteId: Long? = null,
     val message: UiMessage? = null,
+    /** The "During my period, suggest" setting (0.10.3). */
+    val periodSessionKinds: Set<PeriodSessionKind> = PeriodSessionKind.ALL,
 ) {
     val hasEntries: Boolean get() = history.isNotEmpty()
 
@@ -103,8 +106,8 @@ fun phaseLabelRes(phase: CyclePhase): StringResource = when (phase) {
 }
 
 /**
- * "Based on 3 logged cycles" / "Based on a default 28-day cycle — log your period to improve
- * this" (PLAN §5 P11.3's confidence line). [entries] gives the number of intervals actually
+ * "Based on 3 logged cycles" / "Cycle length assumed to be 28 days until your next period is
+ * logged" (PLAN §5 P11.3's confidence line; reworded in 0.10.3). [entries] gives the number of intervals actually
  * averaged — the same count [CycleEngine.confidenceOf] used to decide [confidence].
  */
 fun confidenceLine(confidence: CycleConfidence, entries: List<CycleEntry>): UiMessage =

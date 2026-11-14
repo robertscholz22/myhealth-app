@@ -1,5 +1,6 @@
 package com.myhealth.domain.engine.suggest
 
+import com.myhealth.domain.model.PeriodSessionKind
 import com.myhealth.domain.engine.load.TrimpDefaults
 import com.myhealth.domain.model.Intensity
 import com.myhealth.domain.model.RationaleEntry
@@ -101,7 +102,7 @@ class SuggestionEngine(private val clock: Clock) {
             grid, ctx, bike, periodization.phase, input.cycleStatusByDay, periodization.isStarterWeek,
         )
         if (input.profile.mobilityOnRestDays) {
-            grid = addMobilityToRestDays(grid, periodization.phase, periodization.isStarterWeek)
+            grid = addMobilityToRestDays(grid, periodization.phase, periodization.isStarterWeek, ctx)
         }
         return resultOf(input, periodization, grid, muscle, shape)
     }
@@ -305,12 +306,19 @@ class SuggestionEngine(private val clock: Clock) {
         grid: SuggestionGrid,
         phase: TrainingPhase,
         isStarterWeek: Boolean = false,
+        ctx: ConstraintContext? = null,
     ): SuggestionGrid {
         val entry = SessionCatalog.entryFor(SessionType.MOBILITY) ?: return grid
         var current = grid
         grid.days.forEach { plan ->
             val alreadyThere = plan.items.any { it.isMobility }
             if (!plan.isRestDay || plan.isBlocked || alreadyThere) return@forEach
+            if (ctx != null && PeriodSessionKind.excludedOn(
+                    ctx.cycleStatusByDay[plan.day], SessionType.MOBILITY, ctx.periodSessionKinds,
+                )
+            ) {
+                return@forEach
+            }
             current = current.place(
                 plan.day,
                 Candidate(entry, plan.day).asPlacedItem(

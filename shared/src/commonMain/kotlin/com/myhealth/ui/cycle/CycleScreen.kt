@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import com.myhealth.domain.util.utcDateOfMillis
 import com.myhealth.domain.util.utcMidnightMillis
 import com.myhealth.resources.*
@@ -47,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.myhealth.di.rememberDayVm
 import com.myhealth.domain.model.CycleForecast
 import com.myhealth.domain.model.CycleStatus
+import com.myhealth.domain.model.PeriodSessionKind
 import com.myhealth.domain.util.epochDayDate
 import com.myhealth.ui.common.EmptyState
 import com.myhealth.ui.common.SCREEN_PADDING
@@ -62,7 +66,7 @@ import kotlinx.datetime.TimeZone
  * [com.myhealth.domain.repository.CycleRepository.isTrackingEnabled] is true. */
 @Composable
 fun CycleScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
-    val vm = rememberDayVm { graph -> CycleViewModel(graph.cycleRepo, graph.clock) }
+    val vm = rememberDayVm { graph -> CycleViewModel(graph.cycleRepo, graph.clock, graph.settings) }
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
@@ -79,6 +83,7 @@ fun CycleScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         onLogStartClick = vm::openLogStartDialog,
         onPeriodEndedClick = vm::openPeriodEndedDialog,
         onDeleteClick = vm::requestDelete,
+        onPeriodKindChange = vm::setPeriodSessionKind,
         snackbarHostState = snackbar,
         modifier = modifier,
     )
@@ -120,6 +125,7 @@ private fun CycleContent(
     onDeleteClick: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    onPeriodKindChange: (PeriodSessionKind, Boolean) -> Unit = { _, _ -> },
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -164,6 +170,7 @@ private fun CycleContent(
                     onPeriodEndedClick = onPeriodEndedClick,
                 )
             }
+            item { PeriodSessionsCard(state.periodSessionKinds, onPeriodKindChange) }
             item { ForecastSection(state.forecast) }
             item { HistorySection(state.historyRows, onDeleteClick) }
         }
@@ -210,6 +217,38 @@ private fun ActionsRow(canMarkEnded: Boolean, onLogStartClick: () -> Unit, onPer
             Text(stringResource(Res.string.cycle_action_period_ended))
         }
     }
+}
+
+/** 0.10.3: which kinds of session the suggestions may contain on period days. */
+@Composable
+private fun PeriodSessionsCard(allowed: Set<PeriodSessionKind>, onChange: (PeriodSessionKind, Boolean) -> Unit) {
+    SectionCard(title = stringResource(Res.string.cycle_period_sessions_title)) {
+        PeriodSessionKind.entries.forEach { kind ->
+            val checked = kind in allowed
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(value = checked, role = Role.Checkbox, onValueChange = { onChange(kind, it) }),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Checkbox(checked = checked, onCheckedChange = null)
+                Text(stringResource(periodKindLabel(kind)), style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+        Text(
+            text = stringResource(Res.string.cycle_period_sessions_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+private fun periodKindLabel(kind: PeriodSessionKind): StringResource = when (kind) {
+    PeriodSessionKind.STRENGTH -> Res.string.cycle_period_kind_strength
+    PeriodSessionKind.ENDURANCE -> Res.string.cycle_period_kind_endurance
+    PeriodSessionKind.RECOVERY -> Res.string.cycle_period_kind_recovery
+    PeriodSessionKind.MOBILITY -> Res.string.cycle_period_kind_mobility
 }
 
 private const val ROW_DATE_FORMAT = "d MMM yyyy"

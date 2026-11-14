@@ -1,5 +1,6 @@
 package com.myhealth.ui.today
 
+import com.myhealth.ui.sleep.nightTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -64,6 +65,7 @@ fun TodayScreen(
     onOpenCycle: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenBody: () -> Unit = {},
+    onOpenSleep: () -> Unit = {},
     onOpenIntegrations: () -> Unit = {},
 ) {
     val vm = rememberDayVm { graph ->
@@ -102,6 +104,7 @@ fun TodayScreen(
         onReviewSuggestions = onReviewSuggestions,
         onOpenCycle = onOpenCycle,
         onOpenBody = onOpenBody,
+        onOpenSleep = onOpenSleep,
         onOpenIntegrations = onOpenIntegrations,
         modifier = modifier,
     )
@@ -124,6 +127,7 @@ internal fun TodayContent(
     onOpenCycle: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenBody: () -> Unit = {},
+    onOpenSleep: () -> Unit = {},
     onOpenIntegrations: () -> Unit = {},
 ) {
     // P8.6 — pull down anywhere on Today to run the same sync as the banner's "Sync now".
@@ -146,6 +150,7 @@ internal fun TodayContent(
             onReviewSuggestions = onReviewSuggestions,
             onOpenCycle = onOpenCycle,
             onOpenBody = onOpenBody,
+            onOpenSleep = onOpenSleep,
             onOpenIntegrations = onOpenIntegrations,
         )
     }
@@ -167,6 +172,7 @@ private fun TodayList(
     onOpenCycle: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenBody: () -> Unit = {},
+    onOpenSleep: () -> Unit = {},
     onOpenIntegrations: () -> Unit = {},
 ) {
     LazyColumn(
@@ -198,7 +204,7 @@ private fun TodayList(
         item { TodayActivitiesSection(state.activities, onOpenActivity) { onOpenDay(state.day) } }
         // POLISH-23: both open the Body screen (weight, resting HR and sleep history).
         item { BodyChip(state.weightChipText, onOpenBody) }
-        item { SleepTile(state.sleep, onOpenBody) }
+        item { SleepTile(state.sleep, state.day, onOpenSleep) }
     }
 }
 
@@ -363,7 +369,7 @@ private fun BodyChip(weightChipText: String?, onOpen: () -> Unit) {
 }
 
 @Composable
-private fun SleepTile(sleep: SleepRecord?, onOpen: () -> Unit) {
+private fun SleepTile(sleep: SleepRecord?, today: Long, onOpen: () -> Unit) {
     SectionCard(
         title = stringResource(Res.string.today_sleep_title),
         modifier = Modifier.clickable(onClick = onOpen),
@@ -372,7 +378,7 @@ private fun SleepTile(sleep: SleepRecord?, onOpen: () -> Unit) {
             Text(stringResource(Res.string.today_no_sleep), style = MaterialTheme.typography.bodyMedium)
         } else {
             val hours = sleep.totalSleepMin / 60.0
-            StatTile(label = stringResource(Res.string.today_last_night_label), value = fmtDecimal(hours, 1), unit = "h")
+            StatTile(label = nightTitle(sleep.night, today), value = fmtDecimal(hours, 1), unit = "h")
         }
     }
 }

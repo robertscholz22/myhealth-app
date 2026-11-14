@@ -263,7 +263,7 @@ object Rationale {
     /** P11.2: LOW confidence keeps the rule and adds the "log your period" nudge. */
     private fun lowConfidenceSuffix(cycle: CycleStatus): String =
         if (cycle.confidence == CycleConfidence.LOW) {
-            " Based on a default 28-day cycle — log your period to improve this."
+            " Cycle length assumed to be 28 days until your next period is logged."
         } else {
             ""
         }
