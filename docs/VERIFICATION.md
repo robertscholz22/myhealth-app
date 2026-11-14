@@ -1010,3 +1010,32 @@ it; group settings still reach the untouched ones. Release build over 0.10.1 on 
 
 NOTE-45 is replaced: an edit to a single imported event is kept; it no longer follows later changes
 of the group settings (a moved or cancelled calendar entry still replaces or removes it).
+
+## Session 35 — 2026-11-14 (emulator, 0.10.3: period session kinds, Sleep screen)
+
+Cycle screen → "During my period, suggest": Strength training, Endurance training (runs, rides,
+other cardio), Recovery run or spin, Mobility. On every menstrual day (logged or predicted) the
+suggester only proposes the ticked kinds: hard constraint `CYCLE_PERIOD_KIND` for the greedy loop and
+the pre-placed sessions, and the same check in the active-recovery filler and the rest-day mobility
+pass. Matches, races and hand-planned sessions are untouched. All kinds on by default (stored as the
+excluded kinds in DataStore, `period_excluded_kinds`); with all on, sessions and inputs hash are
+byte-identical to 0.10.2 (`SuggestionEnginePeriodKindsTest`). With one logged period the cycle line
+no longer says "log your period to improve this" but "Cycle length assumed to be 28 days until your
+next period is logged" (card and suggestion rationale).
+
+Emulator, debug build, period logged to start three days ago (today = cycle day 4):
+- all kinds on: a period day gets "Strength upper" (the old behaviour). PASS
+- Strength off: that day becomes an easy run. PASS
+- Strength and Endurance off: both remaining period days get only a recovery run and mobility;
+  strength and intervals move to the days after the period. PASS
+
+Sleep: the Today sleep tile opened Body & Health, whose sleep chart is at the bottom. It now opens a
+Sleep screen (newest night with bedtime–wake time, stages and score; 14-night average against the
+sleep target; the 14-night bars; one row per night); Sleep is also listed in More. A newest night
+older than yesterday is labelled with its date instead of "Last night", on the tile and the screen.
+- emulator with synthetic sleep up to four days ago: tile "Tue 10 Nov 6.9 h" → Sleep screen with that
+  night, 7.3 h average over 10 nights, chart and list; Back returns to Today; More → Sleep. PASS
+
+Release build (R8) after `tools/connected.sh` (33/33; two Settings tests now scroll More to the
+Settings entry, which the new Sleep entry pushes below the fold): fresh onboarding, More → Sleep
+(empty state), Cycle card and wording shown, no crash. `tools/verify.sh`: 1176 unit tests, 0 failures.

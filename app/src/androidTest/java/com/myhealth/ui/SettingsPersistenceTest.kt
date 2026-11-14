@@ -94,7 +94,9 @@ class SettingsPersistenceTest {
      */
     private fun openSettings(activity: MainActivity) {
         composeTestRule.onNodeWithText(str(Res.string.nav_more)).performClick()
-        composeTestRule.waitUntilTextExists(str(Res.string.settings_title))
+        // 0.10.3: with "Sleep" in More, Settings is the last entry and can start below the fold.
+        composeTestRule.waitUntilTextExists(str(Res.string.more_entry_activities))
+        composeTestRule.verticalScroller().performScrollToNode(hasText(str(Res.string.settings_title)))
         composeTestRule.onNodeWithText(str(Res.string.settings_title)).performClick()
         composeTestRule.waitUntilTextExists(str(Res.string.settings_section_profile))
         composeTestRule.verticalScroller().performScrollToNode(hasTestTag(dynamicColorSwitchTag))

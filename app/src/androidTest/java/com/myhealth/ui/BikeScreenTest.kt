@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -206,7 +207,9 @@ class BikeScreenTest {
 
     private fun openSettings(activity: MainActivity) {
         composeTestRule.onNodeWithText(str(Res.string.nav_more)).performClick()
-        composeTestRule.waitUntilTextExists(str(Res.string.settings_title))
+        // 0.10.3: with "Sleep" in More, Settings is the last entry and can start below the fold.
+        composeTestRule.waitUntilTextExists(str(Res.string.more_entry_activities))
+        composeTestRule.verticalScroller().performScrollToNode(hasText(str(Res.string.settings_title)))
         composeTestRule.onNodeWithText(str(Res.string.settings_title)).performClick()
         composeTestRule.waitUntilTextExists(str(Res.string.settings_section_profile))
         composeTestRule.verticalScroller().performScrollToNode(hasTestTag("settings_indoor_trainer_switch"))
