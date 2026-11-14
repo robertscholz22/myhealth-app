@@ -25,6 +25,9 @@ platform :ios do
     # Into setup_ci's temporary keychain (empty password); cert would use the login keychain,
     # which is locked on a runner, and then not find the identity it just made.
     keychain = File.expand_path("~/Library/Keychains/fastlane_tmp_keychain-db")
+    # setup_ci's keychain locks itself after an hour; the Kotlin release framework alone can take
+    # that long, and codesign then waits for an unlock that never comes (run 43615701757).
+    sh("security", "set-keychain-settings", "-t", "21600", keychain)
     cert(api_key: api_key, generate_apple_certs: true, keychain_path: keychain, keychain_password: "")
     sigh(api_key: api_key, app_identifier: BUNDLE_ID, force: true)
     profile = lane_context[SharedValues::SIGH_NAME]

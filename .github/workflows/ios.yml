@@ -112,7 +112,7 @@ jobs:
   testflight:
     if: github.event_name == 'workflow_dispatch' && inputs.testflight
     runs-on: macos-26
-    timeout-minutes: 75
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
