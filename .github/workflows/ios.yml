@@ -161,9 +161,15 @@ jobs:
               2>&1 | tee build-release.log | grep -E "error:|^e: |\*\* "
             exit 0
           fi
-          # The Kotlin release framework for a device needs more heap than the debug one.
+          # The release link of the Kotlin framework (whole-program optimisation) ran out of a 4 GB
+          # heap inside the Gradle daemon. Run the native compiler in its own process with 6 GB and
+          # keep Gradle small; the runner has 7 GB of RAM and swaps for the rest.
           mkdir -p ~/.gradle
-          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8" >> ~/.gradle/gradle.properties
+          {
+            echo "org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8"
+            echo "kotlin.native.disableCompilerDaemon=true"
+            echo "kotlin.native.jvmArgs=-Xmx6g -XX:+UseParallelGC"
+          } >> ~/.gradle/gradle.properties
           fastlane beta
 
       - uses: actions/upload-artifact@v4
