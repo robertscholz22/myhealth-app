@@ -14,6 +14,7 @@ private const val TAG = "HcSeeder"
 /**
  * adb shell am broadcast -a com.myhealth.seeder.SEED -p com.myhealth.seeder --ei days 45
  * adb shell am broadcast -a com.myhealth.seeder.CLEAR -p com.myhealth.seeder
+ * adb shell am broadcast -a com.myhealth.seeder.STRENGTH_TODAY -p com.myhealth.seeder --ei minutes 25 --ei ago 30
  */
 class SeedReceiver : BroadcastReceiver() {
 
@@ -53,6 +54,20 @@ class SeedReceiver : BroadcastReceiver() {
                         Log.i(TAG, "CLEAR DONE")
                     } catch (e: Exception) {
                         Log.e(TAG, "CLEAR DONE: error ${e.message}", e)
+                    } finally {
+                        pendingResult.finish()
+                    }
+                }
+            }
+            "com.myhealth.seeder.STRENGTH_TODAY" -> {
+                val duration = intent.getIntExtra("minutes", 25)
+                val ago = intent.getIntExtra("ago", 30)
+                scope.launch {
+                    try {
+                        val n = Seeder(appContext).strengthToday(duration, ago)
+                        Log.i(TAG, "STRENGTH DONE: $n")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "STRENGTH DONE: error ${e.message}", e)
                     } finally {
                         pendingResult.finish()
                     }

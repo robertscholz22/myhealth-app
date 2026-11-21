@@ -35,6 +35,9 @@ import com.myhealth.domain.repository.NutritionRepository
 import com.myhealth.domain.repository.PlanRepository
 import com.myhealth.domain.repository.ProfileRepository
 import com.myhealth.domain.repository.StrengthRepository
+import com.myhealth.domain.repository.VideoSessions
+import com.myhealth.domain.engine.strength.video.VideoEffort
+import com.myhealth.domain.model.StrengthWorkout
 import com.myhealth.domain.repository.SuggestionRepository
 import com.myhealth.domain.repository.SyncStateRepository
 import com.myhealth.sync.SyncScheduler
@@ -96,6 +99,8 @@ private data class CoreAndSync(
 /** Today's plan card (P6.6/P6.7): what is planned, or the best proposal still awaiting review. */
 private data class TodayPlan(
     val planned: List<PlannedSession>,
+    /** P26.5: the video workouts today's sessions run, by workout id. */
+    val videoWorkouts: Map<Long, StrengthWorkout> = emptyMap(),
     val suggested: SuggestedSession?,
     /** POLISH-8: the open batch predates a calendar change. */
     val stale: Boolean = false,
@@ -130,6 +135,8 @@ class TodayViewModel(
     private val strengthRepo: StrengthRepository,
     clock: PlatformClock,
     private val settingsRepo: SettingsRepository? = null,
+    /** P26.5: estimates for video workouts done without the watch. */
+    private val videoSessions: VideoSessions? = null,
 ) : ViewModel() {
 
     private val today = clock.today().toEpochDays()
@@ -240,7 +247,16 @@ class TodayViewModel(
         planRepo.observeSessions(today, today),
         suggestedToday,
         suggestionRepo.observeStale(),
-    ) { planned, suggested, stale -> TodayPlan(planned, suggested, stale) }
+        strengthRepo.observeAll(),
+    ) { planned, suggested, stale, workouts ->
+        val ids = planned.mapNotNull { it.workoutId }.toSet()
+        TodayPlan(
+            planned = planned,
+            videoWorkouts = workouts.filter { it.id in ids && it.isVideo }.associateBy { it.id },
+            suggested = suggested,
+            stale = stale,
+        )
+    }
 
     /** Today's [com.myhealth.domain.engine.strength.MuscleLoadState] (P14.8) — resolved the same
      * way [LoadViewModel] resolves it, since `ui/` may not import `data/repository`'s own
@@ -286,6 +302,7 @@ class TodayViewModel(
             latestLoad = l.latest,
             weeklyTrimp = l.weeklyTrimp,
             plannedToday = p.planned,
+            videoWorkouts = p.videoWorkouts,
             suggestedToday = p.suggested.takeIf { p.planned.isEmpty() },
             suggestionsStale = p.stale,
             cycleTrackingEnabled = cs.cycle.trackingEnabled,
@@ -302,6 +319,14 @@ class TodayViewModel(
     /** "Done" on the plan card (§4.2 Today, section 2). */
     fun markPlannedDone(sessionId: Long) {
         viewModelScope.launch { planRepo.setSessionStatus(sessionId, PlannedStatus.COMPLETED) }
+    }
+
+    /** P26.5: "Mark done" on a video workout — an estimate unless a recording is linked. */
+    fun markVideoDone(sessionId: Long, durationMin: Int, effort: VideoEffort) {
+        viewModelScope.launch {
+            videoSessions?.markDone(sessionId, durationMin, effort)
+                ?: planRepo.setSessionStatus(sessionId, PlannedStatus.COMPLETED)
+        }
     }
 
     /** Accepting a suggestion (P3.7): links it (upgrading a `SOCCER_MATCH` event's activity sport

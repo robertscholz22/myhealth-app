@@ -56,7 +56,7 @@ fun DayDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val vm = rememberVmWithSavedState { graph, handle ->
-        DayDetailViewModel(epochDay, graph.calendarRepo, graph.planRepo, graph.syncScheduler, graph.cycleRepo, handle)
+        DayDetailViewModel(epochDay, graph.calendarRepo, graph.planRepo, graph.syncScheduler, graph.cycleRepo, handle, graph.videoSessions)
     }
     val state by vm.state.collectAsStateWithLifecycle()
 

@@ -301,6 +301,28 @@ class Seeder(context: Context) {
         return counts
     }
 
+    /**
+     * One strength session today, ending [minutesAgo] minutes ago and lasting [durationMin] —
+     * what a watch recording of a video workout looks like (P26.5 replacement test).
+     */
+    suspend fun strengthToday(durationMin: Int, minutesAgo: Int): Int {
+        val meta = Metadata.manualEntry()
+        val end = Instant.now().minusSeconds(minutesAgo * 60L)
+        val start = end.minusSeconds(durationMin * 60L)
+        val exercises = mutableListOf<ExerciseSessionRecord>()
+        val heartRate = mutableListOf<HeartRateRecord>()
+        val activeCal = mutableListOf<ActiveCaloriesBurnedRecord>()
+        val totalCal = mutableListOf<TotalCaloriesBurnedRecord>()
+        addSimpleSession(
+            Random(7), meta, start, end, ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING, "Strength",
+            hrLow = 105, hrHigh = 145, kcalPerMin = 6.5, exercises, heartRate, activeCal, totalCal,
+        )
+        insertType(heartRate)
+        insertType(activeCal)
+        insertType(totalCal)
+        return insertType(exercises)
+    }
+
     private suspend fun insertType(records: List<Record>): Int {
         if (records.isEmpty()) return 0
         val typeName = records.first()::class.simpleName

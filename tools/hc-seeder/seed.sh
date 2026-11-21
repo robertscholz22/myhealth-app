@@ -4,6 +4,7 @@
 #   seed.sh up            - build debug APK and install on emulator-5554
 #   seed.sh seed [days]   - broadcast SEED (default 45 days) and wait for "SEED DONE"
 #   seed.sh clear         - broadcast CLEAR and wait for "CLEAR DONE"
+#   seed.sh strength [min] [ago] - one strength session today (P26.5)
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -77,8 +78,13 @@ EOF
         echo "Waiting for CLEAR DONE (up to 120s) ..."
         log_wait_for "CLEAR DONE"
         ;;
+    strength)
+        "$ADB" -s "$DEVICE" logcat -c
+        "$ADB" -s "$DEVICE" shell am broadcast -a com.myhealth.seeder.STRENGTH_TODAY -p "$PKG" --include-stopped-packages --ei minutes "${2:-25}" --ei ago "${3:-30}"
+        log_wait_for "STRENGTH DONE"
+        ;;
     *)
-        echo "Usage: $0 {up|seed [days]|clear}" >&2
+        echo "Usage: $0 {up|seed [days]|clear|strength [minutes] [ago]}" >&2
         exit 1
         ;;
 esac

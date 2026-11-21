@@ -8,6 +8,7 @@ import com.myhealth.domain.model.SessionType
 import com.myhealth.domain.model.SportType
 import com.myhealth.domain.model.StrengthWorkout
 import com.myhealth.domain.repository.PlanRepository
+import com.myhealth.domain.repository.VideoSessions
 import com.myhealth.resources.*
 import kotlinx.coroutines.flow.map
 import com.myhealth.ui.zones.resolveHrZoneModel
@@ -70,6 +71,8 @@ class PlannedSessionEditViewModel(
     private val clock: PlatformClock,
     private val healthRepo: HealthRepository? = null,
     private val activityRepo: ActivityRepository? = null,
+    /** P26.5: a deleted session drops its video estimate. */
+    private val videoSessions: VideoSessions? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -189,6 +192,7 @@ class PlannedSessionEditViewModel(
     fun confirmDelete() {
         _state.update { it.copy(pendingDelete = false) }
         viewModelScope.launch {
+            videoSessions?.releaseEstimate(id)
             when (planRepo.deleteSession(id)) {
                 is Outcome.Ok -> _state.update { it.copy(deleted = true) }
                 is Outcome.Err -> _state.update {

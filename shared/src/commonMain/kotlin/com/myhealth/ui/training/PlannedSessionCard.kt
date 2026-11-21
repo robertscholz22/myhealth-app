@@ -49,6 +49,7 @@ import com.myhealth.ui.common.SportIcon
 import com.myhealth.ui.common.zeroPad
 import com.myhealth.ui.theme.MyHealthTheme
 import com.myhealth.ui.zones.zoneChipLabel
+import com.myhealth.ui.strength.WatchVideoButton
 
 /** The per-session actions of §4.2 "Training plan", grouped so the row keeps a short signature. */
 data class PlannedSessionActions(
@@ -83,6 +84,8 @@ fun PlannedSessionCard(
     /** The workout's first three exercises with their prescriptions (P16.2, §P16 "Where it shows"),
      * e.g. "Bench press 3 × 8 @ 50 kg, Squat 3 × 5 @ 40 kg…" — `null` alongside [workoutName]. */
     workoutExercisesLine: String? = null,
+    /** P26.5: the workout's video — a "Watch video" button opens it. */
+    videoUrl: String? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -134,6 +137,7 @@ fun PlannedSessionCard(
                 )
             }
             WorkoutStructureSection(session.structureJson)
+            videoUrl?.let { WatchVideoButton(it) }
         }
         IconButton(onClick = { actions.onToggleLock(session) }) {
             Icon(

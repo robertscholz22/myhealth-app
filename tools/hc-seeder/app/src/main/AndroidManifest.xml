@@ -94,6 +94,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.myhealth.seeder.SEED" />
+                <action android:name="com.myhealth.seeder.STRENGTH_TODAY" />
                 <action android:name="com.myhealth.seeder.CLEAR" />
             </intent-filter>
         </receiver>

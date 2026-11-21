@@ -18,6 +18,8 @@ import com.myhealth.domain.model.Profile
 import com.myhealth.domain.model.RideBestKind
 import com.myhealth.domain.repository.ActivityRepository
 import com.myhealth.domain.repository.CalendarRepository
+import com.myhealth.domain.repository.StrengthRepository
+import com.myhealth.domain.repository.VideoSessions
 import com.myhealth.domain.repository.ProfileRepository
 import com.myhealth.domain.repository.RideBestRepository
 import com.myhealth.sync.SyncScheduler
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.myhealth.data.time.PlatformClock
 import kotlinx.datetime.LocalDate
@@ -71,6 +74,9 @@ class ActivityDetailViewModel(
     private val rideBestRepo: RideBestRepository,
     private val syncScheduler: SyncScheduler,
     private val clock: PlatformClock,
+    /** P26.5 "Which workout was this?" — both `null` hides the card. */
+    strengthRepo: StrengthRepository? = null,
+    private val videoSessions: VideoSessions? = null,
 ) : ViewModel() {
 
     private val showDeleteConfirm = MutableStateFlow(false)
@@ -108,6 +114,26 @@ class ActivityDetailViewModel(
     }
 
     private fun today(): LocalDate = clock.today()
+
+    private val showWorkoutPicker = MutableStateFlow(false)
+
+    /** P26.5: the "Workout" card — link this recording to a workout when no session claims it. */
+    val workoutLink: StateFlow<WorkoutLinkUi> = if (strengthRepo == null || videoSessions == null) {
+        MutableStateFlow(WorkoutLinkUi())
+    } else {
+        combine(activityFlow, dayCalendar, strengthRepo.observeAll(), showWorkoutPicker) { activity, day, workouts, picker ->
+            workoutLinkUi(activityId, activity?.sportType, day?.planned.orEmpty(), workouts, picker)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WorkoutLinkUi())
+    }
+
+    fun openWorkoutPicker() = showWorkoutPicker.update { true }
+
+    fun closeWorkoutPicker() = showWorkoutPicker.update { false }
+
+    fun linkWorkout(workoutId: Long) {
+        showWorkoutPicker.update { false }
+        viewModelScope.launch { videoSessions?.linkWorkout(activityId, workoutId) }
+    }
 
     val state: StateFlow<ActivityDetailUiState> = combine(core, linking, ftp) { c, l, ftpEstimate ->
         val model = hrZoneModelFor(c.profile, clock.today())

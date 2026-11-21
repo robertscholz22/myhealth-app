@@ -14,6 +14,7 @@ import com.myhealth.domain.model.PlannedStatus
 import com.myhealth.domain.repository.CalendarRepository
 import com.myhealth.domain.repository.CycleRepository
 import com.myhealth.domain.repository.PlanRepository
+import com.myhealth.domain.repository.VideoSessions
 import com.myhealth.domain.util.Outcome
 import com.myhealth.resources.*
 import com.myhealth.sync.SyncScheduler
@@ -45,6 +46,8 @@ class DayDetailViewModel(
     private val syncScheduler: SyncScheduler,
     cycleRepo: CycleRepository,
     private val savedState: SavedStateHandle,
+    /** P26.5: a reopened / skipped session drops its video estimate. */
+    private val videoSessions: VideoSessions? = null,
 ) : ViewModel() {
 
     private val dayFlow: StateFlow<Long> = savedState.getStateFlow(KEY_DAY, initialDay)
@@ -155,6 +158,7 @@ class DayDetailViewModel(
 
     fun setSessionStatus(sessionId: Long, status: PlannedStatus) {
         viewModelScope.launch {
+            if (status != PlannedStatus.COMPLETED) videoSessions?.releaseEstimate(sessionId)
             when (planRepo.setSessionStatus(sessionId, status)) {
                 is Outcome.Ok -> {
                     // Completing or skipping a session changes the day's training energy (P4.12).

@@ -73,9 +73,12 @@ fun ActivityDetailScreen(id: Long, onBack: () -> Unit, modifier: Modifier = Modi
             graph.rideBestRepo,
             graph.syncScheduler,
             graph.clock,
+            graph.strengthRepo,
+            graph.videoSessions,
         )
     }
     val state by vm.state.collectAsStateWithLifecycle()
+    val workoutLink by vm.workoutLink.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.deleted) {
         if (state.deleted) onBack()
@@ -111,6 +114,8 @@ fun ActivityDetailScreen(id: Long, onBack: () -> Unit, modifier: Modifier = Modi
             onOpenEventPicker = vm::openEventPicker,
             onUnlinkEvent = vm::unlinkEvent,
             onSaveRpe = vm::saveRpe,
+            workoutLink = workoutLink,
+            onPickWorkout = vm::openWorkoutPicker,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
@@ -119,6 +124,10 @@ fun ActivityDetailScreen(id: Long, onBack: () -> Unit, modifier: Modifier = Modi
 
     if (state.showDeleteConfirm) {
         DeleteConfirmDialog(onConfirm = vm::confirmDelete, onDismiss = vm::cancelDelete)
+    }
+
+    if (workoutLink.showPicker) {
+        WorkoutPickerSheet(workouts = workoutLink.workouts, onSelect = vm::linkWorkout, onDismiss = vm::closeWorkoutPicker)
     }
 
     if (state.showEventPicker) {
@@ -135,6 +144,8 @@ internal fun ActivityDetailBody(
     onUnlinkEvent: () -> Unit,
     onSaveRpe: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    workoutLink: WorkoutLinkUi = WorkoutLinkUi(),
+    onPickWorkout: () -> Unit = {},
 ) {
     val activity = state.activity
     if (activity == null) {
@@ -154,6 +165,9 @@ internal fun ActivityDetailBody(
         item { TitleEditCard(activity.title, onSaveTitle) }
         item { NoteEditCard(activity.note, onSaveNote) }
         item { LinkedEventCard(state.linkedEvent, onOpenEventPicker, onUnlinkEvent) }
+        if (workoutLink.canLink || workoutLink.linkedWorkoutName != null) {
+            item { LinkedWorkoutCard(workoutLink, onPickWorkout) }
+        }
         if (hasPowerFields(activity)) {
             item { PowerCard(activity, state.ftp) }
         }

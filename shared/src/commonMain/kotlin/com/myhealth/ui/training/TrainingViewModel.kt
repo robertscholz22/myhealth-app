@@ -24,6 +24,8 @@ import com.myhealth.domain.repository.GoalRepository
 import com.myhealth.domain.repository.PlanRepository
 import com.myhealth.domain.repository.SettingsRepository
 import com.myhealth.domain.repository.StrengthRepository
+import com.myhealth.domain.repository.VideoSessions
+import com.myhealth.domain.engine.strength.video.VideoEffort
 import com.myhealth.domain.repository.SuggestionRepository
 import com.myhealth.domain.util.Outcome
 import com.myhealth.resources.*
@@ -92,6 +94,8 @@ class TrainingViewModel(
      * unlogged exercise's load from, for [prepareSetLog]. */
     private val bodyWeightKg: suspend () -> Double,
     private val clock: PlatformClock,
+    /** P26.5: estimates for video workouts done without the watch. */
+    private val videoSessions: VideoSessions? = null,
 ) : ViewModel() {
 
     private val weekOffset = MutableStateFlow(0)
@@ -248,15 +252,25 @@ class TrainingViewModel(
         }
     }
 
+    /** P26.5: "Mark done" on a video workout — an estimate unless a recording is linked. */
+    fun markVideoDone(sessionId: Long, durationMin: Int, effort: VideoEffort) =
+        run(UiMessage.of(Res.string.training_session_marked_done)) {
+            videoSessions?.markDone(sessionId, durationMin, effort)
+                ?: planRepo.setSessionStatus(sessionId, PlannedStatus.COMPLETED)
+        }
+
     fun skip(sessionId: Long) = run(UiMessage.of(Res.string.training_session_skipped)) {
+        videoSessions?.releaseEstimate(sessionId)
         planRepo.setSessionStatus(sessionId, PlannedStatus.SKIPPED)
     }
 
     fun reopen(sessionId: Long) = run(UiMessage.of(Res.string.training_session_reopened)) {
+        videoSessions?.releaseEstimate(sessionId)
         planRepo.setSessionStatus(sessionId, PlannedStatus.PLANNED)
     }
 
     fun delete(sessionId: Long) = run(UiMessage.of(Res.string.training_session_deleted)) {
+        videoSessions?.releaseEstimate(sessionId)
         planRepo.deleteSession(sessionId)
     }
 

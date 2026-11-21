@@ -49,6 +49,8 @@ data class TodayUiState(
     val weeklyTrimp: Double = 0.0,
     /** Today's `planned_session` rows — section 2 of §4.2 Today (P6.6). */
     val plannedToday: List<PlannedSession> = emptyList(),
+    /** P26.5: video workouts of today's sessions, by workout id (Watch + the Done sheet). */
+    val videoWorkouts: Map<Long, com.myhealth.domain.model.StrengthWorkout> = emptyMap(),
     /** …or, when nothing is planned, the best suggestion for today from the open batch (P6.7). */
     val suggestedToday: SuggestedSession? = null,
     /** POLISH-8: the open `PROPOSED` batch predates a calendar change and should be regenerated. */

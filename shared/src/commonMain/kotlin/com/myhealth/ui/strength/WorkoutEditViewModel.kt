@@ -10,6 +10,8 @@ import com.myhealth.domain.model.MuscleGroup
 import com.myhealth.domain.model.StrengthWorkoutKind
 import com.myhealth.domain.repository.ProfileRepository
 import com.myhealth.domain.repository.StrengthRepository
+import com.myhealth.domain.repository.VideoSessions
+import com.myhealth.domain.engine.strength.video.VideoEffort
 import com.myhealth.domain.util.Outcome
 import com.myhealth.resources.*
 import com.myhealth.ui.common.UiMessage
@@ -33,6 +35,8 @@ data class WorkoutEditUiState(
     /** `profile.availableEquipmentJson`, decoded (P16.2) — what [ExercisePickerSheet] filters its
      * results by. */
     val myEquipment: Set<Equipment>? = null,
+    /** P26.5: "Done today" was saved (`true`) or failed (`false`); `null` before either. */
+    val doneToday: Boolean? = null,
 ) {
     val highlight: Map<MuscleGroup, Float> get() = draft.highlight()
 }
@@ -50,10 +54,22 @@ class WorkoutEditViewModel(
      * an unlogged exercise's load from. */
     private val bodyWeightKg: suspend () -> Double,
     private val clock: PlatformClock,
+    /** P26.5: "Done today" on a video workout. */
+    private val videoSessions: VideoSessions? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WorkoutEditUiState(isLoading = id != NEW_ID, isNew = id == NEW_ID))
     val state: StateFlow<WorkoutEditUiState> = _state.asStateFlow()
+
+    /** P26.5: "Done today" — a session for today with an estimate from [durationMin] × [effort]. */
+    fun doneToday(durationMin: Int, effort: VideoEffort) {
+        val workoutId = _state.value.draft.id.takeIf { it != 0L } ?: return
+        val sessions = videoSessions ?: return
+        viewModelScope.launch {
+            val ok = sessions.doneToday(workoutId, durationMin, effort) is Outcome.Ok
+            _state.update { it.copy(doneToday = ok) }
+        }
+    }
 
     init {
         if (id != NEW_ID) load()

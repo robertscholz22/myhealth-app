@@ -32,6 +32,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.myhealth.domain.engine.strength.video.VideoEffort
+import androidx.compose.ui.platform.testTag
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,7 +73,7 @@ fun WorkoutEditScreen(
     onRecheckVideo: (Long) -> Unit = {},
 ) {
     val vm = rememberVm { graph ->
-        WorkoutEditViewModel(id, graph.strengthRepo, graph.profileRepo, graph.currentBodyWeightKg, graph.clock)
+        WorkoutEditViewModel(id, graph.strengthRepo, graph.profileRepo, graph.currentBodyWeightKg, graph.clock, graph.videoSessions)
     }
     val state by vm.state.collectAsStateWithLifecycle()
     var showPicker by remember { mutableStateOf(false) }
@@ -109,6 +111,7 @@ fun WorkoutEditScreen(
             onUpdateRow = vm::updateRow,
             onSave = vm::save,
             onRecheckVideo = { onRecheckVideo(state.draft.id) },
+            onDoneToday = vm::doneToday,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         )
     }
@@ -140,6 +143,7 @@ internal fun WorkoutEditContent(
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
     onRecheckVideo: () -> Unit = {},
+    onDoneToday: (Int, VideoEffort) -> Unit = { _, _ -> },
 ) {
     val draft = state.draft
     LazyColumn(
@@ -171,7 +175,15 @@ internal fun WorkoutEditContent(
             }
         }
         if (draft.isVideo) {
-            item { VideoSection(draft = draft, onChange = onChange, onRecheck = onRecheckVideo) }
+            item {
+                VideoSection(
+                    draft = draft,
+                    onChange = onChange,
+                    onRecheck = onRecheckVideo,
+                    doneToday = state.doneToday,
+                    onDoneToday = onDoneToday,
+                )
+            }
         }
         item {
             SectionCard(title = stringResource(Res.string.workout_edit_section_figure)) {
@@ -363,8 +375,11 @@ private fun VideoSection(
     draft: WorkoutEditDraft,
     onChange: ((WorkoutEditDraft) -> WorkoutEditDraft) -> Unit,
     onRecheck: () -> Unit,
+    doneToday: Boolean?,
+    onDoneToday: (Int, VideoEffort) -> Unit,
 ) {
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+    var showDone by remember { mutableStateOf(false) }
     val url = draft.videoUrl.orEmpty()
     SectionCard(title = stringResource(Res.string.workout_edit_section_video)) {
         OutlinedTextField(
@@ -402,5 +417,24 @@ private fun VideoSection(
                 Text(stringResource(Res.string.workout_edit_recheck_video))
             }
         }
+        if (draft.id != 0L) {
+            OutlinedButton(onClick = { showDone = true }, modifier = Modifier.testTag("video_done_today")) {
+                Text(stringResource(Res.string.video_done_today))
+            }
+        }
+        when (doneToday) {
+            true -> Text(stringResource(Res.string.video_done_today_saved), color = MaterialTheme.colorScheme.primary)
+            false -> Text(stringResource(Res.string.video_done_today_failed), color = MaterialTheme.colorScheme.error)
+            null -> Unit
+        }
+    }
+    if (showDone) {
+        VideoDoneSheet(
+            name = draft.name,
+            defaultMinutes = draft.estimatedMinutes,
+            hasRecording = false,
+            onDone = { minutes, effort -> showDone = false; onDoneToday(minutes, effort) },
+            onDismiss = { showDone = false },
+        )
     }
 }

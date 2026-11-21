@@ -52,6 +52,7 @@ import com.myhealth.ui.common.EmptyState
 import com.myhealth.ui.common.CARD_CORNER_RADIUS
 import com.myhealth.ui.common.SCREEN_PADDING
 import com.myhealth.ui.strength.SetLogSheet
+import com.myhealth.ui.strength.VideoDoneSheet
 import com.myhealth.ui.common.SectionCard
 import com.myhealth.ui.theme.MyHealthTheme
 
@@ -83,11 +84,13 @@ fun TrainingScreen(nav: TrainingNavActions, modifier: Modifier = Modifier) {
             strengthRepo = graph.strengthRepo,
             bodyWeightKg = graph.currentBodyWeightKg,
             clock = graph.clock,
+            videoSessions = graph.videoSessions,
         )
     }
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var setLogSession by remember { mutableStateOf<PlannedSession?>(null) }
+    var videoDoneSession by remember { mutableStateOf<PlannedSession?>(null) }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -123,7 +126,14 @@ fun TrainingScreen(nav: TrainingNavActions, modifier: Modifier = Modifier) {
             actions = PlannedSessionActions(
                 onToggleLock = { session -> vm.setLocked(session.id, !session.locked) },
                 onEdit = nav.onEditSession,
-                onMarkDone = { id -> onMarkDoneRequested(state, id, vm::markDone) { session -> setLogSession = session } },
+                onMarkDone = { id ->
+                    onMarkDoneRequested(
+                        state = state,
+                        sessionId = id,
+                        markDone = vm::markDone,
+                        openVideoDone = { session -> videoDoneSession = session },
+                    ) { session -> setLogSession = session }
+                },
                 onSkip = vm::skip,
                 onReopen = vm::reopen,
                 onDelete = confirmDelete,
@@ -135,6 +145,24 @@ fun TrainingScreen(nav: TrainingNavActions, modifier: Modifier = Modifier) {
             onGenerate = vm::generateSuggestions,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         )
+    }
+
+    videoDoneSession?.let { session ->
+        val workout = session.workoutId?.let { state.workoutsById[it] }
+        if (workout == null) {
+            videoDoneSession = null
+        } else {
+            VideoDoneSheet(
+                name = workout.name,
+                defaultMinutes = workout.estimatedMinutes,
+                hasRecording = session.linkedActivityId != null,
+                onDone = { minutes, effort ->
+                    vm.markVideoDone(session.id, minutes, effort)
+                    videoDoneSession = null
+                },
+                onDismiss = { videoDoneSession = null },
+            )
+        }
     }
 
     setLogSession?.let { session ->
@@ -163,11 +191,16 @@ private fun onMarkDoneRequested(
     state: TrainingUiState,
     sessionId: Long,
     markDone: (Long) -> Unit,
+    openVideoDone: (PlannedSession) -> Unit = {},
     openSetLog: (PlannedSession) -> Unit,
 ) {
     val session = state.week.days.flatMap { it.planned }.firstOrNull { it.id == sessionId }
-    val hasWorkout = session?.workoutId?.let { state.workoutsById.containsKey(it) } ?: false
-    if (session != null && hasWorkout) openSetLog(session) else markDone(sessionId)
+    val workout = session?.workoutId?.let { state.workoutsById[it] }
+    when {
+        session == null || workout == null -> markDone(sessionId)
+        workout.isVideo -> openVideoDone(session) // P26.5: no set log for a video, an estimate instead
+        else -> openSetLog(session)
+    }
 }
 
 @Composable

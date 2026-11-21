@@ -88,6 +88,7 @@ fun WeekDayRow(
                 workoutName = session.workoutId?.let { workouts[it]?.name },
                 isMobilityWorkout = session.workoutId?.let { workouts[it]?.kind?.isMobility } ?: false,
                 workoutExercisesLine = session.workoutId?.let { workouts[it] }?.let { workoutPrescriptionLine(it) },
+                videoUrl = session.workoutId?.let { workouts[it]?.videoUrl },
             )
         }
         row.activities.forEach { CompletedActivityRow(it, onOpenActivity) }

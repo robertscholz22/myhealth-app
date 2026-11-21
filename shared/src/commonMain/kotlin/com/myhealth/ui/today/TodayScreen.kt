@@ -18,6 +18,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.myhealth.ui.strength.VideoDoneSheet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.clickable
@@ -86,9 +90,25 @@ fun TodayScreen(
             graph.strengthRepo,
             graph.clock,
             graph.settings,
+            graph.videoSessions,
         )
     }
     val state by vm.state.collectAsStateWithLifecycle()
+    var videoDoneId by remember { mutableStateOf<Long?>(null) }
+    val videoDoneSession = state.plannedToday.firstOrNull { it.id == videoDoneId }
+    val videoDoneWorkout = videoDoneSession?.workoutId?.let { state.videoWorkouts[it] }
+    if (videoDoneSession != null && videoDoneWorkout != null) {
+        VideoDoneSheet(
+            name = videoDoneWorkout.name,
+            defaultMinutes = videoDoneWorkout.estimatedMinutes,
+            hasRecording = videoDoneSession.linkedActivityId != null,
+            onDone = { minutes, effort ->
+                vm.markVideoDone(videoDoneSession.id, minutes, effort)
+                videoDoneId = null
+            },
+            onDismiss = { videoDoneId = null },
+        )
+    }
 
     TodayContent(
         state = state,
@@ -99,7 +119,10 @@ fun TodayScreen(
         onOpenLoad = onOpenLoad,
         onAcceptSuggestion = vm::acceptSuggestion,
         onDismissSuggestion = vm::dismissSuggestion,
-        onMarkPlannedDone = vm::markPlannedDone,
+        onMarkPlannedDone = { id ->
+            val session = state.plannedToday.firstOrNull { it.id == id }
+            if (session?.workoutId?.let { state.videoWorkouts[it] } != null) videoDoneId = id else vm.markPlannedDone(id)
+        },
         onOpenTraining = onOpenTraining,
         onReviewSuggestions = onReviewSuggestions,
         onOpenCycle = onOpenCycle,
@@ -191,6 +214,7 @@ private fun TodayList(
                 suggested = state.suggestedToday,
                 isStale = state.suggestionsStale,
                 hrZoneModel = state.hrZoneModel,
+                videoWorkouts = state.videoWorkouts,
                 onMarkDone = onMarkPlannedDone,
                 onReviewSuggestions = onReviewSuggestions,
                 onOpenTraining = onOpenTraining,

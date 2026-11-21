@@ -249,6 +249,10 @@ abstract class CoreGraph : UiGraph {
         com.myhealth.data.video.OEmbedTitleSource()
     }
 
+    override val videoSessions: com.myhealth.domain.repository.VideoSessions by lazy {
+        com.myhealth.data.video.VideoSessionService(planRepo, activityRepo, loadRepo, strengthRepo, clock)
+    }
+
     override val pendingVideoLink =
         kotlinx.coroutines.flow.MutableStateFlow<com.myhealth.domain.engine.strength.video.VideoLink.Shared?>(null)
 

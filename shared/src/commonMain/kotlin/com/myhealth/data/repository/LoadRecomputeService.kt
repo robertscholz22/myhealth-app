@@ -35,6 +35,7 @@ import com.myhealth.domain.repository.RideBestRepository
 import com.myhealth.domain.repository.RunningBestRepository
 import com.myhealth.domain.repository.SettingsRepository
 import com.myhealth.domain.util.Outcome
+import com.myhealth.domain.engine.strength.video.VideoDone
 import com.myhealth.domain.util.epochDayDate
 import com.myhealth.domain.util.runCatchingApp
 import kotlin.math.abs
@@ -99,6 +100,7 @@ class LoadRecomputeService(
     private suspend fun recomputeInternal(fromDay: Long) {
         val profile = profileRepo.getProfile() ?: return
         val today = clock.todayEpochDay()
+        replaceEstimates(today)
 
         // POLISH-13: the series (and the cached `daily_load` rows) must never start before the
         // first activity. No activities at all means no series and no cached rows.
@@ -191,6 +193,23 @@ class LoadRecomputeService(
         PlannedAutoCompleter.complete(sessions, activities, clock.timeZone).forEach { completion ->
             plans.linkActivity(completion.sessionId, completion.activityId)
             plans.setSessionStatus(completion.sessionId, PlannedStatus.COMPLETED)
+        }
+    }
+
+    /**
+     * P26.5: a video workout marked done without the watch carries a `MANUAL` estimate activity.
+     * When a recording of the same day and kind has synced since, the session is relinked to it
+     * and the estimate deleted — before any load is computed, so the day never counts both.
+     */
+    private suspend fun replaceEstimates(today: Long) {
+        val plans = planRepo ?: return
+        val fromDay = today - AUTO_COMPLETE_WINDOW_DAYS
+        val sessions = plans.getSessions(fromDay, today)
+        if (sessions.none { it.status == PlannedStatus.COMPLETED && it.linkedActivityId != null }) return
+        val activities = activityRepo.observeRange(fromDay, today).first()
+        VideoDone.replacements(sessions, activities).forEach { r ->
+            plans.linkActivity(r.sessionId, r.syncedActivityId)
+            activityRepo.delete(r.estimateActivityId)
         }
     }
 

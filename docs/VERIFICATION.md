@@ -1117,3 +1117,38 @@ Emulator (emulator-5554, fresh install, invented link `youtu.be/AbCdEfGhIj0`, in
   → Save anyway → workout with 2 exercises, the line left out. PASS
 - Not covered here: the oEmbed title with a real video (no real links in the repo; checked by unit
   test of the parser, live check on the Pixel at release).
+
+### P26.5 — video workouts: Watch, done without the watch, replacement, "Which workout was this?"
+`VideoDone` (pure): estimate activity (MANUAL, effort Easy 3 / Moderate 5 / Hard 7 / Very hard 9
+as `rpe`, ends now today or starts at noon on an earlier day, mobility kinds → MOBILITY sport);
+its load comes from the existing RPE rung of `TrimpCalculator` (RPE_ESTIMATE), no new estimator.
+`replacements`: a completed session linked to a MANUAL-only activity is moved to an unlinked
+recording of the same day and kind (mobility needs a mobility recording; longest first; one
+recording per estimate). `LoadRecomputeService` runs it before computing load, links the
+recording and deletes the estimate, so a day never counts twice. `VideoSessions` (domain) /
+`VideoSessionService` (data): mark done, done today, link a workout to an activity, release the
+estimate on reopen / skip / delete (Training, Day detail, session editor). UI: Watch video on
+the Training card, Today plan row and workout editor; `VideoDoneSheet` (minutes + effort) on
+Training and Today; "Done today" in the editor's Video section; Workout card + picker on activity
+detail. The optional "too easy … too hard" from the plan is left out: the effort covers it.
+Seeder: `seed.sh strength [min] [ago]` writes one strength session today. 17 new tests
+(`VideoDoneTest`, `VideoSessionServiceTest` incl. recompute replacement, `WorkoutLinkUiTest`);
+`tools/verify.sh` 1278 unit tests, 0 failures; iOS metadata compile OK.
+
+Emulator (emulator-5554, invented video workouts from P26.4):
+- Plan "Home full body 20" for today → Training card shows "Workout: …", exercises, Watch video. PASS (p265-b)
+- Watch video → YouTube app opens with the link (logcat VIEW → com.google.android.youtube). PASS
+- Mark done → sheet "Done: Home full body 20", 20 min, effort chips, estimate hint → Hard → Mark
+  done → "Completed · Linked", activity "Home full body 20 · 20 min · 42 AU". PASS (p265-c)
+- Today plan row shows the workout and Watch video; Load → Muscle load lights chest, shoulders,
+  core from the video's exercises. PASS (p265-d, p265-e)
+- `seed.sh strength 25 30` + Sync now → day shows only the Health Connect recording (25 min,
+  125 bpm, TRIMP 23); the estimate is gone, the session stays completed and linked. PASS (p265-f)
+- Second recording (30 min, unplanned) → activity detail "Workout" card "Which workout was this?"
+  → Pick workout → Second test → "Workout: Second test"; Training shows a completed linked session
+  with Watch video. PASS (p265-g, p265-h)
+- Editor → Done today → Moderate → "Saved as done today."; Training shows a third session and the
+  estimate "Home full body 20 · 20 min · 30 AU". Reopen → session Planned, estimate deleted, the
+  two recordings and their sessions unchanged. PASS (p265-i, p265-j, p265-k)
+- Note: emulator had no Health Connect permission after the P26.4 reinstall; granted through
+  More → Integrations → Grant permissions (Allow all + past/background access).

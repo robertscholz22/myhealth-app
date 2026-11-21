@@ -56,6 +56,8 @@ fun TodayPlanCard(
     suggested: SuggestedSession?,
     isStale: Boolean = false,
     hrZoneModel: HrZoneModel? = null,
+    /** P26.5: video workouts by id — their rows get "Watch video" and the workout name. */
+    videoWorkouts: Map<Long, com.myhealth.domain.model.StrengthWorkout> = emptyMap(),
     onMarkDone: (Long) -> Unit,
     onReviewSuggestions: () -> Unit,
     onOpenTraining: () -> Unit,
@@ -68,7 +70,7 @@ fun TodayPlanCard(
     ) {
         if (isStale) StaleSuggestionsHint(onRegenerate = onOpenTraining)
         when {
-            planned.isNotEmpty() -> planned.forEach { PlannedRow(it, hrZoneModel, onMarkDone) }
+            planned.isNotEmpty() -> planned.forEach { PlannedRow(it, hrZoneModel, onMarkDone, it.workoutId?.let(videoWorkouts::get)) }
             suggested != null -> SuggestedRow(suggested, hrZoneModel, onReviewSuggestions)
             else -> {
                 Text(
@@ -84,7 +86,12 @@ fun TodayPlanCard(
 }
 
 @Composable
-private fun PlannedRow(session: PlannedSession, hrZoneModel: HrZoneModel?, onMarkDone: (Long) -> Unit) {
+private fun PlannedRow(
+    session: PlannedSession,
+    hrZoneModel: HrZoneModel?,
+    onMarkDone: (Long) -> Unit,
+    video: com.myhealth.domain.model.StrengthWorkout? = null,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -111,6 +118,14 @@ private fun PlannedRow(session: PlannedSession, hrZoneModel: HrZoneModel?, onMar
             )
             TargetZoneChip(session.sessionType, hrZoneModel)
             WorkoutStructureSection(session.structureJson)
+            video?.let {
+                Text(
+                    text = stringResource(Res.string.session_workout_format, it.name),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                it.videoUrl?.let { url -> com.myhealth.ui.strength.WatchVideoButton(url) }
+            }
         }
         if (session.status == PlannedStatus.PLANNED) {
             TextButton(onClick = { onMarkDone(session.id) }) { Text(stringResource(Res.string.today_mark_done)) }

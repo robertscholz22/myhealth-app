@@ -1231,6 +1231,22 @@
     <string name="workouts_video_chip">Video</string>
     <string name="workout_edit_section_video">Video</string>
     <string name="workout_edit_recheck_video">Check exercises again</string>
+    <!-- P26.5 watch and done -->
+    <string name="video_done_title">Done: %1$s</string>
+    <string name="video_done_recorded">Your watch recording is already linked, so its load counts.</string>
+    <string name="video_done_effort">How hard was it?</string>
+    <string name="video_effort_easy">Easy</string>
+    <string name="video_effort_moderate">Moderate</string>
+    <string name="video_effort_hard">Hard</string>
+    <string name="video_effort_very_hard">Very hard</string>
+    <string name="video_done_estimate_hint">Training and muscle load are estimated from time and effort. If your watch recorded it, that recording replaces the estimate after the next sync.</string>
+    <string name="video_done_save">Mark done</string>
+    <string name="video_done_today">Done today</string>
+    <string name="video_done_today_saved">Saved as done today.</string>
+    <string name="video_done_today_failed">Could not save. Try again.</string>
+    <string name="activity_workout_title">Workout</string>
+    <string name="activity_workout_hint">Which workout was this? Pick it so muscle load uses its exercises.</string>
+    <string name="activity_workout_pick">Pick workout</string>
 
     <!-- ===== Strength workouts (ui/strength/WorkoutsScreen.kt, More entry, P14.7) ===== -->
     <string name="more_entry_workouts">Strength workouts</string>
