@@ -23,6 +23,9 @@ targets:
     dependencies:
       # The static Kotlin framework calls these; a static library does not pull them in itself.
       - sdk: HealthKit.framework
+      # >>> share-extension (P26.8; CI removes these marked blocks when built without it)
+      - target: MyHealthShare
+      # <<< share-extension
     info:
       path: MyHealth/Info.plist
       properties:
@@ -62,6 +65,9 @@ targets:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
         com.apple.developer.healthkit.background-delivery: true
+        # >>> share-extension
+        com.apple.security.application-groups: [group.io.github.robertscholz22.myhealth]
+        # <<< share-extension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.robertscholz22.myhealth
@@ -77,6 +83,34 @@ targets:
         script: |
           cd "$SRCROOT/.."
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+  # >>> share-extension
+  # "Share → MyHealth" from YouTube or Safari (P26.8): parks the link in the App Group for the app.
+  MyHealthShare:
+    type: app-extension
+    platform: iOS
+    sources: [MyHealthShare]
+    info:
+      path: MyHealthShare/Info.plist
+      properties:
+        CFBundleDisplayName: MyHealth
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+    entitlements:
+      path: MyHealthShare/MyHealthShare.entitlements
+      properties:
+        com.apple.security.application-groups: [group.io.github.robertscholz22.myhealth]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.robertscholz22.myhealth.share
+        TARGETED_DEVICE_FAMILY: "1"
+  # <<< share-extension
   MyHealthUITests:
     type: bundle.ui-testing
     platform: iOS

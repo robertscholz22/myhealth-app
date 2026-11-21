@@ -343,4 +343,32 @@ final class LaunchTests: XCTestCase {
         app.swipeUp()
         capture(app, "69_backup_imported_counts")
     }
+
+    /// P26.8: a link parked by the share extension (simulated with the Debug launch hook) opens
+    /// "New video workout" filled in; a pasted list is matched against the exercise library.
+    func testVideoWorkoutFromShare() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-sharedVideoText", "Core 15 https://youtu.be/AbCdEfGhIj0"]
+        app.launch()
+        if app.staticTexts["Step 1 of 3: About you"].waitForExistence(timeout: 30) {
+            completeOnboarding(app)
+        }
+        expect(app.staticTexts["New video workout"], app, "70_video_from_share", timeout: 60)
+        XCTAssertTrue(
+            label(containing: "youtube.com/watch?v=AbCdEfGhIj0", in: app).exists
+                || app.textViews.matching(NSPredicate(format: "value CONTAINS 'AbCdEfGhIj0'")).firstMatch.exists,
+            "the shared link was not filled in")
+        let list = field("Exercises in this video", in: app)
+        if !list.isHittable { app.swipeUp() }
+        list.tap()
+        app.typeText("Squats 40s\nPush-ups 40s\nPlank 30s")
+        app.staticTexts["New video workout"].tap()
+        sleep(1)
+        capture(app, "71_video_list_typed")
+        let check = app.buttons["Check exercises"].firstMatch
+        if !check.isHittable { app.swipeUp() }
+        check.tap()
+        expect(label(containing: "matched", in: app), app, "72_video_checked", timeout: 20)
+    }
 }
+

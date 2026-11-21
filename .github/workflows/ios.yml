@@ -13,6 +13,10 @@ on:
         description: Upload this build to TestFlight
         type: boolean
         default: false
+      share_extension:
+        description: Include the share extension (needs the App Group set up in the developer portal)
+        type: boolean
+        default: true
 
 concurrency:
   group: ios-${{ github.ref }}
@@ -140,7 +144,15 @@ jobs:
 
       - name: Generate the Xcode project
         working-directory: iosApp
-        run: xcodegen generate
+        env:
+          SHARE_EXTENSION: ${{ inputs.share_extension }}
+        run: |
+          if [ "$SHARE_EXTENSION" = "false" ]; then
+            # P26.8: build without the share extension — drop every marked block from the spec.
+            sed -i '' '/# >>> share-extension/,/# <<< share-extension/d' project.yml
+            ! grep -q MyHealthShare project.yml
+          fi
+          xcodegen generate
 
       - name: Build, sign and upload
         working-directory: iosApp

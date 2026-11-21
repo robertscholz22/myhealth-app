@@ -12,6 +12,10 @@ struct MyHealthApp: App {
         // finishes (P22.4).
         MainViewControllerKt.onAppLaunched()
         #if DEBUG
+        // Simulator test (P26.8): what the share extension would have parked in the App Group.
+        if let shared = UserDefaults.standard.string(forKey: "sharedVideoText") {
+            MainViewControllerKt.onSharedText(text: shared, subject: nil)
+        }
         // Simulator tests (P22.1): fill the Health store with the fixed sample data set.
         if ProcessInfo.processInfo.arguments.contains("-seedHealthKit") {
             HealthKitSeeder.shared.seed(days: 45) { _ in }

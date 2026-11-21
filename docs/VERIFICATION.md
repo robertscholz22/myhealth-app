@@ -1187,3 +1187,19 @@ Emulator (emulator-5554; `am start -a SEND -t text/plain` with the extras the Yo
   title "Watch this great" (was "Watch this  great" before the fix). PASS (p267-b)
 - Not covered: sharing from the real YouTube app (not signed in on the emulator); checked on the
   Pixel at release.
+
+### P26.8 — iOS share extension + signing (code done, CI run pending)
+New target `MyHealthShare` (`iosApp/MyHealthShare/ShareViewController.swift`, app-extension,
+`com.apple.share-services`, one web URL or text): reads the shared link/text and the item title,
+writes them to the App Group `group.io.github.robertscholz22.myhealth` (`sharedText`,
+`sharedSubject`), shows "Saved to MyHealth. Open MyHealth to finish the video workout." and closes.
+App: `onAppBecameActive` → `consumeSharedVideo` reads and clears the slot → `onSharedText` →
+`VideoLink.fromShare` → `pendingVideoLink` → New video workout (same path as Android). Both targets
+carry the App Group entitlement. The extension blocks in `project.yml` are marked so the workflow
+input `share_extension=false` strips them. Fastfile: creates the App ID `….myhealth.share` and
+switches App Groups on for both IDs through the API, signs both targets, and stops before the
+build with the exact portal clicks when a profile lacks the App Group (the API cannot create an
+App Group or assign one). Debug launch hook `-sharedVideoText` + XCUITest
+`testVideoWorkoutFromShare` (share → New video workout filled → list → Check exercises).
+Linux: `:shared:compileIosMainKotlinMetadata` OK; YAML of workflow and project (also with the
+extension stripped) valid. Not yet run: Swift compile, simulator test, signed TestFlight build.

@@ -62,6 +62,7 @@ fun MainViewController(): UIViewController {
  */
 @Suppress("unused") // Called from Swift.
 fun onAppBecameActive() {
+    consumeSharedVideo()
     IosAppGraph.instance.syncScheduler.syncNow()
     com.myhealth.platform.IosBackground.startHealthObservers()
 }
@@ -87,4 +88,25 @@ fun onOpenDocument(url: String) {
     val nsUrl = platform.Foundation.NSURL.URLWithString(url) ?: return
     val copy = com.myhealth.platform.IosDocuments.copyIntoSandbox(nsUrl) ?: return
     IosAppGraph.instance.pendingImportUri.value = copy
+}
+
+/** P26.8: the App Group the share extension (`iosApp/MyHealthShare`) writes into. */
+private const val SHARE_GROUP = "group.io.github.robertscholz22.myhealth"
+
+/** Picks up and clears a link the share extension parked; the nav host opens "New video workout". */
+private fun consumeSharedVideo() {
+    val defaults = platform.Foundation.NSUserDefaults(suiteName = SHARE_GROUP)
+    val text = defaults.stringForKey("sharedText")
+    val subject = defaults.stringForKey("sharedSubject")
+    if (text == null && subject == null) return
+    defaults.removeObjectForKey("sharedText")
+    defaults.removeObjectForKey("sharedSubject")
+    onSharedText(text, subject)
+}
+
+/** A shared text with a video link (share extension, or the Debug-only simulator hook). */
+@Suppress("unused") // Also called from Swift.
+fun onSharedText(text: String?, subject: String?) {
+    val shared = com.myhealth.domain.engine.strength.video.VideoLink.fromShare(text, subject)
+    if (shared.url != null) IosAppGraph.instance.pendingVideoLink.value = shared
 }

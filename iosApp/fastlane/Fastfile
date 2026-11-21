@@ -4,6 +4,35 @@
 default_platform(:ios)
 
 BUNDLE_ID = "io.github.robertscholz22.myhealth"
+# P26.8: the share extension and the App Group both targets use. Building without the extension
+# (workflow input share_extension=false) strips it from project.yml before this lane runs.
+SHARE_ID = "io.github.robertscholz22.myhealth.share"
+APP_GROUP = "group.io.github.robertscholz22.myhealth"
+
+# The API creates App IDs and switches capabilities on, but cannot create an App Group or add an
+# App ID to one: that stays a one-time step in the developer portal, checked here per profile.
+def ensure_share_ids!
+  unless Spaceship::ConnectAPI::BundleId.find(SHARE_ID)
+    UI.message("Creating App ID #{SHARE_ID}")
+    Spaceship::ConnectAPI::BundleId.create(name: "MyHealth Share", platform: "IOS", identifier: SHARE_ID)
+  end
+  [BUNDLE_ID, SHARE_ID].each do |id|
+    bundle = Spaceship::ConnectAPI::BundleId.find(id)
+    next if bundle.get_capabilities.any? { |c| c.capability_type.to_s == "APP_GROUPS" }
+    UI.message("Enabling App Groups for #{id}")
+    bundle.create_capability(Spaceship::ConnectAPI::BundleIdCapability::Type::APP_GROUPS)
+  end
+end
+
+def check_app_group!(profile_path, id)
+  plist = `security cms -D -i "#{profile_path}"`
+  return if plist.include?(APP_GROUP)
+  UI.user_error!(
+    "The profile for #{id} has no App Group #{APP_GROUP}. One-time step in the developer portal: " \
+    "Identifiers > App Groups > + > #{APP_GROUP}; then Identifiers > #{id} > App Groups > Configure > " \
+    "tick it > Save (for both #{BUNDLE_ID} and #{SHARE_ID}). Or run the workflow with share_extension=false.",
+  )
+end
 
 platform :ios do
   lane :beta do
@@ -29,8 +58,26 @@ platform :ios do
     # that long, and codesign then waits for an unlock that never comes (run 43615701757).
     sh("security", "set-keychain-settings", "-t", "21600", keychain)
     cert(api_key: api_key, generate_apple_certs: true, keychain_path: keychain, keychain_password: "")
+    share = File.read("project.yml").include?("MyHealthShare:")
+    ensure_share_ids! if share
     sigh(api_key: api_key, app_identifier: BUNDLE_ID, force: true)
     profile = lane_context[SharedValues::SIGH_NAME]
+    profiles = { BUNDLE_ID => profile }
+    if share
+      check_app_group!(lane_context[SharedValues::SIGH_PROFILE_PATH], BUNDLE_ID)
+      sigh(api_key: api_key, app_identifier: SHARE_ID, force: true)
+      profiles[SHARE_ID] = lane_context[SharedValues::SIGH_NAME]
+      check_app_group!(lane_context[SharedValues::SIGH_PROFILE_PATH], SHARE_ID)
+      update_code_signing_settings(
+        path: "MyHealth.xcodeproj",
+        targets: ["MyHealthShare"],
+        use_automatic_signing: false,
+        team_id: ENV.fetch("APPLE_TEAM_ID"),
+        bundle_identifier: SHARE_ID,
+        profile_name: profiles[SHARE_ID],
+        code_sign_identity: "Apple Distribution",
+      )
+    end
 
     update_code_signing_settings(
       path: "MyHealth.xcodeproj",
@@ -46,7 +93,7 @@ platform :ios do
       scheme: "MyHealth",
       configuration: "Release",
       export_method: "app-store",
-      export_options: { provisioningProfiles: { BUNDLE_ID => profile } },
+      export_options: { provisioningProfiles: profiles },
       xcargs: "MARKETING_VERSION=#{ENV.fetch('VERSION_NAME')} CURRENT_PROJECT_VERSION=#{ENV.fetch('VERSION_CODE')}",
       output_directory: "build",
     )
