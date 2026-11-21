@@ -1234,3 +1234,6 @@ Emulator (emulator-5554), invented list via share → New video workout:
   "Check exercises" also in the top bar. Emulator: Done shown above the keyboard (p269-d), tap →
   keyboard hidden, top-bar action visible (p269-e); tap on empty space hides the keyboard; top-bar
   "Check exercises" → 2 matched. PASS. The UI test now uses Done + the top-bar action.
+- iOS simulator run 44952779515 (36dbdce): 5/5 UI tests. In `testVideoWorkoutFromShare` the list's
+  Done closes the keyboard (71: both "Check exercises" visible), the top-bar action opens the check
+  step with "3 matched · 0 to check · 0 not found" (72 tree; the image lags one frame). PASS
