@@ -58,7 +58,9 @@ platform :ios do
     # that long, and codesign then waits for an unlock that never comes (run 43615701757).
     sh("security", "set-keychain-settings", "-t", "21600", keychain)
     cert(api_key: api_key, generate_apple_certs: true, keychain_path: keychain, keychain_password: "")
-    share = File.read("project.yml").include?("MyHealthShare:")
+    # Ruby in a lane runs inside fastlane/, actions run in iosApp/ — look in both (run 44944626378).
+    spec = ["../project.yml", "project.yml"].find { |p| File.exist?(p) } or UI.user_error!("project.yml not found")
+    share = File.read(spec).include?("MyHealthShare:")
     ensure_share_ids! if share
     sigh(api_key: api_key, app_identifier: BUNDLE_ID, force: true)
     profile = lane_context[SharedValues::SIGH_NAME]
