@@ -67,6 +67,8 @@ fun WorkoutEditScreen(
     /** The id the exercise editor handed back; added as a new row once, then [onCreatedConsumed]. */
     createdExerciseId: String? = null,
     onCreatedConsumed: () -> Unit = {},
+    /** P26.4: "Check exercises again" on a video workout. */
+    onRecheckVideo: (Long) -> Unit = {},
 ) {
     val vm = rememberVm { graph ->
         WorkoutEditViewModel(id, graph.strengthRepo, graph.profileRepo, graph.currentBodyWeightKg, graph.clock)
@@ -106,6 +108,7 @@ fun WorkoutEditScreen(
             onMoveDown = vm::moveDown,
             onUpdateRow = vm::updateRow,
             onSave = vm::save,
+            onRecheckVideo = { onRecheckVideo(state.draft.id) },
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         )
     }
@@ -136,6 +139,7 @@ internal fun WorkoutEditContent(
     onUpdateRow: (Int, (WorkoutExerciseDraft) -> WorkoutExerciseDraft) -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    onRecheckVideo: () -> Unit = {},
 ) {
     val draft = state.draft
     LazyColumn(
@@ -165,6 +169,9 @@ internal fun WorkoutEditContent(
                     onSelect = { kind -> onChange { it.copy(kind = kind) } },
                 )
             }
+        }
+        if (draft.isVideo) {
+            item { VideoSection(draft = draft, onChange = onChange, onRecheck = onRecheckVideo) }
         }
         item {
             SectionCard(title = stringResource(Res.string.workout_edit_section_figure)) {
@@ -347,5 +354,53 @@ private fun WorkoutEditContentPreview() {
             onUpdateRow = { _, _ -> },
             onSave = {},
         )
+    }
+}
+
+/** P26.4: a video workout's link, title and length, with Watch and "Check exercises again". */
+@Composable
+private fun VideoSection(
+    draft: WorkoutEditDraft,
+    onChange: ((WorkoutEditDraft) -> WorkoutEditDraft) -> Unit,
+    onRecheck: () -> Unit,
+) {
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+    val url = draft.videoUrl.orEmpty()
+    SectionCard(title = stringResource(Res.string.workout_edit_section_video)) {
+        OutlinedTextField(
+            value = url,
+            onValueChange = { v -> onChange { it.copy(videoUrl = v) } },
+            label = { Text(stringResource(Res.string.video_import_link_label)) },
+            singleLine = true,
+            isError = !com.myhealth.domain.engine.strength.video.VideoLink.isWebLink(url.trim()),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = draft.videoTitle,
+            onValueChange = { v -> onChange { it.copy(videoTitle = v) } },
+            label = { Text(stringResource(Res.string.video_import_video_title_label)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = draft.durationMin?.toString().orEmpty(),
+            onValueChange = { t -> onChange { it.copy(durationMin = t.filter(Char::isDigit).take(3).toIntOrNull()) } },
+            label = { Text(stringResource(Res.string.video_import_duration_label)) },
+            suffix = { Text(stringResource(Res.string.video_import_minutes_suffix)) },
+            singleLine = true,
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = { runCatching { uriHandler.openUri(url.trim()) } },
+                enabled = com.myhealth.domain.engine.strength.video.VideoLink.isWebLink(url.trim()),
+            ) { Text(stringResource(Res.string.video_watch)) }
+            OutlinedButton(onClick = onRecheck, enabled = draft.id != 0L) {
+                Text(stringResource(Res.string.workout_edit_recheck_video))
+            }
+        }
     }
 }

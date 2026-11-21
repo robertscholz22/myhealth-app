@@ -1083,3 +1083,37 @@ lists (`ExerciseListParserTest`, `ExerciseMatcherTest`, `ExerciseSynonymsTest`,
 `VideoListEndToEndTest`); every catalog name matches itself as MATCHED. `tools/verify.sh` 1237 unit
 tests, 0 failures; iOS metadata compile OK. Known gaps until P26.9: bodyweight squat
 ("Kniebeugen"), mountain climbers, burpees, jumping jacks are not in the catalog.
+
+### P26.4 — video workouts: link, title, import screen, editor section, list row
+`VideoLink` (first URL in shared text; YouTube forms youtu.be / watch / shorts / embed / live / m.
+→ one `watch?v=` link keeping `t=`; other sites unchanged), `OEmbedTitleSource` (YouTube oEmbed
+title only, nothing else sent; errors → no title), `VideoWorkoutBuilder` (rows: exactly one of
+reps / seconds, defaults 30 s or 10 reps, "each side" note, source line kept; kind derived from
+set-weighted muscle shares; rebuild keeps id, created time and "Use in suggestions"), the import
+screen (step 1 Video, step 2 Check exercises) with `VideoImport` pure helpers, Workouts add menu,
+Video chip in the list, Video section in the workout editor. Fixed on the way: the workout editor
+reset "Use in suggestions" to on when saving. 24 new tests (`VideoLinkTest`,
+`VideoWorkoutBuilderTest`, `OEmbedTitleSourceTest`, `VideoImportTest`). `tools/verify.sh` 1261 unit
+tests, 0 failures; iOS metadata compile OK.
+
+Emulator (emulator-5554, fresh install, invented link `youtu.be/AbCdEfGhIj0`, invented list):
+- Workouts → + → menu "New workout" / "New video workout". PASS
+- Check exercises with empty fields → link, name and list errors. PASS
+- List "Warm-up 2 min / Squats 40s / Push-ups 40s / Glute bridge pulses 40s / Mountain climbers 30s /
+  Side plank 30s each side / Rest 20s / Repeat 3x", 20 min → Check: "2 matched · 2 to check · 1 not
+  found", every row 3 × 40 s (rounds → sets), figure shows the muscles, Kind "Automatic (Full)".
+  Title stays empty (example video does not exist), as designed. PASS (p264-c)
+- Squats → sheet (suggestions, Search, Create, Not an exercise, sets/seconds) → Search "goblet" →
+  Goblet squat → row Matched. PASS
+- Mountain climbers → "Create “Mountain climbers” as new exercise" → editor with name prefilled →
+  Abs + Shoulders front → Save → back on the check step, "4 matched · 1 to check · 0 not found". PASS (p264-f)
+- Save → list row "Full · ▶ Video", "5 exercises · about 20 min". PASS (p264-g)
+- Open it → Video section: normalised link, duration 20, Watch video, Check exercises again. PASS (p264-h)
+- Check exercises again → earlier hand choices kept by source line. Found: Kind showed a fixed
+  "Full"; fixed so a saved kind equal to the derived one reads "Automatic (…)" again. PASS after fix.
+- New video workout (Vimeo link) with "Mountain climbers 30s / Squats 40s" → both Matched from the
+  names learned on the first save. PASS
+- Added "Frog hops 20s" → Save → "Some lines are not matched" dialog (text reworded from "1 lines…")
+  → Save anyway → workout with 2 exercises, the line left out. PASS
+- Not covered here: the oEmbed title with a real video (no real links in the repo; checked by unit
+  test of the parser, live check on the Pixel at release).

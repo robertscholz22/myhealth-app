@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Checkbox
@@ -76,7 +77,10 @@ fun WorkoutsScreen(
     onNewWorkout: () -> Unit,
     onEditWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    /** P26.4: "New video workout" in the add menu. */
+    onNewVideoWorkout: () -> Unit = {},
 ) {
+    var addMenu by remember { mutableStateOf(false) }
     val vm = rememberVm { graph ->
         WorkoutsViewModel(graph.strengthRepo, graph.planRepo, graph.strengthWorkoutSeeder::seed, graph.clock)
     }
@@ -104,8 +108,21 @@ fun WorkoutsScreen(
         },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onNewWorkout) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.workouts_new_content_description))
+            Box {
+                FloatingActionButton(onClick = { addMenu = true }) {
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(Res.string.workouts_new_content_description))
+                }
+                DropdownMenu(expanded = addMenu, onDismissRequest = { addMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.workouts_new_workout)) },
+                        onClick = { addMenu = false; onNewWorkout() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.workouts_new_video_workout)) },
+                        leadingIcon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
+                        onClick = { addMenu = false; onNewVideoWorkout() },
+                    )
+                }
             }
         },
     ) { innerPadding ->
@@ -191,7 +208,17 @@ private fun WorkoutRow(
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BodyFigure(highlight = highlightFor(workout), modifier = Modifier.size(width = 60.dp, height = 66.dp))
             Column {
-                AssistChip(onClick = {}, enabled = false, label = { Text(workout.kind.label()) })
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AssistChip(onClick = {}, enabled = false, label = { Text(workout.kind.label()) })
+                    if (workout.isVideo) {
+                        AssistChip(
+                            onClick = {},
+                            enabled = false,
+                            leadingIcon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
+                            label = { Text(stringResource(Res.string.workouts_video_chip)) },
+                        )
+                    }
+                }
                 Text(
                     text = stringResource(
                         Res.string.workouts_row_subtitle_format,

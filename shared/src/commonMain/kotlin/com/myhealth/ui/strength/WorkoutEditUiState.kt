@@ -27,6 +27,8 @@ data class WorkoutExerciseDraft(
     val isBodyweight: Boolean = false,
     val restSec: Int? = null,
     val note: String = "",
+    /** P26: the pasted line this row came from (video import); kept so a re-import keeps it. */
+    val sourceLine: String? = null,
 ) {
     private companion object {
         const val DEFAULT_SETS = 3
@@ -70,7 +72,16 @@ data class WorkoutEditDraft(
     val notes: String = "",
     val exercises: List<WorkoutExerciseDraft> = emptyList(),
     val createdAtMillis: Long = 0L,
+    /** Kept as loaded; the Workouts list switch changes it, the editor does not. */
+    val useInSuggestions: Boolean = true,
+    /** P26 video workout fields; [videoUrl] `null` for an ordinary workout. */
+    val videoUrl: String? = null,
+    val videoTitle: String = "",
+    val durationMin: Int? = null,
+    val sourceText: String? = null,
 ) {
+    val isVideo: Boolean get() = videoUrl != null
+
     /**
      * §3.12.3's estimate, computed from the draft directly (not by round-tripping through
      * [StrengthWorkout]) so the editor's live minutes stay in step with every keystroke:
@@ -79,6 +90,7 @@ data class WorkoutEditDraft(
      */
     val estimatedMinutes: Int
         get() {
+            durationMin?.takeIf { isVideo && it > 0 }?.let { return it }
             val workingSec = exercises.sumOf { row ->
                 val workSec = row.seconds ?: ((row.reps ?: 0) * StrengthWorkout.SEC_PER_REP)
                 row.sets.toLong() * (workSec + (row.restSec ?: StrengthWorkout.DEFAULT_REST_SEC)).toLong()
@@ -170,10 +182,16 @@ fun WorkoutEditDraft.toStrengthWorkout(clock: PlatformClock): StrengthWorkout {
                 isBodyweight = row.isBodyweight,
                 restSec = row.restSec,
                 note = row.note.trim().takeIf { it.isNotEmpty() },
+                sourceLine = row.sourceLine,
             )
         },
         createdAtMillis = if (id == 0L) now else createdAtMillis,
         updatedAtMillis = now,
+        useInSuggestions = useInSuggestions,
+        videoUrl = videoUrl?.trim()?.takeIf { it.isNotEmpty() },
+        videoTitle = videoTitle.trim().takeIf { it.isNotEmpty() && isVideo },
+        durationMin = durationMin?.takeIf { it > 0 && isVideo },
+        sourceText = sourceText.takeIf { isVideo },
     )
 }
 
@@ -207,7 +225,13 @@ fun workoutEditDraftOf(workout: StrengthWorkout): WorkoutEditDraft = WorkoutEdit
             isBodyweight = row.isBodyweight,
             restSec = row.restSec,
             note = row.note.orEmpty(),
+            sourceLine = row.sourceLine,
         )
     },
     createdAtMillis = workout.createdAtMillis,
+    useInSuggestions = workout.useInSuggestions,
+    videoUrl = workout.videoUrl,
+    videoTitle = workout.videoTitle.orEmpty(),
+    durationMin = workout.durationMin,
+    sourceText = workout.sourceText,
 )

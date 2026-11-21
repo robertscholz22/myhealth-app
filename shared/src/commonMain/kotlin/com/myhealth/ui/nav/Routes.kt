@@ -56,3 +56,10 @@ import kotlinx.serialization.Serializable
 )
 
 const val CREATED_EXERCISE_KEY: String = "createdExerciseId"
+
+/** P26.4: new video workout (optionally from a share), or `workoutId` to check its exercises again. */
+@Serializable data class VideoImportRoute(
+    val workoutId: Long = -1,
+    val url: String = "",
+    val title: String = "",
+)

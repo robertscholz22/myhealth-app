@@ -245,6 +245,13 @@ abstract class CoreGraph : UiGraph {
         )
     }
 
+    override val videoTitleSource: com.myhealth.domain.repository.VideoTitleSource by lazy {
+        com.myhealth.data.video.OEmbedTitleSource()
+    }
+
+    override val pendingVideoLink =
+        kotlinx.coroutines.flow.MutableStateFlow<com.myhealth.domain.engine.strength.video.VideoLink.Shared?>(null)
+
     /** P26: `user_exercise` + `exercise_alias`; keeps `ExerciseRegistry` current. */
     override val userExerciseRepo: com.myhealth.domain.repository.UserExerciseRepository by lazy {
         com.myhealth.data.repository.RoomUserExerciseRepository(db.userExerciseDao(), clock)

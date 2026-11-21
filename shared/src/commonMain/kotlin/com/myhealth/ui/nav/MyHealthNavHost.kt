@@ -57,6 +57,7 @@ import com.myhealth.ui.settings.IntegrationsScreen
 import com.myhealth.ui.settings.SettingsScreen
 import com.myhealth.ui.strength.ExerciseDetailScreen
 import com.myhealth.ui.strength.ExerciseEditScreen
+import com.myhealth.ui.strength.VideoImportScreen
 import com.myhealth.ui.strength.ExercisesScreen
 import com.myhealth.ui.strength.WorkoutEditScreen
 import com.myhealth.ui.strength.WorkoutsScreen
@@ -319,6 +320,7 @@ fun MyHealthNavHost(
                             onBack = { navController.popBackStack() },
                             onNewWorkout = { navController.navigate(WorkoutEditRoute()) },
                             onEditWorkout = { id -> navController.navigate(WorkoutEditRoute(id = id)) },
+                            onNewVideoWorkout = { navController.navigate(VideoImportRoute()) },
                         )
                     }
                     composable<WorkoutEditRoute> { entry ->
@@ -328,6 +330,28 @@ fun MyHealthNavHost(
                         WorkoutEditScreen(
                             id = route.id,
                             onBack = { navController.popBackStack() },
+                            onCreateExercise = { name ->
+                                navController.navigate(ExerciseEditRoute(prefillName = name, returnResult = true))
+                            },
+                            createdExerciseId = created,
+                            onCreatedConsumed = { entry.savedStateHandle[CREATED_EXERCISE_KEY] = null },
+                            onRecheckVideo = { id ->
+                                navController.navigate(VideoImportRoute(workoutId = id)) {
+                                    popUpTo<WorkoutEditRoute> { inclusive = true }
+                                }
+                            },
+                        )
+                    }
+                    composable<VideoImportRoute> { entry ->
+                        val route = entry.toRoute<VideoImportRoute>()
+                        val created by entry.savedStateHandle.getStateFlow<String?>(CREATED_EXERCISE_KEY, null)
+                            .collectAsStateWithLifecycle()
+                        VideoImportScreen(
+                            workoutId = route.workoutId.takeIf { it > 0 },
+                            sharedUrl = route.url.ifEmpty { null },
+                            sharedTitle = route.title.ifEmpty { null },
+                            onBack = { navController.popBackStack() },
+                            onSaved = { navController.popBackStack() },
                             onCreateExercise = { name ->
                                 navController.navigate(ExerciseEditRoute(prefillName = name, returnResult = true))
                             },
