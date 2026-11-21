@@ -39,6 +39,7 @@ object ExerciseSubstitution {
         if (available == null || exercise.equipment in available) return exercise
         val candidates = ExerciseCatalog.ALL.filter {
             it.id != exercise.id &&
+                it.id !in ExerciseCatalog.HOME_IDS &&
                 it.pattern == exercise.pattern &&
                 it.isTimed == exercise.isTimed &&
                 it.isMobility == exercise.isMobility &&

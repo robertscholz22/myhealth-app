@@ -78,18 +78,18 @@ class ExerciseMatcherTest {
 
     @Test
     fun a_vague_name_is_a_check_with_up_to_three_candidates() {
-        val r = matcher.match("Squat")
+        val r = matcher.match("Row")
         assertEquals(MatchStatus.CHECK, r.status)
         assertTrue(r.candidates.size in 2..3)
-        assertTrue(r.candidates.all { it.exercise.name.contains("squat", ignoreCase = true) })
+        assertTrue(r.candidates.all { it.exercise.name.contains("row", ignoreCase = true) })
     }
 
     @Test
     fun unknown_moves_are_not_found() {
-        val r = matcher.match("Jumping jacks")
+        val r = matcher.match("Bear crawl")
         assertEquals(MatchStatus.NOT_FOUND, r.status)
         assertNull(r.best)
-        assertEquals(MatchStatus.NOT_FOUND, matcher.match("Burpees").status)
+        assertEquals(MatchStatus.NOT_FOUND, matcher.match("Inchworms").status)
         assertEquals(MatchStatus.NOT_FOUND, matcher.match("").status)
     }
 
@@ -118,19 +118,19 @@ class ExerciseMatcherTest {
 
     @Test
     fun own_exercises_take_part() {
-        val own = userExercise("USER_FIREHYDRANT1", "Fire hydrant")
+        val own = userExercise("USER_BEARCRAWL01", "Bear crawl")
         val m = ExerciseMatcher(ExerciseLibrary(listOf(own)))
-        assertEquals("USER_FIREHYDRANT1", m.match("Fire hydrants").best?.id)
-        assertEquals(MatchStatus.MATCHED, m.match("fire-hydrant").status)
+        assertEquals("USER_BEARCRAWL01", m.match("Bear crawls").best?.id)
+        assertEquals(MatchStatus.MATCHED, m.match("bear-crawl").status)
     }
 
     @Test
     fun archived_own_exercises_are_not_offered_but_resolve_through_aliases() {
-        val own = userExercise("USER_ARCHIVED2345", "Fire hydrant", archived = true)
+        val own = userExercise("USER_ARCHIVED2345", "Bear crawl", archived = true)
         val library = ExerciseLibrary(listOf(own))
-        assertEquals(MatchStatus.NOT_FOUND, ExerciseMatcher(library).match("Fire hydrant").status)
-        val withAlias = ExerciseMatcher(library, mapOf(ExerciseMatcher.key("Fire hydrant") to own.exercise.id))
-        assertEquals(own.exercise.id, withAlias.match("Fire hydrant").best?.id)
+        assertEquals(MatchStatus.NOT_FOUND, ExerciseMatcher(library).match("Bear crawl").status)
+        val withAlias = ExerciseMatcher(library, mapOf(ExerciseMatcher.key("Bear crawl") to own.exercise.id))
+        assertEquals(own.exercise.id, withAlias.match("Bear crawl").best?.id)
     }
 
     @Test

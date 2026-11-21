@@ -13,7 +13,7 @@ import org.junit.Test
 class VideoImportTest {
 
     private val library = ExerciseLibrary.CATALOG_ONLY
-    private val text = "Push-ups 40s\nGlute bridge pulses 40s\nMountain climbers 30s\nRest 20s"
+    private val text = "Push-ups 40s\nGlute bridge pulses 40s\nBear crawl 30s\nRest 20s"
 
     @Test
     fun rows_carry_status_from_the_matcher() {
@@ -60,16 +60,16 @@ class VideoImportTest {
 
     @Test
     fun recheck_keeps_saved_choices_by_source_line() {
-        val previous = mapOf("Mountain climbers 30s" to "PLANK")
+        val previous = mapOf("Bear crawl 30s" to "PLANK")
         val (_, rows) = VideoImport.rows(text, emptySet(), library, emptyMap(), previousBySourceLine = previous)
-        val row = rows.first { it.sourceLine == "Mountain climbers 30s" }
+        val row = rows.first { it.sourceLine == "Bear crawl 30s" }
         assertEquals("PLANK", row.chosenId)
         assertTrue(row.chosenByHand)
     }
 
     @Test
     fun learned_aliases_match_next_time() {
-        val aliases = mapOf(ExerciseMatcher.key("Mountain climbers") to "PLANK")
+        val aliases = mapOf(ExerciseMatcher.key("Bear crawl") to "PLANK")
         val (_, rows) = VideoImport.rows(text, emptySet(), library, aliases)
         assertEquals(ImportRowStatus.MATCHED, rows[2].status)
     }

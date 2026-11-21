@@ -10,9 +10,9 @@ class ExerciseAnimationsTest {
 
     @Test
     fun an01_every_shipped_exercise_has_a_clip() {
-        // The catalog is 54 lifts + 33 P17 mobility drills; the table must cover all of them.
-        assertThat(ExerciseCatalog.ALL).hasSize(87)
-        assertThat(ExerciseCatalog.strength).hasSize(54)
+        // The catalog is 54 lifts + 33 P17 mobility drills + 23 P26.9 home moves; the table must cover all.
+        assertThat(ExerciseCatalog.ALL).hasSize(110)
+        assertThat(ExerciseCatalog.strength).hasSize(77)
         assertThat(ExerciseCatalog.mobility).hasSize(33)
 
         ExerciseCatalog.ALL.forEach { exercise ->

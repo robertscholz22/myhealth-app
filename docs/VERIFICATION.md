@@ -1203,3 +1203,21 @@ App Group or assign one). Debug launch hook `-sharedVideoText` + XCUITest
 `testVideoWorkoutFromShare` (share → New video workout filled → list → Check exercises).
 Linux: `:shared:compileIosMainKotlinMetadata` OK; YAML of workflow and project (also with the
 extension stripped) valid. Not yet run: Swift compile, simulator test, signed TestFlight build.
+
+### P26.9 — home-workout moves in the catalog
+23 bodyweight moves appended after the mobility half (`ExerciseCatalogHome.kt`): bodyweight /
+sumo squat, squat jump, side and curtsy lunge, single-leg glute bridge, donkey kick, fire hydrant,
+clamshell, knee / diamond / pike push-up, mountain climbers, plank shoulder taps, crunch, bicycle
+crunch, lying leg raise, flutter kicks, superman, burpee, jumping jacks, high knees, skater jumps.
+English and German synonyms (e.g. Kniebeugen, Hampelmann, Bergsteiger). Each plays the nearest
+existing clip; bespoke clips stay a later animation task. They are excluded from equipment
+substitution (`ExerciseCatalog.HOME_IDS`), so "my equipment" materialises built-ins exactly as
+before; every earlier list position is unchanged. Tests: `HomeExercisesTest` (4); matcher /
+end-to-end / import tests that used these moves as "not found" examples now use "Bear crawl" /
+"Inchworms". verify: 1288 unit tests, OK; iOS metadata compile OK.
+
+Emulator (emulator-5554), invented list via share → New video workout:
+- "Jumping jacks 40s, Burpees 30s, Mountain climbers 40s, Kniebeugen 45 Sek, Fire hydrants 30s
+  each side, Bicycle crunches 40s, Bear crawl 30s" → 6 matched · 0 to check · 1 not found (Bear
+  crawl), body figure shows chest/abs/quads/glutes. PASS (p269-a, p269-b)
+- Exercises → search "burpee" → detail plays the jump clip, chest + quads primary. PASS (p269-c)

@@ -30,8 +30,13 @@ class VideoListEndToEndTest {
         assertEquals(true, entries[4].perSide)
         val statuses = entries.map { matcher.match(it.name).status }
         assertEquals(
-            listOf(MatchStatus.CHECK, MatchStatus.MATCHED, MatchStatus.MATCHED, MatchStatus.MATCHED, MatchStatus.MATCHED, MatchStatus.NOT_FOUND),
+            List(6) { MatchStatus.MATCHED },
             statuses,
+        )
+        // P26.9: the home-workout moves made the bodyweight squat and mountain climbers matchable.
+        assertEquals(
+            listOf("AIR_SQUAT", "PUSH_UP", "GLUTE_BRIDGE", "PLANK", "SIDE_PLANK", "MOUNTAIN_CLIMBER"),
+            entries.map { matcher.match(it.name).best?.id },
         )
         assertEquals(4, lines.count { it.kind == LineKind.SKIP })
     }
@@ -52,6 +57,6 @@ class VideoListEndToEndTest {
         assertEquals(listOf("Kniebeugen", "Liegestütze", "Beckenheben", "Unterarmstütz"), entries.map { it.name })
         assertEquals(listOf(3, 3, 3, 3), entries.map { it.sets })
         assertEquals(listOf(45, 45, 45, 45), entries.map { it.seconds })
-        assertEquals(listOf(null, "PUSH_UP", "GLUTE_BRIDGE", "PLANK"), entries.map { matcher.match(it.name).best?.id })
+        assertEquals(listOf("AIR_SQUAT", "PUSH_UP", "GLUTE_BRIDGE", "PLANK"), entries.map { matcher.match(it.name).best?.id })
     }
 }

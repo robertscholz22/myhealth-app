@@ -26,7 +26,10 @@ object ExerciseCatalog {
      * and `ExerciseSubstitution`'s "first candidate wins" stays the choice it was before P17.
      */
     val ALL: List<Exercise> =
-        UPPER_BODY_EXERCISES + LOWER_BODY_EXERCISES + CORE_EXERCISES + MOBILITY_EXERCISES
+        UPPER_BODY_EXERCISES + LOWER_BODY_EXERCISES + CORE_EXERCISES + MOBILITY_EXERCISES + HOME_EXERCISES
+
+    /** P26.9: the home-workout moves, appended last and never offered as a substitute. */
+    val HOME_IDS: Set<String> = HOME_EXERCISES.map { it.id }.toSet()
 
     /** The lifts — everything that is not a P17 mobility drill. */
     val strength: List<Exercise> = ALL.filter { !it.isMobility }

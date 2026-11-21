@@ -7,7 +7,7 @@ import com.myhealth.domain.model.MovementPattern
 /**
  * Which [AnimationClip] each shipped exercise plays (P18.1).
  *
- * The table is **explicit and exhaustive**: every one of the 87 catalog ids (54 strength +
+ * The table is **explicit and exhaustive**: every one of the 110 catalog ids (54 strength + 23 P26.9 home moves +
  * 33 mobility) names a clip, and `an01` fails the build if the catalog grows an entry that is not
  * listed here. That is deliberate — a silent pattern-based fallback would quietly give a new
  * exercise the wrong animation, and the point of P18 is that a shipped exercise always shows the
@@ -115,6 +115,30 @@ object ExerciseAnimations {
         "RUSSIAN_TWIST" to A.TWIST,
         "PALLOF_PRESS" to A.PALLOF,
         "BACK_EXTENSION" to A.BACK_EXTENSION,
+        // ---- P26.9 home-workout moves (23): the nearest existing clip --------------------------
+        "AIR_SQUAT" to A.SQUAT,
+        "SUMO_SQUAT" to A.SQUAT,
+        "SQUAT_JUMP" to A.JUMP,
+        "SIDE_LUNGE" to A.LUNGE,
+        "CURTSY_LUNGE" to A.LUNGE,
+        "SINGLE_LEG_GLUTE_BRIDGE" to A.HIP_THRUST,
+        "DONKEY_KICK" to A.BIRD_DOG,
+        "FIRE_HYDRANT" to A.BIRD_DOG,
+        "CLAMSHELL" to A.SIDE_PLANK,
+        "KNEE_PUSH_UP" to A.PUSH_UP,
+        "DIAMOND_PUSH_UP" to A.PUSH_UP,
+        "PIKE_PUSH_UP" to A.PUSH_UP,
+        "MOUNTAIN_CLIMBER" to A.PLANK,
+        "PLANK_SHOULDER_TAP" to A.PLANK,
+        "CRUNCH" to A.HOLLOW,
+        "BICYCLE_CRUNCH" to A.DEAD_BUG,
+        "LYING_LEG_RAISE" to A.LEG_RAISE,
+        "FLUTTER_KICK" to A.HOLLOW,
+        "SUPERMAN" to A.BACK_EXTENSION,
+        "BURPEE" to A.JUMP,
+        "JUMPING_JACK" to A.JUMP,
+        "HIGH_KNEES" to A.JUMP,
+        "SKATER_JUMP" to A.LUNGE,
     ) + MOBILITY_CLIP_IDS
 
     init {
