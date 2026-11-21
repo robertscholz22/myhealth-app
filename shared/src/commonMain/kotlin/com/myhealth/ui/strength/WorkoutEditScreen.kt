@@ -58,7 +58,16 @@ import com.myhealth.ui.theme.MyHealthTheme
  * P14.7). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WorkoutEditScreen(id: Long, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun WorkoutEditScreen(
+    id: Long,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    /** P26.2: opens the exercise editor with the picker's search text as the name. */
+    onCreateExercise: ((String) -> Unit)? = null,
+    /** The id the exercise editor handed back; added as a new row once, then [onCreatedConsumed]. */
+    createdExerciseId: String? = null,
+    onCreatedConsumed: () -> Unit = {},
+) {
     val vm = rememberVm { graph ->
         WorkoutEditViewModel(id, graph.strengthRepo, graph.profileRepo, graph.currentBodyWeightKg, graph.clock)
     }
@@ -66,6 +75,12 @@ fun WorkoutEditScreen(id: Long, onBack: () -> Unit, modifier: Modifier = Modifie
     var showPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.saved) { if (state.saved) onBack() }
+    LaunchedEffect(createdExerciseId, state.isLoading) {
+        if (createdExerciseId != null && !state.isLoading) {
+            vm.addExercise(createdExerciseId)
+            onCreatedConsumed()
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -105,6 +120,7 @@ fun WorkoutEditScreen(id: Long, onBack: () -> Unit, modifier: Modifier = Modifie
             },
             onPick = { exercise -> vm.addExercise(exercise.id); showPicker = false },
             onDismiss = { showPicker = false },
+            onCreate = onCreateExercise?.let { create -> { name -> showPicker = false; create(name) } },
         )
     }
 }

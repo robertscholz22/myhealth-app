@@ -1154,6 +1154,35 @@
     <string name="exercise_detail_section_progression">Progression</string>
     <string name="exercise_detail_last_feedback_format">Last: %1$s on %2$s</string>
     <string name="exercise_detail_no_sessions">No sessions logged yet.</string>
+    <!-- P26.2 own exercises -->
+    <string name="exercise_edit_title_new">New exercise</string>
+    <string name="exercise_edit_title_edit">Edit exercise</string>
+    <string name="exercise_edit_name_label">Name</string>
+    <string name="exercise_edit_error_name">Give the exercise a name.</string>
+    <string name="exercise_edit_error_primary">Pick at least one primary muscle.</string>
+    <string name="exercise_edit_duplicate_format">“%1$s” is already in the library.</string>
+    <string name="exercise_edit_use_existing_format">Use %1$s instead</string>
+    <string name="exercise_edit_section_muscles">Muscles</string>
+    <string name="exercise_edit_muscles_hint">Tap the figure: once for primary, twice for secondary, a third time to clear.</string>
+    <string name="exercise_edit_primary_label">Primary</string>
+    <string name="exercise_edit_secondary_label">Secondary</string>
+    <string name="exercise_edit_timed_label">Timed (seconds instead of reps)</string>
+    <string name="exercise_edit_notes_label">Notes / cue</string>
+    <string name="exercise_edit_pattern_none">Not specified</string>
+    <string name="exercise_edit_section_manage">Manage</string>
+    <string name="exercise_edit_load_note">Changing the muscles also changes the muscle load of past sessions with this exercise.</string>
+    <string name="exercise_edit_used_format">In use (%1$d× in workouts), so it can only be archived: it stays in those workouts and is hidden from lists.</string>
+    <string name="exercise_edit_archive">Archive</string>
+    <string name="exercise_edit_unarchive">Restore</string>
+    <string name="exercise_edit_delete">Delete exercise</string>
+    <string name="exercise_edit_delete_title">Delete this exercise?</string>
+    <string name="exercise_edit_delete_message">It is not used in any workout. This cannot be undone.</string>
+    <string name="exercises_kind_mine">Mine</string>
+    <string name="exercises_new_exercise">New exercise</string>
+    <string name="exercises_create_format">Create “%1$s”</string>
+    <string name="exercise_detail_edit">Edit</string>
+    <string name="exercise_detail_own_badge">Own exercise</string>
+    <string name="exercise_detail_archived_badge">Archived</string>
 
     <!-- ===== Strength workouts (ui/strength/WorkoutsScreen.kt, More entry, P14.7) ===== -->
     <string name="more_entry_workouts">Strength workouts</string>

@@ -46,3 +46,13 @@ import kotlinx.serialization.Serializable
 @Serializable data class WorkoutEditRoute(val id: Long = -1)
 @Serializable data object ExercisesRoute
 @Serializable data class ExerciseDetailRoute(val exerciseId: String)
+
+/** P26.2: own exercise editor; `id = ""` is a new one. With [returnResult] the saved id goes back
+ * to the previous entry under [CREATED_EXERCISE_KEY] instead of opening its detail screen. */
+@Serializable data class ExerciseEditRoute(
+    val id: String = "",
+    val prefillName: String = "",
+    val returnResult: Boolean = false,
+)
+
+const val CREATED_EXERCISE_KEY: String = "createdExerciseId"

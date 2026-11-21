@@ -38,6 +38,7 @@ import com.myhealth.data.time.PlatformClock
 class ExercisesViewModel(
     private val strengthRepo: StrengthRepository,
     private val profileRepo: ProfileRepository,
+    private val userExerciseRepo: com.myhealth.domain.repository.UserExerciseRepository,
     private val seed: suspend () -> Int,
     private val bodyWeightKg: suspend () -> Double,
     private val clock: PlatformClock,
@@ -50,8 +51,13 @@ class ExercisesViewModel(
         filters,
         strengthRepo.observeAll(),
         profileRepo.observeProfile(),
-    ) { filter, workouts, profile ->
-        filter.copy(workouts = workouts, myEquipment = EquipmentSetCodec.decode(profile?.availableEquipmentJson))
+        userExerciseRepo.observeLibrary(),
+    ) { filter, workouts, profile, library ->
+        filter.copy(
+            workouts = workouts,
+            myEquipment = EquipmentSetCodec.decode(profile?.availableEquipmentJson),
+            library = library,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), ExercisesUiState())
 
     /** [ExerciseDetailScreen]'s Progression card (P16.2) — loaded on demand by [loadProgressionCard]
@@ -66,6 +72,8 @@ class ExercisesViewModel(
 
     /** The P17 kind chip row (All/Strength/Mobility). */
     fun setKind(kind: com.myhealth.domain.engine.strength.ExerciseKind?) = filters.update { it.copy(kind = kind) }
+
+    fun setMineOnly(mineOnly: Boolean) = filters.update { it.copy(mineOnly = mineOnly) }
 
     fun setEquipment(equipment: Equipment?) = filters.update { it.copy(equipment = equipment) }
 

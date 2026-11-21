@@ -14,6 +14,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -49,11 +52,17 @@ import com.myhealth.ui.theme.MyHealthTheme
  * body figure (PLAN §4.2 "Exercises", P14.7, P17.2, More entry). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExercisesScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, modifier: Modifier = Modifier) {
+fun ExercisesScreen(
+    onBack: () -> Unit,
+    onOpenExercise: (String) -> Unit,
+    onNewExercise: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val vm = rememberVm { graph ->
         ExercisesViewModel(
             graph.strengthRepo,
             graph.profileRepo,
+            graph.userExerciseRepo,
             graph.strengthWorkoutSeeder::seed,
             graph.currentBodyWeightKg,
             graph.clock,
@@ -73,11 +82,20 @@ fun ExercisesScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, modifi
                 },
             )
         },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { onNewExercise(state.query.trim()) },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text(stringResource(Res.string.exercises_new_exercise)) },
+                modifier = Modifier.testTag("exercises_new"),
+            )
+        },
     ) { innerPadding ->
         ExercisesContent(
             state = state,
             onQueryChange = vm::setQuery,
             onKindSelect = vm::setKind,
+            onMineSelect = vm::setMineOnly,
             onEquipmentSelect = vm::setEquipment,
             onMuscleSelect = vm::setMuscle,
             onOnlyMyEquipmentChange = vm::setOnlyMyEquipment,
@@ -99,6 +117,7 @@ internal fun ExercisesContent(
     onClearFilters: () -> Unit,
     onOpenExercise: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onMineSelect: (Boolean) -> Unit = {},
 ) {
     Column(modifier = modifier) {
         Column(
@@ -112,7 +131,7 @@ internal fun ExercisesContent(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
-            ExerciseKindFilterRow(state.kind, onKindSelect)
+            ExerciseKindFilterRow(state.kind, onKindSelect, mine = state.mineOnly, onMineSelect = onMineSelect)
             EquipmentFilterRow(state.equipment, onEquipmentSelect)
             if (state.showOnlyMyEquipmentSwitch) {
                 OnlyMyEquipmentRow(checked = state.onlyMyEquipment, onCheckedChange = onOnlyMyEquipmentChange)
@@ -145,10 +164,14 @@ internal fun ExercisesContent(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 24.dp),
+                contentPadding = PaddingValues(bottom = 96.dp),
             ) {
                 items(state.items, key = { it.id }) { exercise ->
-                    ExerciseRow(exercise, onClick = { onOpenExercise(exercise.id) })
+                    ExerciseRow(
+                        exercise,
+                        archived = state.library.userExercise(exercise.id)?.archived == true,
+                        onClick = { onOpenExercise(exercise.id) },
+                    )
                     HorizontalDivider()
                 }
             }
@@ -173,9 +196,25 @@ private fun OnlyMyEquipmentRow(checked: Boolean, onCheckedChange: (Boolean) -> U
 /** All / Strength / Mobility (P17.2): `null` is "All". Shared with [ExercisePickerSheet]'s own
  * compact filter row. */
 @Composable
-internal fun ExerciseKindFilterRow(selected: ExerciseKind?, onSelect: (ExerciseKind?) -> Unit) {
+internal fun ExerciseKindFilterRow(
+    selected: ExerciseKind?,
+    onSelect: (ExerciseKind?) -> Unit,
+    /** The P26.2 "Mine" toggle chip; `null` hides it (the picker). */
+    mine: Boolean? = null,
+    onMineSelect: (Boolean) -> Unit = {},
+) {
     val kinds: List<ExerciseKind?> = listOf(null, ExerciseKind.STRENGTH, ExerciseKind.MOBILITY)
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (mine != null) {
+            item {
+                FilterChip(
+                    selected = mine,
+                    onClick = { onMineSelect(!mine) },
+                    label = { Text(stringResource(Res.string.exercises_kind_mine)) },
+                    modifier = Modifier.testTag("exercises_mine"),
+                )
+            }
+        }
         items(kinds) { kind ->
             FilterChip(
                 selected = kind == selected,
@@ -207,9 +246,13 @@ private fun EquipmentFilterRow(selected: Equipment?, onSelect: (Equipment?) -> U
 }
 
 @Composable
-private fun ExerciseRow(exercise: Exercise, onClick: () -> Unit) {
+private fun ExerciseRow(exercise: Exercise, archived: Boolean, onClick: () -> Unit) {
     ListItem(
-        headlineContent = { Text(exercise.name) },
+        headlineContent = {
+            Text(
+                if (archived) "${exercise.name} · ${stringResource(Res.string.exercise_detail_archived_badge)}" else exercise.name,
+            )
+        },
         supportingContent = {
             Text(
                 text = exerciseRowSubtitle(exercise),

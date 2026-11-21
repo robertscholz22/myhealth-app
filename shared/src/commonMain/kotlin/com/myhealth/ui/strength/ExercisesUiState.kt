@@ -2,6 +2,7 @@ package com.myhealth.ui.strength
 
 import com.myhealth.domain.engine.strength.ExerciseCatalog
 import com.myhealth.domain.engine.strength.ExerciseRegistry
+import com.myhealth.domain.engine.strength.ExerciseLibrary
 import com.myhealth.domain.engine.strength.ExerciseKind
 import com.myhealth.domain.model.Equipment
 import com.myhealth.domain.model.Exercise
@@ -34,18 +35,30 @@ data class ExercisesUiState(
     /** The "Only my equipment" switch (§P16 "My equipment"): on by default, but only ever narrows
      * the list when [myEquipment] is non-null. */
     val onlyMyEquipment: Boolean = true,
+    /** The "Mine" chip (P26.2): only the owner's own exercises, archived ones included. */
+    val mineOnly: Boolean = false,
+    /** Catalog plus own exercises, live from the repository (P26.2). */
+    val library: ExerciseLibrary = ExerciseRegistry.library,
 ) {
     /** [kind] narrowed by search, combined with the three chip filters and the equipment switch,
      * all `AND`-ed (`eqmy01`, `mobui01`). */
     val items: List<Exercise>
         get() {
-            val bySearch = if (query.isBlank()) ExerciseRegistry.library.of(kind) else ExerciseRegistry.library.search(query, kind)
+            val bySearch = if (mineOnly) {
+                library.userExercises.map { it.exercise }
+                    .filter { kind == null || (kind == ExerciseKind.MOBILITY) == it.isMobility }
+                    .filter { query.isBlank() || it.name.contains(query.trim(), ignoreCase = true) }
+            } else if (query.isBlank()) {
+                library.of(kind)
+            } else {
+                library.search(query, kind)
+            }
             val home = myEquipment
             return bySearch.filter { exercise ->
                 (equipment == null || exercise.equipment == equipment) &&
                     (pattern == null || exercise.pattern == pattern) &&
                     (muscle == null || muscle in exercise.primary || muscle in exercise.secondary) &&
-                    (!onlyMyEquipment || home == null || exercise.equipment in home)
+                    (mineOnly || !onlyMyEquipment || home == null || exercise.equipment in home)
             }
         }
 

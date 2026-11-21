@@ -1039,3 +1039,34 @@ older than yesterday is labelled with its date instead of "Last night", on the t
 Release build (R8) after `tools/connected.sh` (33/33; two Settings tests now scroll More to the
 Settings entry, which the new Sleep entry pushes below the fold): fresh onboarding, More → Sleep
 (empty state), Cycle card and wording shown, no crash. `tools/verify.sh`: 1176 unit tests, 0 failures.
+
+## Session 36 — 2026-11-21 (emulator, 0.11.0 in progress: P26 video workouts)
+
+### P26.1 — exercise library, schema 12
+No visible change. `tools/verify.sh` 1183 unit tests, 0 failures; `tools/connected.sh` 34/34 (new
+`migration_11_to_12_keeps_workouts_and_adds_own_exercises`); upgrade from the 0.10.3 release APK with
+data onto the new build: Workouts and Exercises open, no crash. PASS
+
+### P26.2 — own exercises
+Exercises screen: "Mine" chip and a "New exercise" button that takes the search text as the name.
+Editor: name, strength/mobility, muscles by tapping the figure (primary → secondary → off) or by chip
+rows (kept disjoint), equipment, pattern ("Not specified" = `OTHER`), timed, one side, notes;
+duplicate hint ("Push-ups" = catalog "Push-up") with "Use … instead". Detail: Edit, "Own exercise" /
+"Archived" chips. In use → Archive / Restore only; unused → Delete with confirmation. Workout editor
+picker: "Create “<search>”" row, and the saved exercise comes back as a new row (nav result through
+the previous entry's `savedStateHandle`).
+
+Emulator, debug build:
+- Exercises → search "Booty band walk" (no match) → New exercise: name prefilled. Save without
+  muscles: error. Figure tap on the lower back: primary; second tap: secondary; chip Glutes:
+  primary; equipment Band; Save → detail with glutes primary, lower back secondary, standing figure,
+  "Equipment: Band", "Movement pattern: Not specified", "Own exercise". Back → list. PASS
+- Mine shows only own exercises. PASS
+- Strength workouts → New workout → Add exercise → "Fire hydrant" → Create row → editor (name
+  prefilled) → Glutes → Save → back in the workout editor with a "Fire hydrant 3 × 8" row; workout
+  saved. PASS
+- Fire hydrant → Edit: in use, Archive offered (no Delete). Archive → Restore shown; Mine lists
+  "Fire hydrant · Archived"; All hides it. PASS
+- Booty band walk (unused) → Edit → Delete exercise → confirm → back to Exercises, gone. PASS
+- Found and fixed during the run: `\"` in two strings showed literally (now “ ”); "Used in 1 workout
+  rows" reworded.

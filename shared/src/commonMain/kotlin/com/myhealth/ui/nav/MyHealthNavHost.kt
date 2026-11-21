@@ -56,6 +56,7 @@ import com.myhealth.ui.settings.CalendarImportScreen
 import com.myhealth.ui.settings.IntegrationsScreen
 import com.myhealth.ui.settings.SettingsScreen
 import com.myhealth.ui.strength.ExerciseDetailScreen
+import com.myhealth.ui.strength.ExerciseEditScreen
 import com.myhealth.ui.strength.ExercisesScreen
 import com.myhealth.ui.strength.WorkoutEditScreen
 import com.myhealth.ui.strength.WorkoutsScreen
@@ -322,17 +323,54 @@ fun MyHealthNavHost(
                     }
                     composable<WorkoutEditRoute> { entry ->
                         val route = entry.toRoute<WorkoutEditRoute>()
-                        WorkoutEditScreen(id = route.id, onBack = { navController.popBackStack() })
+                        val created by entry.savedStateHandle.getStateFlow<String?>(CREATED_EXERCISE_KEY, null)
+                            .collectAsStateWithLifecycle()
+                        WorkoutEditScreen(
+                            id = route.id,
+                            onBack = { navController.popBackStack() },
+                            onCreateExercise = { name ->
+                                navController.navigate(ExerciseEditRoute(prefillName = name, returnResult = true))
+                            },
+                            createdExerciseId = created,
+                            onCreatedConsumed = { entry.savedStateHandle[CREATED_EXERCISE_KEY] = null },
+                        )
                     }
                     composable<ExercisesRoute> {
                         ExercisesScreen(
                             onBack = { navController.popBackStack() },
                             onOpenExercise = { id -> navController.navigate(ExerciseDetailRoute(exerciseId = id)) },
+                            onNewExercise = { name -> navController.navigate(ExerciseEditRoute(prefillName = name)) },
                         )
                     }
                     composable<ExerciseDetailRoute> { entry ->
                         val route = entry.toRoute<ExerciseDetailRoute>()
-                        ExerciseDetailScreen(exerciseId = route.exerciseId, onBack = { navController.popBackStack() })
+                        ExerciseDetailScreen(
+                            exerciseId = route.exerciseId,
+                            onBack = { navController.popBackStack() },
+                            onEdit = { id -> navController.navigate(ExerciseEditRoute(id = id)) },
+                        )
+                    }
+                    composable<ExerciseEditRoute> { entry ->
+                        val route = entry.toRoute<ExerciseEditRoute>()
+                        fun finish(id: String) {
+                            if (route.returnResult) {
+                                navController.previousBackStackEntry?.savedStateHandle?.set(CREATED_EXERCISE_KEY, id)
+                                navController.popBackStack()
+                            } else if (route.id.isEmpty()) {
+                                navController.popBackStack()
+                                navController.navigate(ExerciseDetailRoute(exerciseId = id))
+                            } else {
+                                navController.popBackStack()
+                            }
+                        }
+                        ExerciseEditScreen(
+                            exerciseId = route.id.ifEmpty { null },
+                            prefillName = route.prefillName.ifEmpty { null },
+                            onBack = { navController.popBackStack() },
+                            onSaved = ::finish,
+                            onDeleted = { navController.popBackStack(ExercisesRoute, inclusive = false) },
+                            onUseExisting = { existing -> finish(existing.id) },
+                        )
                     }
                     composable<GoalsRoute> {
                         GoalsScreen(

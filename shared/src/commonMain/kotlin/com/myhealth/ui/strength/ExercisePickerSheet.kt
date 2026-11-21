@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import com.myhealth.resources.*
 import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,6 +58,8 @@ fun ExercisePickerSheet(
     /** The kind chip's starting position (P17.2): `null` (All) normally, `MOBILITY` when the
      * workout being edited is itself a mobility kind. */
     initialKind: ExerciseKind? = null,
+    /** P26.2: offers "Create '<query>'" when set — called with the typed name. */
+    onCreate: ((String) -> Unit)? = null,
 ) {
     val sheetState = rememberModalBottomSheetState()
     var query by remember { mutableStateOf("") }
@@ -90,6 +93,22 @@ fun ExercisePickerSheet(
             }
         }
         LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
+            val typed = query.trim()
+            if (onCreate != null && typed.isNotEmpty() && results.none { it.name.equals(typed, ignoreCase = true) }) {
+                item(key = "create") {
+                    Text(
+                        text = stringResource(Res.string.exercises_create_format, typed),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onCreate(typed) }
+                            .padding(horizontal = 16.dp, vertical = 16.dp)
+                            .testTag("exercise_picker_create"),
+                    )
+                    HorizontalDivider()
+                }
+            }
             items(results, key = { it.id }) { exercise ->
                 Row(
                     modifier = Modifier

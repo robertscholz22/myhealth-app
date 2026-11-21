@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import com.myhealth.resources.*
 import com.myhealth.ui.common.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,11 +66,17 @@ import kotlinx.datetime.LocalDate
  * "Exercise detail", P14.7). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExerciseDetailScreen(exerciseId: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun ExerciseDetailScreen(
+    exerciseId: String,
+    onBack: () -> Unit,
+    onEdit: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val vm = rememberVm { graph ->
         ExercisesViewModel(
             graph.strengthRepo,
             graph.profileRepo,
+            graph.userExerciseRepo,
             graph.strengthWorkoutSeeder::seed,
             graph.currentBodyWeightKg,
             graph.clock,
@@ -77,7 +84,8 @@ fun ExerciseDetailScreen(exerciseId: String, onBack: () -> Unit, modifier: Modif
     }
     val state by vm.state.collectAsStateWithLifecycle()
     val progressionCard by vm.progressionCardState.collectAsStateWithLifecycle()
-    val exercise = ExerciseRegistry.byId(exerciseId)
+    val exercise = state.library.byId(exerciseId)
+    val own = state.library.userExercise(exerciseId)
     var showPicker by remember { mutableStateOf(false) }
     var confirmedWorkout by remember { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
@@ -102,6 +110,14 @@ fun ExerciseDetailScreen(exerciseId: String, onBack: () -> Unit, modifier: Modif
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.action_back))
                     }
                 },
+                actions = {
+                    if (own != null) {
+                        androidx.compose.material3.TextButton(
+                            onClick = { onEdit(exerciseId) },
+                            modifier = androidx.compose.ui.Modifier.testTag("exercise_detail_edit"),
+                        ) { Text(stringResource(Res.string.exercise_detail_edit)) }
+                    }
+                },
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -122,6 +138,7 @@ fun ExerciseDetailScreen(exerciseId: String, onBack: () -> Unit, modifier: Modif
         } else {
             ExerciseDetailContent(
                 exercise = exercise,
+                archived = own?.archived,
                 progressionCard = progressionCard,
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
             )
@@ -146,6 +163,8 @@ internal fun ExerciseDetailContent(
     exercise: Exercise,
     modifier: Modifier = Modifier,
     progressionCard: ProgressionCardState = ProgressionCardState(),
+    /** `null` for a catalog exercise; otherwise whether the owner's exercise is archived (P26.2). */
+    archived: Boolean? = null,
 ) {
     LazyColumn(
         modifier = modifier,
@@ -176,8 +195,14 @@ internal fun ExerciseDetailContent(
         }
         item {
             SectionCard(title = stringResource(Res.string.exercise_detail_section_details)) {
+                if (archived != null) {
+                    AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(Res.string.exercise_detail_own_badge)) })
+                    if (archived) {
+                        AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(Res.string.exercise_detail_archived_badge)) })
+                    }
+                }
                 DetailRow(stringResource(Res.string.exercise_detail_equipment_label), exercise.equipment.label())
-                DetailRow(stringResource(Res.string.exercise_detail_pattern_label), exercise.pattern.label())
+                DetailRow(stringResource(Res.string.exercise_detail_pattern_label), patternLabel(exercise.pattern))
                 if (exercise.unilateral) {
                     AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(Res.string.exercise_detail_unilateral_flag)) })
                 }
@@ -186,9 +211,11 @@ internal fun ExerciseDetailContent(
                 }
             }
         }
-        item {
-            SectionCard(title = stringResource(Res.string.exercise_detail_section_cue)) {
-                Text(exercise.cue, style = MaterialTheme.typography.bodyMedium)
+        if (exercise.cue.isNotBlank()) {
+            item {
+                SectionCard(title = stringResource(Res.string.exercise_detail_section_cue)) {
+                    Text(exercise.cue, style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }
