@@ -1070,3 +1070,16 @@ Emulator, debug build:
 - Booty band walk (unused) → Edit → Delete exercise → confirm → back to Exercises, gone. PASS
 - Found and fixed during the run: `\"` in two strings showed literally (now “ ”); "Used in 1 workout
   rows" reworded.
+
+### P26.3 — list parser, matcher, synonyms (pure, no UI yet)
+`ExerciseListParser` (lines, one-line lists split on , • | ; but not "1,5"; bullets, numbering,
+chapter timestamps, emoji; seconds / minutes / reps / sets in English and German; per side; SKIP for
+warm-up, rest, intro, links, hashtags, sentences; HEADER for rounds / blocks / circuits / "Repeat 3
+times" with round counts; a move repeated across rounds merges into one entry). `ExerciseMatcher`
+(learned name → exact name or synonym compared without spaces → fuzzy token / spelling /
+containment score with equipment bonus; MATCHED ≥ 0.85, CHECK ≥ 0.60, no MATCHED on a tie).
+`ExerciseSynonyms`: about 70 catalog ids with English and German names. 46 new tests with invented
+lists (`ExerciseListParserTest`, `ExerciseMatcherTest`, `ExerciseSynonymsTest`,
+`VideoListEndToEndTest`); every catalog name matches itself as MATCHED. `tools/verify.sh` 1237 unit
+tests, 0 failures; iOS metadata compile OK. Known gaps until P26.9: bodyweight squat
+("Kniebeugen"), mountain climbers, burpees, jumping jacks are not in the catalog.
