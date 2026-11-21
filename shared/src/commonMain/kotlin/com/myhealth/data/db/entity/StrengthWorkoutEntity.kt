@@ -34,4 +34,9 @@ data class StrengthWorkoutEntity(
     /** P19 (DB v8): the "Use in suggestions" checkbox; every pre-0.8.0 workout starts checked. */
     @ColumnInfo(defaultValue = "1")
     val useInSuggestions: Boolean = true,
+    /** P26 (DB v12): video workouts; all `NULL` on an ordinary workout. */
+    val videoUrl: String? = null,
+    val videoTitle: String? = null,
+    val durationMin: Int? = null,
+    val sourceText: String? = null,
 )

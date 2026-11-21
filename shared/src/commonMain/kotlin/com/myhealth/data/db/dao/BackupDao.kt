@@ -15,6 +15,8 @@ import com.myhealth.data.db.entity.DailyHealthSummaryEntity
 import com.myhealth.data.db.entity.DailyLoadEntity
 import com.myhealth.data.db.entity.EventOverrideEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
+import com.myhealth.data.db.entity.ExerciseAliasEntity
+import com.myhealth.data.db.entity.UserExerciseEntity
 import com.myhealth.data.db.entity.GoalEntity
 import com.myhealth.data.db.entity.ImportRecordEntity
 import com.myhealth.data.db.entity.IngredientEntity
@@ -340,4 +342,22 @@ interface BackupDao {
 
     @Query("DELETE FROM exercise_progress")
     suspend fun deleteExerciseProgress()
+
+    @Query("SELECT * FROM user_exercise")
+    suspend fun allUserExercise(): List<UserExerciseEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUserExercise(rows: List<UserExerciseEntity>): List<Long>
+
+    @Query("DELETE FROM user_exercise")
+    suspend fun deleteUserExercise()
+
+    @Query("SELECT * FROM exercise_alias")
+    suspend fun allExerciseAlias(): List<ExerciseAliasEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertExerciseAlias(rows: List<ExerciseAliasEntity>): List<Long>
+
+    @Query("DELETE FROM exercise_alias")
+    suspend fun deleteExerciseAlias()
 }

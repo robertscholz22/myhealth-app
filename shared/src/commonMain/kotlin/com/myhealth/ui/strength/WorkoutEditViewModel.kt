@@ -1,5 +1,6 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myhealth.domain.engine.strength.EquipmentSetCodec
@@ -84,7 +85,7 @@ class WorkoutEditViewModel(
         val weight = bodyWeightKg()
         val rows = draft.exercises.map { row ->
             if (row.loadKg != null || row.isBodyweight) return@map row
-            val exercise = ExerciseCatalog.byId(row.exerciseId) ?: return@map row
+            val exercise = ExerciseRegistry.byId(row.exerciseId) ?: return@map row
             row.withPrescription(strengthRepo.prescriptionFor(exercise, weight))
         }
         return draft.copy(exercises = rows)
@@ -110,7 +111,7 @@ class WorkoutEditViewModel(
      * the row has none" — right after adding, a row's numbers are a placeholder, not a real one).
      */
     fun addExercise(exerciseId: String) {
-        val exercise = ExerciseCatalog.byId(exerciseId) ?: return
+        val exercise = ExerciseRegistry.byId(exerciseId) ?: return
         update { it.addExercise(exerciseId) }
         viewModelScope.launch {
             val prescription = strengthRepo.prescriptionFor(exercise, bodyWeightKg())

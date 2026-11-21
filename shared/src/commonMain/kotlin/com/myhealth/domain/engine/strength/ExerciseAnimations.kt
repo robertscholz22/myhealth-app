@@ -35,7 +35,7 @@ object ExerciseAnimations {
 
     /** The table, the catalog's pattern archetype, or — for an id nothing knows — [A.STANDING]. */
     fun clipOrStanding(exerciseId: String): AnimationClip =
-        BY_ID[exerciseId] ?: ExerciseCatalog.byId(exerciseId)?.let { defaultFor(it.pattern) }
+        BY_ID[exerciseId] ?: ExerciseRegistry.byId(exerciseId)?.let { defaultFor(it.pattern) }
             ?: A.STANDING
 
     /** The archetype clip of a movement pattern — the fallback for a user's own exercise. */
@@ -52,6 +52,7 @@ object ExerciseAnimations {
         MovementPattern.ISOLATION -> A.CURL
         MovementPattern.PLYOMETRIC -> A.JUMP
         MovementPattern.MOBILITY -> A.CAT_COW
+        MovementPattern.OTHER -> A.STANDING
     }
 
     private val BY_ID: Map<String, AnimationClip> = mapOf(

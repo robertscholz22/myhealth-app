@@ -48,6 +48,9 @@ interface UiGraph {
     val rideBestRepo: RideBestRepository
     val currentBodyWeightKg: suspend () -> Double
     val strengthRepo: StrengthRepository
+
+    /** P26: the owner's own exercises and learned names. */
+    val userExerciseRepo: com.myhealth.domain.repository.UserExerciseRepository
     val strengthWorkoutSeeder: StrengthWorkoutSeeder
     val loadRepo: LoadRepository
     val goalRepo: GoalRepository

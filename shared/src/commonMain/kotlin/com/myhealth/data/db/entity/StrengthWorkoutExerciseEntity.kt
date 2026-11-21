@@ -46,4 +46,6 @@ data class StrengthWorkoutExerciseEntity(
     val isBodyweight: Boolean = false,
     val restSec: Int? = null,
     val note: String? = null,
+    /** P26 (DB v12): the pasted line a video workout row was matched from. */
+    val sourceLine: String? = null,
 )

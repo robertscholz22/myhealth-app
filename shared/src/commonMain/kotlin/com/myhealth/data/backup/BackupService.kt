@@ -114,6 +114,8 @@ class BackupService(
         strengthWorkoutExercise = dao.allStrengthWorkoutExercise(),
         strengthSetLog = dao.allStrengthSetLog(),
         exerciseProgress = dao.allExerciseProgress(),
+        userExercise = dao.allUserExercise(),
+        exerciseAlias = dao.allExerciseAlias(),
     )
 
     /** Child-first wipe, then parent-first insert with the backup's own ids. */
@@ -126,6 +128,8 @@ class BackupService(
         // P14: the set log hangs off `planned_session` and `activity_session`, the exercise rows
         // off `strength_workout` — all three go before any of their parents.
         dao.deleteExerciseProgress()
+        dao.deleteExerciseAlias()
+        dao.deleteUserExercise()
         dao.deleteStrengthSetLog()
         dao.deleteStrengthWorkoutExercise()
         dao.deleteCycleEntry()
@@ -197,6 +201,9 @@ class BackupService(
         written += dao.insertStrengthSetLog(file.strengthSetLog).size
         // P16.1: `exercise_progress` references nothing — the catalog is code, not a table.
         written += dao.insertExerciseProgress(file.exerciseProgress).size
+        // P26: no foreign keys either — workout rows name exercises by id.
+        written += dao.insertUserExercise(file.userExercise).size
+        written += dao.insertExerciseAlias(file.exerciseAlias).size
         return written
     }
 }

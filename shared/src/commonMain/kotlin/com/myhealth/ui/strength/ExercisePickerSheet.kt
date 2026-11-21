@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.myhealth.domain.engine.strength.ExerciseAnimations
 import com.myhealth.domain.engine.strength.ExerciseCatalog
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import com.myhealth.domain.engine.strength.ExerciseKind
 import com.myhealth.domain.model.Equipment
 import com.myhealth.domain.model.Exercise
@@ -62,7 +63,7 @@ fun ExercisePickerSheet(
     var kind by remember { mutableStateOf(initialKind) }
     var showAll by remember { mutableStateOf(false) }
     val results = remember(query, kind, showAll, myEquipment) {
-        val bySearch = ExerciseCatalog.search(query, kind)
+        val bySearch = ExerciseRegistry.library.search(query, kind)
         if (!showAll && myEquipment != null) bySearch.filter { it.equipment in myEquipment } else bySearch
     }
 

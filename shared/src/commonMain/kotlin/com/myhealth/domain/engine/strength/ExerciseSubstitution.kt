@@ -59,7 +59,7 @@ object ExerciseSubstitution {
     fun materialise(workout: StrengthWorkout, available: Set<Equipment>?): StrengthWorkout {
         if (available == null) return workout
         val rows = workout.exercises.mapNotNull { row ->
-            val original = ExerciseCatalog.byId(row.exerciseId) ?: return@mapNotNull null
+            val original = ExerciseRegistry.byId(row.exerciseId) ?: return@mapNotNull null
             val replacement = substitute(original, available) ?: return@mapNotNull null
             row.copy(
                 exerciseId = replacement.id,

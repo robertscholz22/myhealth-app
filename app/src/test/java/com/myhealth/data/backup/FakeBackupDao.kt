@@ -25,6 +25,8 @@ import com.myhealth.data.db.entity.RideBestEntity
 import com.myhealth.data.db.entity.RunningBestEntity
 import com.myhealth.data.db.entity.SleepSessionEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
+import com.myhealth.data.db.entity.ExerciseAliasEntity
+import com.myhealth.data.db.entity.UserExerciseEntity
 import com.myhealth.data.db.entity.StrengthSetLogEntity
 import com.myhealth.data.db.entity.StrengthWorkoutEntity
 import com.myhealth.data.db.entity.StrengthWorkoutExerciseEntity
@@ -342,4 +344,21 @@ internal class FakeBackupDao : BackupDao {
         keyed(exerciseProgress, rows) { it.exerciseId }
 
     override suspend fun deleteExerciseProgress() = exerciseProgress.clear()
+
+    val userExercise: MutableList<UserExerciseEntity> = mutableListOf()
+
+    override suspend fun allUserExercise(): List<UserExerciseEntity> = userExercise.toList()
+
+    override suspend fun insertUserExercise(rows: List<UserExerciseEntity>) = keyed(userExercise, rows) { it.id }
+
+    override suspend fun deleteUserExercise() = userExercise.clear()
+
+    val exerciseAlias: MutableList<ExerciseAliasEntity> = mutableListOf()
+
+    override suspend fun allExerciseAlias(): List<ExerciseAliasEntity> = exerciseAlias.toList()
+
+    override suspend fun insertExerciseAlias(rows: List<ExerciseAliasEntity>) =
+        keyed(exerciseAlias, rows) { it.normalisedName }
+
+    override suspend fun deleteExerciseAlias() = exerciseAlias.clear()
 }

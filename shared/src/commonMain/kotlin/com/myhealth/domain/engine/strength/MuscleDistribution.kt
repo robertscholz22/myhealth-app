@@ -168,7 +168,7 @@ object MuscleDistribution {
      */
     fun isMobilityOnly(workout: StrengthWorkout): Boolean {
         if (workout.kind.isMobility) return true
-        val exercises = workout.exercises.mapNotNull { ExerciseCatalog.byId(it.exerciseId) }
+        val exercises = workout.exercises.mapNotNull { ExerciseRegistry.byId(it.exerciseId) }
         return exercises.isNotEmpty() && exercises.all { it.isMobility }
     }
 

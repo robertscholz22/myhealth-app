@@ -292,6 +292,12 @@ enum class MovementPattern {
      * and never substituted for a strength movement (`ExerciseSubstitution`).
      */
     MOBILITY,
+
+    /**
+     * Appended for P26: an exercise the owner created and gave no pattern. It gets the standing
+     * figure instead of an animation and is never offered as a substitute.
+     */
+    OTHER,
 }
 
 /**

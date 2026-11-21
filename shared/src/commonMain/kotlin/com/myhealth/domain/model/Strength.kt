@@ -44,7 +44,37 @@ data class Exercise(
      * a strength movement.
      */
     val isMobility: Boolean get() = pattern == MovementPattern.MOBILITY
+
+    /** P26: an exercise the owner created (`user_exercise`), not a catalog entry. */
+    val isCustom: Boolean get() = id.startsWith(USER_EXERCISE_PREFIX)
+
+    companion object {
+        /** Prefix of every id in `user_exercise`; catalog ids never start with it. */
+        const val USER_EXERCISE_PREFIX: String = "USER_"
+    }
 }
+
+/**
+ * P26: an exercise the owner created, as stored (`user_exercise`). [exercise] is what every
+ * lookup returns; [archived] hides it from lists and pickers while saved workouts keep resolving it.
+ */
+data class UserExercise(
+    val exercise: Exercise,
+    val notes: String? = null,
+    val archived: Boolean = false,
+    val createdAtMillis: Long,
+    val updatedAtMillis: Long,
+)
+
+/**
+ * P26: a name the owner matched to an exercise by hand on the video import screen. Stored
+ * normalised, so "Booty Bridges" and "booty bridges" are the same learned name.
+ */
+data class ExerciseAlias(
+    val normalisedName: String,
+    val exerciseId: String,
+    val createdAtMillis: Long,
+)
 data class StrengthWorkout(
     val id: Long,
     val name: String,
@@ -60,7 +90,18 @@ data class StrengthWorkout(
     val updatedAtMillis: Long,
     /** P19: the Workouts screen's "Use in suggestions" checkbox (DB v8). */
     val useInSuggestions: Boolean = true,
+    /** P26 (DB v12): the video this workout follows; `null` for an ordinary workout. */
+    val videoUrl: String? = null,
+    /** P26: the video's title as fetched or typed; [name] is what lists show. */
+    val videoTitle: String? = null,
+    /** P26: how long the video runs; replaces the computed estimate when set. */
+    val durationMin: Int? = null,
+    /** P26: the exercise list as pasted, kept so the matches can be checked again later. */
+    val sourceText: String? = null,
 ) {
+    /** P26: a workout that follows a video (no weights, no set log, no progression). */
+    val isVideo: Boolean get() = videoUrl != null
+
     /**
      * How long the workout takes, rounded up (§3.12.3):
      * `ceil((Σ sets × (workSec + restSec) + 480) / 60)` with `workSec = seconds ?: reps × 3` and
@@ -70,6 +111,7 @@ data class StrengthWorkout(
      */
     val estimatedMinutes: Int
         get() {
+            durationMin?.let { return it }
             val workingSec = exercises.sumOf { row ->
                 val workSec = row.seconds ?: ((row.reps ?: 0) * SEC_PER_REP)
                 row.sets.toLong() * (workSec + (row.restSec ?: DEFAULT_REST_SEC)).toLong()
@@ -106,6 +148,8 @@ data class StrengthWorkoutExercise(
     val isBodyweight: Boolean = false,
     val restSec: Int? = null,
     val note: String? = null,
+    /** P26 (DB v12): the pasted line this row was matched from, on a video workout. */
+    val sourceLine: String? = null,
 )
 
 /**

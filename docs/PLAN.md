@@ -3122,6 +3122,47 @@ Order of work (each step green on Linux — JVM tests + `compileIosMainKotlinMet
   - FIT import from Files and a backup export/import round trip.
   CI adds the test photos (`simctl addmedia`) and puts `run_5k.fit` into Files › On My iPhone.
 
+## P26 — Video workouts and own exercises (owner request for the iPhone user, 2026-11-21 → release 0.11.0, DB v12)
+
+The iPhone user trains mostly with video-guided workouts. A workout can now carry a video link and the
+list of exercises the video contains; the list is matched against the exercise library so muscle load,
+C15 and the mobility choice work as for any workout. An exercise the library lacks is created from the
+import screen (name prefilled, primary/secondary muscles picked). Owner's decisions: the list is pasted
+(title fetched once via YouTube oEmbed when online), "Share → MyHealth" on Android and iPhone (Share
+Extension + App Group), the suggester may pick video workouts ("Use in suggestions"), and "Done" without a
+watch recording stores a manual activity estimated from duration × effort, replaced when a synced
+strength activity arrives. Full plan: `~/.claude/plans/fluffy-dreaming-zephyr.md`.
+
+- **P26.1 Exercise library (DB v12).** `user_exercise` (`USER_…` random ids, muscles as CSV of
+  `MuscleGroup`, lenient decoding) and `exercise_alias` (learned names, normalised); `strength_workout`
+  gets `videoUrl`, `videoTitle`, `durationMin`, `sourceText`, `strength_workout_exercise` gets
+  `sourceLine`; `MovementPattern.OTHER` (standing figure). `ExerciseLibrary` = catalog + own exercises;
+  `ExerciseRegistry` holds the current immutable snapshot and replaces `ExerciseCatalog.byId` at every
+  lookup site (engines, body figure, labels, set log, editor). Deviation from the plan: a registry
+  rather than a lookup parameter threaded through every engine call — the snapshot is installed by
+  `RoomUserExerciseRepository` at app start and on every table change (an app-lifetime observer, so a
+  restore or merge re-installs it); until then, and in every test that installs nothing, it is the
+  catalog alone, so all `sug*` / `ar*` fixtures stay byte-identical. Built-in templates and the
+  animation coverage check stay catalog-only. Backups carry both tables (schema 12; merge keyed by id /
+  normalised name, the device's copy wins).
+- **P26.2 Own exercises UI.** Exercise editor (name, muscles via chips and the body figure, kind,
+  equipment, pattern, timed, one side, notes, duplicate warning), Exercises screen "Mine" + FAB, edit /
+  archive / delete (delete only when no workout uses it), "Create '<query>'" row in the picker.
+- **P26.3 Parser and matcher.** `ExerciseListParser` (bullets, numbering, chapter timestamps, durations,
+  reps, rounds, per side, warm-up/rest lines skipped, repeats → sets; English and German) and
+  `ExerciseMatcher` (learned alias → exact name/synonym → token score with Levenshtein; Matched ≥ 0.85,
+  Check ≥ 0.60, else Not found) with `ExerciseSynonyms`.
+- **P26.4 Video workouts.** `VideoLink`, oEmbed title fetch, import screen (video step, check-exercises
+  step with live body figure, row sheet: suggestions / search / create / not an exercise), Workouts FAB
+  menu, video section in the workout editor, list row.
+- **P26.5 Watch and done.** Watch buttons (Training, Today, suggestion card, workout); `VideoDoneSheet`
+  on Training and Today; manual activity from duration × effort; replaced by a synced strength activity
+  on the same day; "Done today"; "Which workout was this?" on an unlinked strength activity.
+- **P26.6 Suggestions.** Workout type derived from the matched muscles; video duration as the estimate;
+  "Video" / "Watch" on the suggestion card; substitution and progression skip video workouts.
+- **P26.7 Android share target**, **P26.8 iOS Share Extension** (+ CI signing of the second bundle id),
+  **P26.9 catalog extension** with common home-workout moves (pattern-default animation).
+
 ## 6. Verification strategy
 
 ### 6.1 After every task (the lead runs this)
@@ -3185,6 +3226,7 @@ If a phase ends below its floor, the lead rejects the phase and orders the missi
 | 9 | P24 (Template servings) | `meal_template.servings` (`REAL NOT NULL DEFAULT 1`): how many servings a template's items make; every existing template stays one serving, so logging it is unchanged. `BackupFile.CURRENT_SCHEMA_VERSION` 8 → **9** | `MIGRATION_8_9` |
 | 10 | P25 (Calendar import) | `calendar_event.externalSource`, `calendar_event.externalId` (both `TEXT`, nullable): set on events the calendar import wrote, `NULL` on events made in the app. `BackupFile.CURRENT_SCHEMA_VERSION` 9 → **10** | `MIGRATION_9_10` |
 | 11 | P25 (event intensity) | `calendar_event.intensity` (`TEXT`, nullable): the expected intensity of a match, soccer training or race; `NULL` means the usual one of its type. | `MIGRATION_10_11`: one `ALTER TABLE … ADD COLUMN`. |
+| 12 | P26.1 (Video workouts, own exercises) | New tables `user_exercise` (`id` **TEXT PRIMARY KEY** `USER_…`, `name`, `primaryMuscles`, `secondaryMuscles`, `equipment`, `pattern`, `isTimed`, `unilateral`, `notes`?, `archived` `DEFAULT 0`, timestamps) and `exercise_alias` (`normalisedName` **TEXT PRIMARY KEY**, `exerciseId`, `createdAtMillis`); `strength_workout.videoUrl` / `videoTitle` / `sourceText` (`TEXT`) + `durationMin` (`INTEGER`), `strength_workout_exercise.sourceLine` (`TEXT`), all nullable. Purely additive. `BackupFile.CURRENT_SCHEMA_VERSION` 11 → **12** | `MIGRATION_11_12` |
 
 ### 6.5 Manual smoke test (phone attached)
 

@@ -1,5 +1,6 @@
 package com.myhealth.data.repository
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import com.myhealth.data.db.dao.StrengthDao
 import com.myhealth.data.mapper.toDomain
 import com.myhealth.data.mapper.toEntity
@@ -119,7 +120,7 @@ class RoomStrengthRepository(
                 logs.mapNotNull { row -> row.feedback?.let { row.exerciseId to it } }
                     .distinctBy { it.first }
                     .forEach { (exerciseId, feedback) ->
-                        val exercise = ExerciseCatalog.byId(exerciseId) ?: return@forEach
+                        val exercise = ExerciseRegistry.byId(exerciseId) ?: return@forEach
                         val current = dao.getProgress(exerciseId)?.toDomain()
                             ?: ProgressionEngine.initial(exercise, weight, today)
                         val next = ProgressionEngine.next(current, feedback, exercise, today)

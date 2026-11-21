@@ -278,6 +278,32 @@ object Migrations {
     }
 
     /**
+     * v12 (P26): video workouts and the owner's own exercises. Two new tables (`TEXT` keys: a
+     * `USER_…` id and a normalised name) and five nullable columns, so every existing row keeps
+     * its meaning.
+     */
+    private val MIGRATION_11_12 = MigrationStep(11, 12) { db ->
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `user_exercise` (" +
+                "`id` TEXT NOT NULL, `name` TEXT NOT NULL, `primaryMuscles` TEXT NOT NULL, " +
+                "`secondaryMuscles` TEXT NOT NULL, `equipment` TEXT NOT NULL, `pattern` TEXT NOT NULL, " +
+                "`isTimed` INTEGER NOT NULL, `unilateral` INTEGER NOT NULL, `notes` TEXT, " +
+                "`archived` INTEGER NOT NULL DEFAULT 0, `createdAtMillis` INTEGER NOT NULL, " +
+                "`updatedAtMillis` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `exercise_alias` (" +
+                "`normalisedName` TEXT NOT NULL, `exerciseId` TEXT NOT NULL, " +
+                "`createdAtMillis` INTEGER NOT NULL, PRIMARY KEY(`normalisedName`))",
+        )
+        db.execSQL("ALTER TABLE `strength_workout` ADD COLUMN `videoUrl` TEXT")
+        db.execSQL("ALTER TABLE `strength_workout` ADD COLUMN `videoTitle` TEXT")
+        db.execSQL("ALTER TABLE `strength_workout` ADD COLUMN `durationMin` INTEGER")
+        db.execSQL("ALTER TABLE `strength_workout` ADD COLUMN `sourceText` TEXT")
+        db.execSQL("ALTER TABLE `strength_workout_exercise` ADD COLUMN `sourceLine` TEXT")
+    }
+
+    /**
      * Every migration, oldest first. `.addMigrations(*ALL)` is the only call site, in each
      * platform's database builder, so adding a migration never changes it.
      */
@@ -297,6 +323,7 @@ object Migrations {
             MIGRATION_8_9,
             MIGRATION_9_10,
             MIGRATION_10_11,
+            MIGRATION_11_12,
         )
 }
 

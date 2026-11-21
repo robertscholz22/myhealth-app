@@ -1,5 +1,6 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import com.myhealth.data.time.todayEpochDay
 import com.myhealth.domain.model.StrengthWorkout
 import com.myhealth.domain.engine.strength.ExerciseCatalog
@@ -205,7 +206,7 @@ private const val SESSION_LOOKAHEAD_DAYS = 3650L
 /** "Upper A: Bench press 3×10, Plank 3×30 s" — what a session keeps of a deleted workout. */
 fun workoutSummary(workout: StrengthWorkout): String {
     val rows = workout.exercises.joinToString(", ") { row ->
-        val name = ExerciseCatalog.byId(row.exerciseId)?.name ?: row.exerciseId.lowercase().replace('_', ' ')
+        val name = ExerciseRegistry.byId(row.exerciseId)?.name ?: row.exerciseId.lowercase().replace('_', ' ')
         val amount = row.reps?.let { "${row.sets}×$it" } ?: "${row.sets}×${row.seconds ?: 0} s"
         "$name $amount"
     }

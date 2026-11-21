@@ -649,6 +649,59 @@ class MyHealthMigrationTest {
         }
     }
 
+    /**
+     * P26: a v11 workout and its rows survive with no video fields, the two new tables start
+     * empty and take an own exercise and a learned name, and a workout row may name the new id.
+     */
+    @Test
+    fun migration_11_to_12_keeps_workouts_and_adds_own_exercises() {
+        migrations.createDatabase(MIGRATION_DB, 11).use { v11 ->
+            v11.execSQL(
+                "INSERT INTO strength_workout (id, name, kind, templateId, isBuiltIn, notes, " +
+                    "createdAtMillis, updatedAtMillis, useInSuggestions) VALUES (1, 'Legs', 'LOWER', NULL, 0, NULL, 1, 1, 1)",
+            )
+            v11.execSQL(
+                "INSERT INTO strength_workout_exercise (id, workoutId, orderIndex, exerciseId, sets, reps, " +
+                    "seconds, loadKg, isBodyweight, restSec, note) VALUES (1, 1, 0, 'GOBLET_SQUAT', 3, 10, NULL, 12.0, 0, NULL, NULL)",
+            )
+        }
+
+        migrations.runMigrationsAndValidate(MIGRATION_DB, 12, true, *Migrations.ALL)
+
+        val migrated = Room.databaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            MyHealthDatabase::class.java,
+            MIGRATION_DB,
+        ).addMigrations(*Migrations.ALL).build()
+        try {
+            runTest {
+                val strength = migrated.strengthDao()
+                val workout = checkNotNull(strength.getById(1L))
+                assertThat(workout.workout.videoUrl).isNull()
+                assertThat(workout.workout.durationMin).isNull()
+                assertThat(workout.exercises.single().sourceLine).isNull()
+
+                val own = migrated.userExerciseDao()
+                assertThat(own.getAll()).isEmpty()
+                own.upsert(
+                    com.myhealth.data.db.entity.UserExerciseEntity(
+                        id = "USER_ABCDEFGHJKLM", name = "Band walk", primaryMuscles = "GLUTES",
+                        equipment = "BAND", pattern = "OTHER", createdAtMillis = 2, updatedAtMillis = 2,
+                    ),
+                )
+                own.upsertAlias(com.myhealth.data.db.entity.ExerciseAliasEntity("band walks", "USER_ABCDEFGHJKLM", 2))
+                strength.upsertExercises(
+                    listOf(workout.exercises.single().copy(id = 0, orderIndex = 1, exerciseId = "USER_ABCDEFGHJKLM", sourceLine = "Band walks 40s")),
+                )
+                assertThat(own.getAll().single().archived).isFalse()
+                assertThat(own.getAliases().single().exerciseId).isEqualTo("USER_ABCDEFGHJKLM")
+                assertThat(own.countWorkoutRows("USER_ABCDEFGHJKLM")).isEqualTo(1)
+            }
+        } finally {
+            migrated.close()
+        }
+    }
+
     private companion object {
         const val MIGRATION_DB = "migration-test.db"
     }

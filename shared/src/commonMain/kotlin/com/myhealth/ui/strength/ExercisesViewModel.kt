@@ -1,5 +1,6 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myhealth.domain.engine.strength.EquipmentSetCodec
@@ -84,7 +85,7 @@ class ExercisesViewModel(
      * sessions ([recentSessionLines]). A dropped catalog id leaves the card empty.
      */
     fun loadProgressionCard(exerciseId: String) {
-        val exercise = ExerciseCatalog.byId(exerciseId) ?: return
+        val exercise = ExerciseRegistry.byId(exerciseId) ?: return
         viewModelScope.launch {
             val weight = bodyWeightKg()
             val prescription = strengthRepo.prescriptionFor(exercise, weight)
@@ -104,7 +105,7 @@ class ExercisesViewModel(
      * equipment) and saves the whole workout — "Add to workout…" (§4.2).
      */
     fun addToWorkout(exerciseId: String, workoutId: Long) {
-        val exercise = ExerciseCatalog.byId(exerciseId) ?: return
+        val exercise = ExerciseRegistry.byId(exerciseId) ?: return
         viewModelScope.launch {
             val workout = strengthRepo.getById(workoutId) ?: return@launch
             val row = StrengthWorkoutExercise(

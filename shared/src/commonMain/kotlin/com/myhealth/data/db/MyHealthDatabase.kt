@@ -59,6 +59,9 @@ import com.myhealth.data.db.entity.SuggestionBatchEntity
 import com.myhealth.data.db.entity.SyncStateEntity
 import com.myhealth.data.db.entity.TrainingPlanEntity
 import com.myhealth.data.db.entity.WaterLogEntity
+import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.ExerciseAliasEntity
+import com.myhealth.data.db.dao.UserExerciseDao
 
 /**
  * The single Room database (PLAN §2.2): 26 tables plus the P8.5 `ingredient_fts` index, the
@@ -117,8 +120,11 @@ import com.myhealth.data.db.entity.WaterLogEntity
         StrengthSetLogEntity::class,
         // §P16 P16.1 per-exercise load progression
         ExerciseProgressEntity::class,
+        // §P26 own exercises and learned names
+        UserExerciseEntity::class,
+        ExerciseAliasEntity::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -126,6 +132,8 @@ import com.myhealth.data.db.entity.WaterLogEntity
 abstract class MyHealthDatabase : RoomDatabase() {
 
     abstract fun profileDao(): ProfileDao
+
+    abstract fun userExerciseDao(): UserExerciseDao
 
     abstract fun bodyDao(): BodyDao
 

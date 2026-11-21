@@ -1,5 +1,6 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -76,7 +77,7 @@ fun ExerciseDetailScreen(exerciseId: String, onBack: () -> Unit, modifier: Modif
     }
     val state by vm.state.collectAsStateWithLifecycle()
     val progressionCard by vm.progressionCardState.collectAsStateWithLifecycle()
-    val exercise = ExerciseCatalog.byId(exerciseId)
+    val exercise = ExerciseRegistry.byId(exerciseId)
     var showPicker by remember { mutableStateOf(false) }
     var confirmedWorkout by remember { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }

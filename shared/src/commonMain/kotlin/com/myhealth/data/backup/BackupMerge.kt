@@ -57,6 +57,12 @@ internal class BackupMerge(private val dao: BackupDao) {
             file.exerciseProgress, existing.exerciseProgress, { it.exerciseId },
             dao::insertExerciseProgress,
         )
+        // P26: random `USER_…` ids are unique across devices; the device's own copy of an
+        // exercise (and its own learned names) wins, as for the progression above.
+        written += mergeKeyed(file.userExercise, existing.userExercise, { it.id }, dao::insertUserExercise)
+        written += mergeKeyed(
+            file.exerciseAlias, existing.exerciseAlias, { it.normalisedName }, dao::insertExerciseAlias,
+        )
 
         val ingredients = mergeRoot(
             file.ingredient, existing.ingredient, { it.id },

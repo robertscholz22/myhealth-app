@@ -1,5 +1,6 @@
 package com.myhealth.ui.common.body
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import com.myhealth.domain.engine.strength.ExerciseCatalog
 import com.myhealth.domain.model.BodyFace
 import com.myhealth.domain.model.BodyPose
@@ -84,7 +85,7 @@ fun highlightFor(exercise: Exercise): Map<MuscleGroup, Float> =
 fun highlightFor(workout: StrengthWorkout): Map<MuscleGroup, Float> {
     val result = mutableMapOf<MuscleGroup, Float>()
     workout.exercises.forEach { row ->
-        val exercise = ExerciseCatalog.byId(row.exerciseId) ?: return@forEach
+        val exercise = ExerciseRegistry.byId(row.exerciseId) ?: return@forEach
         highlightFor(exercise).forEach { (group, value) ->
             result[group] = maxOf(result[group] ?: 0f, value)
         }

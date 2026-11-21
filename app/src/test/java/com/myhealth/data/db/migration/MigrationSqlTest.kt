@@ -157,11 +157,35 @@ class MigrationSqlTest {
         assertThat(createSqlOf(exportedEntities(10), "calendar_event")).doesNotContain("`intensity`")
     }
 
+    /**
+     * P26: the two new tables are created with exactly the SQL Room exported, and the five video
+     * columns are nullable additions (no row changes meaning).
+     */
     @Test
-    fun the_exported_schema_is_version_eleven_and_the_older_ones_are_untouched() {
-        val latest = Json.parseToJsonElement(schemaFile(11).readText()).jsonObject.getValue("database")
-        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("11")
-        (1..10).forEach { assertThat(schemaFile(it).isFile).isTrue() }
+    fun migration_11_to_12_creates_the_exercise_tables_and_adds_the_video_columns() {
+        val v12 = exportedEntities(12)
+        val source = flattenedMigrationSource()
+        listOf("user_exercise", "exercise_alias").forEach { table ->
+            assertThat(source).contains(createSqlOf(v12, table))
+            assertThat(exportedEntities(11)).doesNotContainKey(table)
+        }
+        listOf(
+            "ALTER TABLE `strength_workout` ADD COLUMN `videoUrl` TEXT",
+            "ALTER TABLE `strength_workout` ADD COLUMN `videoTitle` TEXT",
+            "ALTER TABLE `strength_workout` ADD COLUMN `durationMin` INTEGER",
+            "ALTER TABLE `strength_workout` ADD COLUMN `sourceText` TEXT",
+            "ALTER TABLE `strength_workout_exercise` ADD COLUMN `sourceLine` TEXT",
+        ).forEach { assertThat(source).contains(it) }
+        assertThat(createSqlOf(v12, "strength_workout")).contains("`videoUrl` TEXT")
+        assertThat(createSqlOf(v12, "strength_workout_exercise")).contains("`sourceLine` TEXT")
+    }
+
+    @Test
+    fun the_exported_schema_is_version_twelve_and_the_older_ones_are_untouched() {
+        val latest = Json.parseToJsonElement(schemaFile(12).readText()).jsonObject.getValue("database")
+        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("12")
+        assertThat(schemaFile(11).readText()).doesNotContain("user_exercise")
+        (1..11).forEach { assertThat(schemaFile(it).isFile).isTrue() }
         // `strength_*` exists only from v6 on: v5 must not have grown a table retroactively.
         assertThat(schemaFile(5).readText()).doesNotContain("strength_workout")
         // … and `exercise_progress` only from v7 on.
@@ -196,8 +220,8 @@ class MigrationSqlTest {
         entities.getValue(table).indices
 
     @Test
-    fun p20_2_the_steps_chain_1_to_10_and_each_platform_migration_runs_exactly_their_sql() {
-        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..10).map { it to it + 1 })
+    fun p20_2_the_steps_chain_1_to_11_and_each_platform_migration_runs_exactly_their_sql() {
+        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..11).map { it to it + 1 })
         val source = flattenedMigrationSource()
         Migrations.STEPS.flatMap { it.statements }.forEach { assertThat(source).contains(it) }
 

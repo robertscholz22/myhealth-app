@@ -11,6 +11,8 @@ import com.myhealth.data.db.entity.DailyHealthSummaryEntity
 import com.myhealth.data.db.entity.DailyLoadEntity
 import com.myhealth.data.db.entity.EventOverrideEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
+import com.myhealth.data.db.entity.ExerciseAliasEntity
+import com.myhealth.data.db.entity.UserExerciseEntity
 import com.myhealth.data.db.entity.GoalEntity
 import com.myhealth.data.db.entity.ImportRecordEntity
 import com.myhealth.data.db.entity.IngredientEntity
@@ -96,6 +98,9 @@ data class BackupFile(
     val strengthSetLog: List<StrengthSetLogEntity> = emptyList(),
     // §P16 P16.1 load progression
     val exerciseProgress: List<ExerciseProgressEntity> = emptyList(),
+    // §P26 own exercises and learned names
+    val userExercise: List<UserExerciseEntity> = emptyList(),
+    val exerciseAlias: List<ExerciseAliasEntity> = emptyList(),
 ) {
 
     /** Rows per SQLite table name, empty tables omitted — what the screen reports after a run. */
@@ -132,6 +137,8 @@ data class BackupFile(
         "strength_workout_exercise" to strengthWorkoutExercise.size,
         "strength_set_log" to strengthSetLog.size,
         "exercise_progress" to exerciseProgress.size,
+        "user_exercise" to userExercise.size,
+        "exercise_alias" to exerciseAlias.size,
     ).filterValues { it > 0 }
 
     val totalRows: Int get() = rowsPerTable().values.sum()
@@ -145,7 +152,9 @@ data class BackupFile(
          * field exists for. P16.1 raises it to **7** ("my equipment", the set-log feedback and
          * `exercise_progress`). P24 raises it to **9** (`meal_template.servings`; an older file
          * decodes with the entity's default of one serving).
+         * P26 raises it to **12** (`user_exercise`, `exercise_alias`, the video columns of
+         * `strength_workout` and `strength_workout_exercise`; an older file has none of them).
          */
-        const val CURRENT_SCHEMA_VERSION: Int = 11
+        const val CURRENT_SCHEMA_VERSION: Int = 12
     }
 }

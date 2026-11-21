@@ -108,6 +108,11 @@ abstract class CoreGraph : UiGraph {
     /** App-start work, run once per process by the platform shell before the first screen. */
     @OptIn(FlowPreview::class)
     fun start() {
+        // P26: the owner's own exercises into ExerciseRegistry before anything looks one up, and
+        // kept current for the process lifetime (an edit, a restore or a merge re-installs it).
+        appScope.launch { userExerciseRepo.getLibrary() }
+        userExerciseRepo.observeLibrary().launchIn(appScope)
+
         // BUG-19: shrink oversized import error lists (≤ 0.9.1) before any screen reads them.
         appScope.launch { importRepo.repairOversizedErrors() }
 
@@ -238,6 +243,11 @@ abstract class CoreGraph : UiGraph {
             bodyWeightKg = currentBodyWeightKg,
             clock = clock,
         )
+    }
+
+    /** P26: `user_exercise` + `exercise_alias`; keeps `ExerciseRegistry` current. */
+    override val userExerciseRepo: com.myhealth.domain.repository.UserExerciseRepository by lazy {
+        com.myhealth.data.repository.RoomUserExerciseRepository(db.userExerciseDao(), clock)
     }
 
     /**

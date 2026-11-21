@@ -1,5 +1,6 @@
 package com.myhealth.ui.training
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myhealth.data.time.today
@@ -214,7 +215,7 @@ class TrainingViewModel(
         viewModelScope.launch {
             val weight = bodyWeightKg()
             val prescriptions = workout.exercises.map { it.exerciseId }.distinct()
-                .mapNotNull { id -> ExerciseCatalog.byId(id)?.let { id to strengthRepo.prescriptionFor(it, weight) } }
+                .mapNotNull { id -> ExerciseRegistry.byId(id)?.let { id to strengthRepo.prescriptionFor(it, weight) } }
                 .toMap()
             action.update { it.copy(setLogPrescriptions = prescriptions) }
         }

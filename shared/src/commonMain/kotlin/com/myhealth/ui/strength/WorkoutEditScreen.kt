@@ -1,5 +1,6 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -215,7 +216,7 @@ private fun ExerciseRowCard(
     onMoveDown: () -> Unit,
     onChange: ((WorkoutExerciseDraft) -> WorkoutExerciseDraft) -> Unit,
 ) {
-    val exercise = ExerciseCatalog.byId(row.exerciseId)
+    val exercise = ExerciseRegistry.byId(row.exerciseId)
     SectionCard(
         title = exercise?.name ?: row.exerciseId,
         action = {

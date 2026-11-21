@@ -1,6 +1,7 @@
 package com.myhealth.ui.strength
 
 import com.myhealth.domain.engine.strength.ExerciseCatalog
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import com.myhealth.domain.engine.strength.ExerciseKind
 import com.myhealth.domain.model.Equipment
 import com.myhealth.domain.model.Exercise
@@ -38,7 +39,7 @@ data class ExercisesUiState(
      * all `AND`-ed (`eqmy01`, `mobui01`). */
     val items: List<Exercise>
         get() {
-            val bySearch = if (query.isBlank()) ExerciseCatalog.of(kind) else ExerciseCatalog.search(query, kind)
+            val bySearch = if (query.isBlank()) ExerciseRegistry.library.of(kind) else ExerciseRegistry.library.search(query, kind)
             val home = myEquipment
             return bySearch.filter { exercise ->
                 (equipment == null || exercise.equipment == equipment) &&

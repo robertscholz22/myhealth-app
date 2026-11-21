@@ -1,5 +1,6 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import com.myhealth.domain.engine.strength.ExerciseCatalog
 import com.myhealth.domain.engine.strength.ProgressionDefaults
 import com.myhealth.domain.model.ExercisePrescription
@@ -28,7 +29,7 @@ fun setLogRowsFor(
     workout: StrengthWorkout,
     prescriptions: Map<String, ExercisePrescription> = emptyMap(),
 ): List<SetLogRow> = workout.exercises.flatMap { row ->
-    val name = ExerciseCatalog.byId(row.exerciseId)?.name ?: row.exerciseId
+    val name = ExerciseRegistry.byId(row.exerciseId)?.name ?: row.exerciseId
     val prescription = prescriptions[row.exerciseId]
     (0 until row.sets).map { setIndex ->
         SetLogRow(

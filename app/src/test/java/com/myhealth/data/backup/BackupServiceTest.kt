@@ -43,6 +43,8 @@ class BackupServiceTest {
         dao.strengthWorkoutExercise += BackupFixtures.strengthWorkoutExercise()
         dao.strengthSetLog += BackupFixtures.strengthSetLog()
         dao.exerciseProgress += BackupFixtures.exerciseProgress()
+        dao.userExercise += BackupFixtures.userExercise()
+        dao.exerciseAlias += BackupFixtures.exerciseAlias()
     }
 
     @Test
@@ -51,8 +53,8 @@ class BackupServiceTest {
 
         val summary = (service.export(URI) as Outcome.Ok).value
 
-        assertThat(summary.totalRows).isEqualTo(14)
-        assertThat(summary.rowsWritten).isEqualTo(14)
+        assertThat(summary.totalRows).isEqualTo(16)
+        assertThat(summary.rowsWritten).isEqualTo(16)
         assertThat(summary.appVersion).isEqualTo("1.0")
         assertThat(summary.exportedAtMillis).isEqualTo(clock.millis())
         assertThat(summary.schemaVersion).isEqualTo(BackupFile.CURRENT_SCHEMA_VERSION)
@@ -70,7 +72,7 @@ class BackupServiceTest {
 
         val summary = (service.import(URI, BackupMode.REPLACE) as Outcome.Ok).value
 
-        assertThat(summary.rowsWritten).isEqualTo(14)
+        assertThat(summary.rowsWritten).isEqualTo(16)
         assertThat(dao.activitySession.map { it.id to it.title }).containsExactly(1L to "Spiel")
         assertThat(dao.ingredient.map { it.name }).containsExactly("Haferflocken")
         assertThat(dao.activityStream.single().activityId).isEqualTo(1L)
@@ -84,7 +86,7 @@ class BackupServiceTest {
 
         val summary = (service.import(URI, BackupMode.MERGE) as Outcome.Ok).value
 
-        assertThat(summary.rowsWritten).isEqualTo(14)
+        assertThat(summary.rowsWritten).isEqualTo(16)
         val activityId = dao.activitySession.single().id
         assertThat(activityId).isNotEqualTo(1L)
         assertThat(dao.activityStream.single().activityId).isEqualTo(activityId)
@@ -265,6 +267,8 @@ class BackupServiceTest {
         dao.strengthWorkoutExercise.clear()
         dao.strengthSetLog.clear()
         dao.exerciseProgress.clear()
+        dao.userExercise.clear()
+        dao.exerciseAlias.clear()
     }
 
     private companion object {

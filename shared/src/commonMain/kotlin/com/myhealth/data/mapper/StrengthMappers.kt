@@ -30,6 +30,10 @@ fun StrengthWorkoutWithExercises.toDomain(): StrengthWorkout = StrengthWorkout(
     createdAtMillis = workout.createdAtMillis,
     updatedAtMillis = workout.updatedAtMillis,
     useInSuggestions = workout.useInSuggestions,
+    videoUrl = workout.videoUrl,
+    videoTitle = workout.videoTitle,
+    durationMin = workout.durationMin,
+    sourceText = workout.sourceText,
 )
 
 /** The header row only; the children are written separately (see `RoomStrengthRepository`). */
@@ -43,6 +47,10 @@ fun StrengthWorkout.toEntity(): StrengthWorkoutEntity = StrengthWorkoutEntity(
     createdAtMillis = createdAtMillis,
     updatedAtMillis = updatedAtMillis,
     useInSuggestions = useInSuggestions,
+    videoUrl = videoUrl,
+    videoTitle = videoTitle,
+    durationMin = durationMin,
+    sourceText = sourceText,
 )
 
 fun StrengthWorkoutExerciseEntity.toDomain(): StrengthWorkoutExercise = StrengthWorkoutExercise(
@@ -57,6 +65,7 @@ fun StrengthWorkoutExerciseEntity.toDomain(): StrengthWorkoutExercise = Strength
     isBodyweight = isBodyweight,
     restSec = restSec,
     note = note,
+    sourceLine = sourceLine,
 )
 
 /**
@@ -76,6 +85,7 @@ fun StrengthWorkoutExercise.toEntity(workoutId: Long = this.workoutId): Strength
         isBodyweight = isBodyweight,
         restSec = restSec,
         note = note,
+        sourceLine = sourceLine,
     )
 
 fun StrengthSetLogEntity.toDomain(): StrengthSetLog = StrengthSetLog(

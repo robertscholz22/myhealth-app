@@ -164,7 +164,7 @@ object MuscleLoadEngine {
     fun workoutShares(workout: StrengthWorkout): Map<MuscleGroup, Double>? {
         val weights = mutableMapOf<MuscleGroup, Double>()
         workout.exercises.forEach { row ->
-            val exercise = ExerciseCatalog.byId(row.exerciseId) ?: return@forEach
+            val exercise = ExerciseRegistry.byId(row.exerciseId) ?: return@forEach
             val sets = row.sets.toDouble()
             exercise.primary.forEach { weights[it] = (weights[it] ?: 0.0) + sets }
             exercise.secondary.forEach { weights[it] = (weights[it] ?: 0.0) + sets * SECONDARY_WEIGHT }

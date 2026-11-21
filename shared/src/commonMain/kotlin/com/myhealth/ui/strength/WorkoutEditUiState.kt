@@ -1,5 +1,6 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import com.myhealth.domain.engine.strength.ExerciseCatalog
 import com.myhealth.domain.engine.strength.ProgressionDefaults
 import com.myhealth.domain.model.ExercisePrescription
@@ -120,7 +121,7 @@ fun validateWorkoutDraft(draft: WorkoutEditDraft): WorkoutValidation {
 /** Appends [exerciseId] as a new last row, defaulting to a hold for a timed exercise and to the
  * catalog's own bodyweight flag (`swui02`). A dropped catalog id leaves the draft unchanged. */
 fun WorkoutEditDraft.addExercise(exerciseId: String): WorkoutEditDraft {
-    val exercise = ExerciseCatalog.byId(exerciseId) ?: return this
+    val exercise = ExerciseRegistry.byId(exerciseId) ?: return this
     val row = WorkoutExerciseDraft(
         exerciseId = exercise.id,
         reps = if (exercise.isTimed) null else 10,
@@ -182,7 +183,7 @@ fun WorkoutEditDraft.toStrengthWorkout(clock: PlatformClock): StrengthWorkout {
 fun WorkoutEditDraft.highlight(): Map<MuscleGroup, Float> {
     val result = mutableMapOf<MuscleGroup, Float>()
     exercises.forEach { row ->
-        val exercise = ExerciseCatalog.byId(row.exerciseId) ?: return@forEach
+        val exercise = ExerciseRegistry.byId(row.exerciseId) ?: return@forEach
         highlightFor(exercise).forEach { (group, value) -> result[group] = maxOf(result[group] ?: 0f, value) }
     }
     return result.mapValues { it.value.coerceIn(0f, 1f) }

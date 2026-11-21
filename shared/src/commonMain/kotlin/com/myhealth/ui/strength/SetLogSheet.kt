@@ -1,5 +1,6 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -126,7 +127,7 @@ private fun ExerciseFeedbackRow(
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            val exercise = ExerciseCatalog.byId(exerciseId)
+            val exercise = ExerciseRegistry.byId(exerciseId)
             AnimatedBodyFigure(
                 clip = ExerciseAnimations.clipOrStanding(exerciseId),
                 highlight = exercise?.let(::highlightFor) ?: emptyMap(),

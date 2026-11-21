@@ -12,6 +12,8 @@ import com.myhealth.data.db.entity.ProfileEntity
 import com.myhealth.data.db.entity.RideBestEntity
 import com.myhealth.data.db.entity.RunningBestEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
+import com.myhealth.data.db.entity.ExerciseAliasEntity
+import com.myhealth.data.db.entity.UserExerciseEntity
 import com.myhealth.data.db.entity.StrengthSetLogEntity
 import com.myhealth.data.db.entity.StrengthWorkoutEntity
 import com.myhealth.data.db.entity.StrengthWorkoutExerciseEntity
@@ -230,6 +232,23 @@ internal object BackupFixtures {
             updatedDay = DAY,
         )
 
+    /** P26: one of the owner's exercises; the random `USER_…` id is the MERGE key. */
+    fun userExercise(id: String = "USER_TESTEXERCISE1", name: String = "Booty band walk") =
+        UserExerciseEntity(
+            id = id,
+            name = name,
+            primaryMuscles = "GLUTES",
+            secondaryMuscles = "ADDUCTORS",
+            equipment = "BAND",
+            pattern = "OTHER",
+            createdAtMillis = START,
+            updatedAtMillis = START,
+        )
+
+    /** P26: a learned name; the normalised name is the PK and the MERGE key. */
+    fun exerciseAlias(name: String = "band walks", exerciseId: String = "USER_TESTEXERCISE1") =
+        ExerciseAliasEntity(normalisedName = name, exerciseId = exerciseId, createdAtMillis = START)
+
     fun file(exportedAtMillis: Long = START, appVersion: String = "1.0") = BackupFile(
         exportedAtMillis = exportedAtMillis,
         appVersion = appVersion,
@@ -248,5 +267,7 @@ internal object BackupFixtures {
         strengthWorkoutExercise = listOf(strengthWorkoutExercise()),
         strengthSetLog = listOf(strengthSetLog()),
         exerciseProgress = listOf(exerciseProgress()),
+        userExercise = listOf(userExercise()),
+        exerciseAlias = listOf(exerciseAlias()),
     )
 }

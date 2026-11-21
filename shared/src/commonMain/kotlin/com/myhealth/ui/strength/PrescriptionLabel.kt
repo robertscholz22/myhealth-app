@@ -1,5 +1,6 @@
 package com.myhealth.ui.strength
 
+import com.myhealth.domain.engine.strength.ExerciseRegistry
 import com.myhealth.domain.engine.strength.ExerciseCatalog
 import com.myhealth.domain.engine.strength.ProgressionDefaults
 import com.myhealth.domain.model.ExercisePrescription
@@ -55,7 +56,7 @@ fun prescriptionOnlyLabel(prescription: ExercisePrescription): String {
 fun workoutPrescriptionLine(workout: StrengthWorkout): String? {
     if (workout.exercises.isEmpty()) return null
     val lines = workout.exercises.sortedBy { it.orderIndex }.take(WORKOUT_LINE_EXERCISE_COUNT).map { row ->
-        val name = ExerciseCatalog.byId(row.exerciseId)?.name ?: row.exerciseId
+        val name = ExerciseRegistry.byId(row.exerciseId)?.name ?: row.exerciseId
         "$name ${prescriptionLabel(row.sets, row.asFallbackPrescription())}"
     }
     val suffix = if (workout.exercises.size > WORKOUT_LINE_EXERCISE_COUNT) "…" else ""
