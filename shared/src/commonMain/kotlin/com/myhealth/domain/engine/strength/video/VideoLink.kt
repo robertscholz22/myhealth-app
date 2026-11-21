@@ -34,7 +34,8 @@ object VideoLink {
      */
     fun fromShare(text: String?, subject: String?): Shared {
         val url = firstUrl(text) ?: firstUrl(subject)
-        val rest = text?.let { t -> url?.let { t.replace(URL, "") } ?: t }?.trim()?.trim('-', '|', ':', ' ')
+        val rest = text?.let { t -> url?.let { t.replace(URL, " ") } ?: t }
+            ?.replace(SPACES, " ")?.trim()?.trim('-', '|', ':', ' ')
         val title = subject?.trim()?.takeIf { it.isNotEmpty() && firstUrl(it) == null }
             ?: rest?.takeIf { it.isNotEmpty() && it.length <= MAX_TITLE }
         return Shared(url?.let(::normalise), title)
@@ -44,6 +45,7 @@ object VideoLink {
     fun isWebLink(url: String?): Boolean = url != null && WEB.matches(url.trim())
 
     private const val MAX_TITLE = 200
+    private val SPACES = Regex("\\s+")
     private val URL = Regex("https?://[^\\s<>\"]+", RegexOption.IGNORE_CASE)
     private val WEB = Regex("^https?://[^\\s]+$", RegexOption.IGNORE_CASE)
     private val ID = Regex("^[A-Za-z0-9_-]{11}$")

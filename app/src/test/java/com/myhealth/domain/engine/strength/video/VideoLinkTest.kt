@@ -67,4 +67,11 @@ class VideoLinkTest {
         assertFalse(VideoLink.isWebLink(null))
         assertFalse(VideoLink.isWebLink("javascript:alert(1)"))
     }
+
+    @Test
+    fun text_around_the_link_becomes_one_clean_title() {
+        val shared = VideoLink.fromShare("Watch this https://vimeo.com/987654 great", null)
+        assertEquals("https://vimeo.com/987654", shared.url)
+        assertEquals("Watch this great", shared.title)
+    }
 }

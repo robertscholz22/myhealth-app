@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.myhealth.di.LocalAppGraph
+import com.myhealth.domain.engine.strength.video.VideoLink
 import com.myhealth.domain.model.AppSettings
 import com.myhealth.ui.common.LocalPlatformUi
 import com.myhealth.ui.nav.MyHealthNavHost
@@ -57,6 +58,17 @@ class MainActivity : ComponentActivity() {
      * the Import screen when it sees one, and the screen starts the import and clears it (P7.6).
      */
     private fun handleImportIntent(intent: Intent?) {
+        // P26.7: "Share → MyHealth" from YouTube or a browser: a text with a link.
+        if (intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("text/plain") == true) {
+            val shared = VideoLink.fromShare(
+                intent.getStringExtra(Intent.EXTRA_TEXT),
+                intent.getStringExtra(Intent.EXTRA_SUBJECT),
+            )
+            if (shared.url != null) {
+                (application as MyHealthApp).graph.pendingVideoLink.value = shared
+                return
+            }
+        }
         val uri: Uri? = when (intent?.action) {
             Intent.ACTION_SEND -> intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
             Intent.ACTION_VIEW -> intent.data

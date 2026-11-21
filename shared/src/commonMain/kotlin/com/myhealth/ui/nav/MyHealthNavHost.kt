@@ -107,6 +107,15 @@ fun MyHealthNavHost(
                 if (sharedImport != null && !onImport) navController.navigate(ImportRoute)
             }
 
+            // P26.7: a video link shared into the app opens "New video workout" with it filled in.
+            val sharedVideo by graph.pendingVideoLink.collectAsStateWithLifecycle()
+            LaunchedEffect(sharedVideo, onOnboarding, backStackEntry != null) {
+                val shared = sharedVideo ?: return@LaunchedEffect
+                if (onOnboarding || backStackEntry == null) return@LaunchedEffect
+                graph.pendingVideoLink.value = null
+                navController.navigate(VideoImportRoute(url = shared.url.orEmpty(), title = shared.title.orEmpty()))
+            }
+
             Scaffold(
                 modifier = modifier.fillMaxSize(),
                 bottomBar = { if (!onOnboarding) MyHealthBottomBar(navController) },

@@ -1171,3 +1171,19 @@ Emulator (emulator-5554):
   exercises, 13 min." Found: the slot's 50 min kept because that workout has no stored length;
   fixed to use the workout's estimate → "Video · 13 min · 23 AU", Watch video. PASS after fix (p266-b)
 - Accept selected → next week, Mon 23 Nov card: "Workout: Second test", Watch video. PASS (p266-c)
+
+### P26.7 — Android share target
+`ACTION_SEND text/plain` intent filter on `MainActivity`; `handleImportIntent` turns EXTRA_TEXT +
+EXTRA_SUBJECT into `VideoLink.fromShare` and parks it in `graph.pendingVideoLink` (a text share
+without a link falls through to the file path as before); `MyHealthNavHost` opens
+`VideoImportRoute(url, title)` once a profile exists and clears the slot. `fromShare` now collapses
+the spaces left where the link was cut out. 1 new test; `tools/verify.sh` 1284 unit tests, 0 failures.
+
+Emulator (emulator-5554; `am start -a SEND -t text/plain` with the extras the YouTube app sends):
+- `cmd package query-activities --brief -a SEND -t text/plain` lists `com.myhealth/.MainActivity`. PASS
+- Cold start, text `https://youtube.com/watch?v=AbCdEfGhIj1&si=xyz`, subject "Example core video"
+  → New video workout, link `https://www.youtube.com/watch?v=AbCdEfGhIj1`, title and name filled. PASS (p267-a)
+- App running, text "Watch this https://vimeo.com/987654 great" → same screen, Vimeo link kept,
+  title "Watch this great" (was "Watch this  great" before the fix). PASS (p267-b)
+- Not covered: sharing from the real YouTube app (not signed in on the emulator); checked on the
+  Pixel at release.

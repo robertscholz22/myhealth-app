@@ -105,6 +105,12 @@
                 <data android:mimeType="image/fits" />
                 <data android:mimeType="application/vnd.ant.fit" />
             </intent-filter>
+            <!-- P26.7: "Share → MyHealth" with a video link (YouTube app, browser). -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

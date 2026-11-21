@@ -55,10 +55,10 @@ interface UiGraph {
     /** P26.4: one oEmbed title lookup per video link. */
     val videoTitleSource: com.myhealth.domain.repository.VideoTitleSource
 
-    /** P26.7: a link shared into the app ("Share → MyHealth"), consumed by the nav host. */
     /** P26.5: done / undone without a watch recording, "Which workout was this?". */
     val videoSessions: com.myhealth.domain.repository.VideoSessions
 
+    /** P26.7: a link shared into the app ("Share → MyHealth"), consumed by the nav host. */
     val pendingVideoLink: kotlinx.coroutines.flow.MutableStateFlow<com.myhealth.domain.engine.strength.video.VideoLink.Shared?>
     val strengthWorkoutSeeder: StrengthWorkoutSeeder
     val loadRepo: LoadRepository
