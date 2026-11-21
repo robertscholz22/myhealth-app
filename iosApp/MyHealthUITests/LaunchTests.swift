@@ -362,15 +362,15 @@ final class LaunchTests: XCTestCase {
         if !list.isHittable { app.swipeUp() }
         list.tap()
         app.typeText("Squats 40s\nPush-ups 40s\nPlank 30s")
-        // Right after typing the tree can lag (run 44944626378): wait for the title, else swipe the
-        // keyboard away.
-        let title = app.staticTexts["New video workout"]
-        if title.waitForExistence(timeout: 10) && title.isHittable { title.tap() } else { app.swipeDown() }
+        // iOS shifts the whole view up while typing, so the tab bar covers the bottom button: the
+        // "Done" in the hint row closes the keyboard, then the top bar's "Check exercises" goes on.
+        let done = app.buttons["video_import_list_done"].firstMatch
+        XCTAssertTrue(done.waitForExistence(timeout: 10), "no Done while typing the list")
+        done.tap()
         sleep(1)
         capture(app, "71_video_list_typed")
-        var check = app.buttons["video_import_next"].firstMatch
-        if !check.waitForExistence(timeout: 10) { check = app.buttons["Check exercises"].firstMatch }
-        if !check.isHittable { app.swipeUp(); sleep(1) }
+        let check = app.buttons["video_import_next_top"].firstMatch
+        XCTAssertTrue(check.waitForExistence(timeout: 10), "no Check exercises in the top bar")
         check.tap()
         expect(label(containing: "matched", in: app), app, "72_video_checked", timeout: 20)
     }

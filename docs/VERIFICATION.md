@@ -1221,3 +1221,16 @@ Emulator (emulator-5554), invented list via share → New video workout:
   each side, Bicycle crunches 40s, Bear crawl 30s" → 6 matched · 0 to check · 1 not found (Bear
   crawl), body figure shows chest/abs/quads/glutes. PASS (p269-a, p269-b)
 - Exercises → search "burpee" → detail plays the jump clip, chest + quads primary. PASS (p269-c)
+
+### TestFlight 0.11.0 (210) and the keyboard fix on "New video workout"
+- Simulator run 44940412665 (d395c46, with the share extension): 5/5 UI tests incl.
+  `testVideoWorkoutFromShare`. PASS
+- Version 0.11.0 (210). TestFlight run 44944626378 failed: the Fastfile read `project.yml` from
+  `fastlane/` (lane code runs there) → now looks in `../` too. Run 44947813963
+  (`share_extension=false`) uploaded build 210. PASS
+- That run's simulator job showed a real problem: while typing the list, the whole view shifts
+  up, the tab bar covers "Check exercises" and Return only adds a line, so there was no clear way
+  on. Fix: "Done" in the list's hint row while it has focus, tap on empty space clears focus,
+  "Check exercises" also in the top bar. Emulator: Done shown above the keyboard (p269-d), tap →
+  keyboard hidden, top-bar action visible (p269-e); tap on empty space hides the keyboard; top-bar
+  "Check exercises" → 2 matched. PASS. The UI test now uses Done + the top-bar action.

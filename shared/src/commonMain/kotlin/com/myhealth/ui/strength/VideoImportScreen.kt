@@ -48,6 +48,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
@@ -126,6 +130,11 @@ fun VideoImportScreen(
                         TextButton(onClick = { vm.save() }, enabled = !state.saving, modifier = Modifier.testTag("video_import_save")) {
                             Text(stringResource(Res.string.action_save))
                         }
+                    } else if (!state.loading) {
+                        // Reachable without scrolling past the keyboard (iOS shifts the whole view up).
+                        TextButton(onClick = vm::next, modifier = Modifier.testTag("video_import_next_top")) {
+                            Text(stringResource(Res.string.video_import_next))
+                        }
                     }
                 },
             )
@@ -197,8 +206,13 @@ private fun VideoStepContent(
     onNext: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
+    var listFocused by remember { mutableStateOf(false) }
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState()).imePadding().padding(SCREEN_PADDING),
+        modifier = modifier
+            // Return adds a line in the list, so a tap on empty space is how the keyboard closes.
+            .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }
+            .verticalScroll(rememberScrollState()).imePadding().padding(SCREEN_PADDING),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         OutlinedTextField(
@@ -262,14 +276,23 @@ private fun VideoStepContent(
             placeholder = { Text(stringResource(Res.string.video_import_list_placeholder)) },
             isError = state.showErrors && state.textError,
             supportingText = {
-                Text(
-                    stringResource(
-                        if (state.showErrors && state.textError) Res.string.video_import_error_list else Res.string.video_import_list_hint,
-                    ),
-                )
+                // The hint row is what stays visible right above the keyboard, so "Done" lives here.
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stringResource(
+                            if (state.showErrors && state.textError) Res.string.video_import_error_list else Res.string.video_import_list_hint,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (listFocused) {
+                        TextButton(onClick = { focusManager.clearFocus() }, modifier = Modifier.testTag("video_import_list_done")) {
+                            Text(stringResource(Res.string.import_action_done))
+                        }
+                    }
+                }
             },
             minLines = 8,
-            modifier = Modifier.fillMaxWidth().testTag("video_import_list"),
+            modifier = Modifier.fillMaxWidth().testTag("video_import_list").onFocusChanged { listFocused = it.isFocused },
         )
         Button(onClick = onNext, modifier = Modifier.fillMaxWidth().testTag("video_import_next")) {
             Text(stringResource(Res.string.video_import_next))
