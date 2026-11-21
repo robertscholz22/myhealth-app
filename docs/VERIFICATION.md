@@ -1152,3 +1152,22 @@ Emulator (emulator-5554, invented video workouts from P26.4):
   two recordings and their sessions unchanged. PASS (p265-i, p265-j, p265-k)
 - Note: emulator had no Health Connect permission after the P26.4 reinstall; granted through
   More → Integrations → Grant permissions (Allow all + past/background access).
+
+### P26.6 — video workouts in suggestions
+Video workouts were already in the pool through "Use in suggestions" and their derived kind
+(P19 `strengthPool`, `choiceFor`). New: a placed session whose chosen workout is a video takes the
+video's minutes (`estimatedMinutes` = stored length, else the computed estimate) and their
+catalog estimate instead of the slot's; the rationale line reads "Video workout: … — n exercises,
+m min."; the inputs hash adds `:v<min>` per video workout only (no video → byte-identical, all
+`sug*` fixtures unchanged). Suggestion review card and Today's suggested row show "Video" and
+Watch video. The workout editor no longer prescribes loads for video workouts (no weights, no
+progression); built-in substitution never touches them (only `StrengthWorkoutSeeder` materialises).
+5 new tests (`VideoSuggestionTest`); `tools/verify.sh` 1283 unit tests, 0 failures; iOS OK.
+
+Emulator (emulator-5554):
+- Unchecked "Full body A"; first generate gave no strength at all — this week already held three
+  strength sessions from the P26.5 run (cap 2). Settings → Strength cap 5 → Regenerate. PASS
+- Mon 23 Nov: Strength full, "Video · 50 min · 90 AU", rationale "Video workout: Second test — 2
+  exercises, 13 min." Found: the slot's 50 min kept because that workout has no stored length;
+  fixed to use the workout's estimate → "Video · 13 min · 23 AU", Watch video. PASS after fix (p266-b)
+- Accept selected → next week, Mon 23 Nov card: "Workout: Second test", Watch video. PASS (p266-c)

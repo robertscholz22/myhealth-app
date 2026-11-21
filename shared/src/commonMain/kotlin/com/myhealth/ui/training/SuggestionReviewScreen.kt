@@ -67,7 +67,7 @@ import com.myhealth.ui.theme.MyHealthTheme
 @Composable
 fun SuggestionReviewScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val vm = rememberVm { graph ->
-        SuggestionReviewViewModel(graph.suggestionRepo, graph.settings, graph.profileRepo, graph.clock, graph.planRepo, graph.healthRepo, graph.activityRepo, graph.calendarRepo)
+        SuggestionReviewViewModel(graph.suggestionRepo, graph.settings, graph.profileRepo, graph.clock, graph.planRepo, graph.healthRepo, graph.activityRepo, graph.calendarRepo, graph.strengthRepo)
     }
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
@@ -152,6 +152,7 @@ internal fun SuggestionReviewContent(
                     isAccepted = state.isAccepted(session.id),
                     onToggle = { onToggle(session.id) },
                     hrZoneModel = state.hrZoneModel,
+                    videoUrl = session.workoutId?.let { state.videoUrls[it] },
                 )
             }
         }
@@ -215,6 +216,7 @@ private fun SuggestionCard(
     isAccepted: Boolean,
     onToggle: () -> Unit,
     hrZoneModel: HrZoneModel?,
+    videoUrl: String? = null,
 ) {
     SectionCard(
         title = dayHeaderLabel(day),
@@ -237,6 +239,7 @@ private fun SuggestionCard(
         }
         Text(
             text = listOfNotNull(
+                videoUrl?.let { stringResource(Res.string.workouts_video_chip) },
                 session.targetDurationMin?.let { "$it min" },
                 session.targetPaceSecPerKm?.let { formatPaceSecPerKm(it) },
                 "${mathRound(session.estimatedTrimp)} AU",
@@ -247,6 +250,7 @@ private fun SuggestionCard(
         TargetZoneChip(session.sessionType, hrZoneModel)
         WorkoutStructureSection(session.structureJson)
         RationaleList(session.rationale)
+        videoUrl?.let { com.myhealth.ui.strength.WatchVideoButton(it) }
     }
 }
 

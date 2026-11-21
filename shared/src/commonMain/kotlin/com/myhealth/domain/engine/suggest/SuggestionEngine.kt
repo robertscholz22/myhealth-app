@@ -464,6 +464,10 @@ class SuggestionEngine(private val clock: Clock) {
         val choice = StrengthRules.choiceFor(item.sessionType, muscle, occurrence)
         val workout = choice?.workout
         val longRunHere = longRun?.takeIf { item.sessionType == SessionType.LONG_RUN }
+        // P26.6: a video runs as long as it runs — its minutes and their estimate replace the slot's.
+        val videoMinutes = workout?.takeIf { it.isVideo }?.estimatedMinutes?.takeIf { it > 0 }
+        val minutes = videoMinutes ?: item.minutes
+        val estTrimp = videoMinutes?.let { m -> entry?.estTrimpFor(m) } ?: item.estTrimp
         val distance = when {
             isTimeTrial -> GoalRules.BENCHMARK_DISTANCE_M
             longRunHere != null -> longRunHere.meters
@@ -476,9 +480,9 @@ class SuggestionEngine(private val clock: Clock) {
             sportType = item.sportType,
             sessionType = item.sessionType,
             intensity = item.intensity,
-            targetDurationMin = item.minutes,
+            targetDurationMin = minutes,
             targetDistanceMeters = distance,
-            estimatedTrimp = item.estTrimp,
+            estimatedTrimp = estTrimp,
             score = item.score,
             rationale = item.rationale +
                 Rationale.intervalEntries(plan, pace, ctx, item.sessionType) +

@@ -252,6 +252,13 @@ object StrengthRules {
         // P17: a mobility routine is announced by [mobilityEntry], not by the strength line.
         if (row.kind.isMobility) return null
         val count = row.exercises.size
+        if (row.isVideo) {
+            return RationaleEntry(
+                ruleId = Rationale.RULE_STRENGTH_WORKOUT,
+                text = "Video workout: ${row.name} — $count ${if (count == 1) "exercise" else "exercises"}, " +
+                    "${row.estimatedMinutes} min.",
+            )
+        }
         return RationaleEntry(
             ruleId = Rationale.RULE_STRENGTH_WORKOUT,
             text = "Workout: ${row.name} — $count ${if (count == 1) "exercise" else "exercises"}, " +

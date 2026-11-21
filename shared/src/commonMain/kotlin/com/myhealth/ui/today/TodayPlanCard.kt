@@ -71,7 +71,7 @@ fun TodayPlanCard(
         if (isStale) StaleSuggestionsHint(onRegenerate = onOpenTraining)
         when {
             planned.isNotEmpty() -> planned.forEach { PlannedRow(it, hrZoneModel, onMarkDone, it.workoutId?.let(videoWorkouts::get)) }
-            suggested != null -> SuggestedRow(suggested, hrZoneModel, onReviewSuggestions)
+            suggested != null -> SuggestedRow(suggested, hrZoneModel, onReviewSuggestions, suggested.workoutId?.let(videoWorkouts::get))
             else -> {
                 Text(
                     text = stringResource(Res.string.today_plan_empty),
@@ -134,7 +134,12 @@ private fun PlannedRow(
 }
 
 @Composable
-private fun SuggestedRow(session: SuggestedSession, hrZoneModel: HrZoneModel?, onReviewSuggestions: () -> Unit) {
+private fun SuggestedRow(
+    session: SuggestedSession,
+    hrZoneModel: HrZoneModel?,
+    onReviewSuggestions: () -> Unit,
+    video: com.myhealth.domain.model.StrengthWorkout? = null,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -166,6 +171,14 @@ private fun SuggestedRow(session: SuggestedSession, hrZoneModel: HrZoneModel?, o
             )
             TargetZoneChip(session.sessionType, hrZoneModel)
             WorkoutStructureSection(session.structureJson)
+            video?.let {
+                Text(
+                    text = stringResource(Res.string.session_workout_format, it.name),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                it.videoUrl?.let { url -> com.myhealth.ui.strength.WatchVideoButton(url) }
+            }
             session.rationale.firstOrNull()?.let { entry ->
                 Text(
                     text = entry.text,

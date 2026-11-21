@@ -42,6 +42,8 @@ data class SuggestionReviewUiState(
     /** A profile-only zone model (P14.6, §4.2): the chip only needs a zone's bpm range, not a
      * measured pace band, so this is the lightweight resolution — see `lightweightHrZoneModel`. */
     val hrZoneModel: HrZoneModel? = null,
+    /** P26.6: the video link per workout id, for the card's "Video" label and Watch button. */
+    val videoUrls: Map<Long, String> = emptyMap(),
 ) {
     val phase: TrainingPhase? get() = batch?.phase
 

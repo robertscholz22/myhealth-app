@@ -97,6 +97,8 @@ class WorkoutEditViewModel(
      * that already carry a load skip the lookup.
      */
     private suspend fun fillMissingLoads(draft: WorkoutEditDraft): WorkoutEditDraft {
+        // P26: a video decides what happens — no weights, no progression.
+        if (draft.isVideo) return draft
         if (draft.exercises.none { it.loadKg == null && !it.isBodyweight }) return draft
         val weight = bodyWeightKg()
         val rows = draft.exercises.map { row ->
@@ -129,6 +131,7 @@ class WorkoutEditViewModel(
     fun addExercise(exerciseId: String) {
         val exercise = ExerciseRegistry.byId(exerciseId) ?: return
         update { it.addExercise(exerciseId) }
+        if (_state.value.draft.isVideo) return
         viewModelScope.launch {
             val prescription = strengthRepo.prescriptionFor(exercise, bodyWeightKg())
             update { draft ->

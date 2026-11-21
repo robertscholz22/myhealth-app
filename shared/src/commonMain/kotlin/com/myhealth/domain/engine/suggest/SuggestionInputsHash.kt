@@ -202,7 +202,10 @@ object SuggestionInputsHash {
     /** P19: the checked workouts and the rotation state; absent while `strengthPool` is `null`. */
     private fun poolLine(input: SuggestionInput): String? {
         val pool = input.strengthPool ?: return null
-        val workouts = pool.sortedBy { it.id }.joinToString(",") { "${it.id}:${it.kind.name}:${it.updatedAtMillis}" }
+        val workouts = pool.sortedBy { it.id }.joinToString(",") { w ->
+            // P26.6: video fields only where present, so pre-P26 inputs hash byte-identically.
+            "${w.id}:${w.kind.name}:${w.updatedAtMillis}" + if (w.isVideo) ":v${w.durationMin ?: ""}" else ""
+        }
         val last = input.lastWorkoutIdBySessionType.entries
             .sortedBy { it.key.name }
             .joinToString(",") { "${it.key.name}=${it.value}" }

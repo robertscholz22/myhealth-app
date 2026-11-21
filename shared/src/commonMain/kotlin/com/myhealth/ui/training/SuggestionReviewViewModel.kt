@@ -16,6 +16,7 @@ import com.myhealth.domain.engine.load.HrZoneModel
 import com.myhealth.domain.repository.HealthRepository
 import com.myhealth.domain.repository.PlanRepository
 import com.myhealth.domain.repository.SettingsRepository
+import com.myhealth.domain.repository.StrengthRepository
 import com.myhealth.domain.repository.SuggestionRepository
 import com.myhealth.domain.util.Outcome
 import com.myhealth.resources.*
@@ -72,7 +73,13 @@ class SuggestionReviewViewModel(
     private val healthRepo: HealthRepository? = null,
     private val activityRepo: ActivityRepository? = null,
     private val calendarRepo: CalendarRepository? = null,
+    private val strengthRepo: StrengthRepository? = null,
 ) : ViewModel() {
+
+    /** P26.6: workout id → video link. */
+    private val videoUrls: Flow<Map<Long, String>> = strengthRepo?.observeAll()
+        ?.map { all -> all.mapNotNull { w -> w.videoUrl?.let { w.id to it } }.toMap() }
+        ?: flowOf(emptyMap())
 
     private val action = MutableStateFlow(ReviewAction())
 
@@ -132,7 +139,7 @@ class SuggestionReviewViewModel(
     }
 
     val state: StateFlow<SuggestionReviewUiState> =
-        combine(batch, sessions, action, replaceable, combine(fixed, zoneModel) { f, z -> f to z }) { current, rows, act, count, extra ->
+        combine(batch, sessions, action, replaceable, combine(fixed, zoneModel, videoUrls) { f, z, v -> Triple(f, z, v) }) { current, rows, act, count, extra ->
             SuggestionReviewUiState(
                 isLoading = false,
                 batch = current,
@@ -144,6 +151,7 @@ class SuggestionReviewViewModel(
                 done = act.done,
                 hrZoneModel = extra.second,
                 fixedLoad = extra.first.load,
+                videoUrls = extra.third,
             )
         }.stateIn(
             viewModelScope,

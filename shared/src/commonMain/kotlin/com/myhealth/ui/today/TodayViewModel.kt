@@ -249,7 +249,7 @@ class TodayViewModel(
         suggestionRepo.observeStale(),
         strengthRepo.observeAll(),
     ) { planned, suggested, stale, workouts ->
-        val ids = planned.mapNotNull { it.workoutId }.toSet()
+        val ids = planned.mapNotNull { it.workoutId }.toSet() + listOfNotNull(suggested?.workoutId)
         TodayPlan(
             planned = planned,
             videoWorkouts = workouts.filter { it.id in ids && it.isVideo }.associateBy { it.id },
