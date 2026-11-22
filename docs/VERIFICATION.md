@@ -1237,3 +1237,6 @@ Emulator (emulator-5554), invented list via share → New video workout:
 - iOS simulator run 44952779515 (36dbdce): 5/5 UI tests. In `testVideoWorkoutFromShare` the list's
   Done closes the keyboard (71: both "Check exercises" visible), the top-bar action opens the check
   step with "3 matched · 0 to check · 0 not found" (72 tree; the image lags one frame). PASS
+- Build 211 (0.11.0, keyboard fix), run 44958800109: attempt 1 failed on runner limits (Kotlin
+  release link `Java heap space`/exit 137; photo-picker miss in `testScanFromPhoto`); attempt 2:
+  simulator 5/5 and build 211 uploaded to TestFlight. PASS
