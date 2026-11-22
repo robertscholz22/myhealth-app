@@ -1240,3 +1240,10 @@ Emulator (emulator-5554), invented list via share → New video workout:
 - Build 211 (0.11.0, keyboard fix), run 44958800109: attempt 1 failed on runner limits (Kotlin
   release link `Java heap space`/exit 137; photo-picker miss in `testScanFromPhoto`); attempt 2:
   simulator 5/5 and build 211 uploaded to TestFlight. PASS
+
+### Release 0.11.0 (versionCode 211)
+- main fast-forwarded to the P26 branch; verify OK (1288 unit tests); `tools/connected.sh
+  emulator-5554`: 34/34 instrumented tests. Tag v0.11.0, GitHub release with MyHealth-0.11.0.apk.
+- Owner's phone: JSON backup before the install, release asset signer equal to the installed app's,
+  `install -r` → 0.11.0 (211), app opens, no crash. Backup after the install: schema 12, the two new
+  tables present and empty, the same row counts; only `dailyLoad.computedAtMillis` differs. PASS
