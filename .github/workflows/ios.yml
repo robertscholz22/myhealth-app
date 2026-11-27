@@ -82,7 +82,7 @@ jobs:
           fi
 
       # P27: a family library on the Firebase emulator (project demo-family, never the cloud) with
-      # "Anna"'s items, for testFamilySharingJoinAndImport. The simulator reaches it at 127.0.0.1.
+      # "Anna"'s items, for testSharedFamilyLibraryJoinAndImport. The simulator reaches it at 127.0.0.1.
       - name: Firebase emulator with a seeded family library
         run: |
           nohup bash tools/firestore-emu.sh serve > "$RUNNER_TEMP/firebase-emu.log" 2>&1 &

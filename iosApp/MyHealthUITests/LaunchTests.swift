@@ -380,10 +380,10 @@ final class LaunchTests: XCTestCase {
         app.descendants(matching: .any)[tag].firstMatch
     }
 
-    /// P27: joins the family library that ios.yml seeds on the Firebase emulator
+    /// P27 (named to run after testOnboarding…, which needs a fresh install; XCTest runs A→Z): joins the family library that ios.yml seeds on the Firebase emulator
     /// (tools/share-seed.py: "Anna" with a recipe, two ingredients, an exercise and a workout) and
     /// imports her recipe, which brings its ingredients along.
-    func testFamilySharingJoinAndImport() throws {
+    func testSharedFamilyLibraryJoinAndImport() throws {
         guard let code = ProcessInfo.processInfo.environment["SHARE_CODE"], !code.isEmpty else {
             throw XCTSkip("no seeded family library (SHARE_CODE)")
         }
