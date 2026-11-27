@@ -183,11 +183,13 @@ private fun CreateWizard(state: ShareUiState, vm: ShareLibraryViewModel, share: 
         }
         OutlinedTextField(
             value = state.projectId, onValueChange = vm::setProjectId, singleLine = true,
+            keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Next),
             label = { Text(stringResource(Res.string.share_project_id_label)) },
             modifier = Modifier.fillMaxWidth().testTag("share_project_field"),
         )
         OutlinedTextField(
             value = state.apiKey, onValueChange = vm::setApiKey, singleLine = true,
+            keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Next),
             label = { Text(stringResource(Res.string.share_api_key_label)) },
             modifier = Modifier.fillMaxWidth().testTag("share_key_field"),
         )

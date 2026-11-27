@@ -71,6 +71,8 @@ fun ExerciseDetailScreen(
     onBack: () -> Unit,
     onEdit: (String) -> Unit,
     modifier: Modifier = Modifier,
+    /** P27.5: "Make my copy" made one; open it. */
+    onOpenCopy: (com.myhealth.domain.share.ShareRef) -> Unit = {},
 ) {
     val vm = rememberVm { graph ->
         ExercisesViewModel(
@@ -86,6 +88,10 @@ fun ExerciseDetailScreen(
     val progressionCard by vm.progressionCardState.collectAsStateWithLifecycle()
     val exercise = state.library.byId(exerciseId)
     val own = state.library.userExercise(exerciseId)
+    val share = com.myhealth.ui.share.rememberShareCard(
+        if (exerciseId.startsWith("USER_")) com.myhealth.domain.share.ShareRef(com.myhealth.domain.share.ShareKind.EXERCISE, exerciseId) else null,
+    )
+    val readOnly = share?.state?.collectAsStateWithLifecycle()?.value?.readOnly == true
     var showPicker by remember { mutableStateOf(false) }
     var confirmedWorkout by remember { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
@@ -111,7 +117,7 @@ fun ExerciseDetailScreen(
                     }
                 },
                 actions = {
-                    if (own != null) {
+                    if (own != null && !readOnly) {
                         androidx.compose.material3.TextButton(
                             onClick = { onEdit(exerciseId) },
                             modifier = androidx.compose.ui.Modifier.testTag("exercise_detail_edit"),
@@ -141,6 +147,7 @@ fun ExerciseDetailScreen(
                 archived = own?.archived,
                 progressionCard = progressionCard,
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
+                header = { if (own != null) com.myhealth.ui.share.ShareCard(share, onOpenCopy) },
             )
         }
     }
@@ -165,12 +172,14 @@ internal fun ExerciseDetailContent(
     progressionCard: ProgressionCardState = ProgressionCardState(),
     /** `null` for a catalog exercise; otherwise whether the owner's exercise is archived (P26.2). */
     archived: Boolean? = null,
+    header: @Composable () -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(SCREEN_PADDING),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        item { header() }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(

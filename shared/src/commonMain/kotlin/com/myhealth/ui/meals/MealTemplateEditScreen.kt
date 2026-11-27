@@ -60,7 +60,16 @@ import com.myhealth.ui.theme.MyHealthTheme
 /** Create/edit a meal template: name, default slot, item rows, live totals (PLAN §4.2, P4.4). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MealTemplateEditScreen(id: Long, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun MealTemplateEditScreen(
+    id: Long,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    onOpenCopy: (com.myhealth.domain.share.ShareRef) -> Unit = {},
+) {
+    val share = com.myhealth.ui.share.rememberShareCard(
+        if (id > 0) com.myhealth.domain.share.ShareRef(com.myhealth.domain.share.ShareKind.MEAL, id.toString()) else null,
+    )
+    val readOnly = share?.state?.collectAsStateWithLifecycle()?.value?.readOnly == true
     val vm = rememberVm { graph ->
         MealTemplateEditViewModel(id, graph.mealRepo, graph.ingredientRepo, graph.clock)
     }
@@ -118,6 +127,8 @@ fun MealTemplateEditScreen(id: Long, onBack: () -> Unit, modifier: Modifier = Mo
                     onSave = vm::save,
                 ),
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
+                readOnly = readOnly,
+                header = { com.myhealth.ui.share.ShareCard(share, onOpenCopy) },
             )
         }
     }
@@ -162,12 +173,15 @@ private fun MealTemplateEditContent(
     state: MealTemplateEditUiState,
     actions: TemplateEditActions,
     modifier: Modifier = Modifier,
+    readOnly: Boolean = false,
+    header: @Composable () -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item { header() }
         state.loadError?.let { item { ErrorBanner(message = it.resolve()) } }
         state.saveError?.let { item { ErrorBanner(message = it.resolve()) } }
 
@@ -265,7 +279,7 @@ private fun MealTemplateEditContent(
             }
         }
 
-        item {
+        if (!readOnly) item {
             Button(
                 onClick = actions.onSave,
                 enabled = !state.isSaving,

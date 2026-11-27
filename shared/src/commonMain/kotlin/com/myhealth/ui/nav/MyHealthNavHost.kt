@@ -271,6 +271,7 @@ fun MyHealthNavHost(
                             barcode = route.barcode,
                             onBack = { navController.popBackStack() },
                             onScan = { navController.navigate(ScanRoute) },
+                            onOpenCopy = navController::openShareCopy,
                         )
                     }
                     composable<ScanRoute> {
@@ -306,7 +307,7 @@ fun MyHealthNavHost(
                     }
                     composable<MealTemplateEditRoute> { entry ->
                         val route = entry.toRoute<MealTemplateEditRoute>()
-                        MealTemplateEditScreen(id = route.id, onBack = { navController.popBackStack() })
+                        MealTemplateEditScreen(id = route.id, onBack = { navController.popBackStack() }, onOpenCopy = navController::openShareCopy)
                     }
 
                     // ---- body / load / goals -------------------------------------------------
@@ -350,6 +351,7 @@ fun MyHealthNavHost(
                                     popUpTo<WorkoutEditRoute> { inclusive = true }
                                 }
                             },
+                            onOpenCopy = navController::openShareCopy,
                         )
                     }
                     composable<VideoImportRoute> { entry ->
@@ -382,6 +384,7 @@ fun MyHealthNavHost(
                             exerciseId = route.exerciseId,
                             onBack = { navController.popBackStack() },
                             onEdit = { id -> navController.navigate(ExerciseEditRoute(id = id)) },
+                            onOpenCopy = navController::openShareCopy,
                         )
                     }
                     composable<ExerciseEditRoute> { entry ->
@@ -445,4 +448,15 @@ private fun mealSlotOf(name: String): MealSlot =
 private sealed interface ProfileLoadState {
     data object Loading : ProfileLoadState
     data class Loaded(val hasProfile: Boolean) : ProfileLoadState
+}
+
+/** P27.5: replaces the screen of someone else's item with the editor of the copy just made. */
+private fun androidx.navigation.NavController.openShareCopy(ref: com.myhealth.domain.share.ShareRef) {
+    popBackStack()
+    when (ref.kind) {
+        com.myhealth.domain.share.ShareKind.EXERCISE -> navigate(ExerciseDetailRoute(exerciseId = ref.localKey))
+        com.myhealth.domain.share.ShareKind.INGREDIENT -> navigate(IngredientEditRoute(id = ref.localKey.toLong()))
+        com.myhealth.domain.share.ShareKind.MEAL -> navigate(MealTemplateEditRoute(id = ref.localKey.toLong()))
+        com.myhealth.domain.share.ShareKind.WORKOUT -> navigate(WorkoutEditRoute(id = ref.localKey.toLong()))
+    }
 }

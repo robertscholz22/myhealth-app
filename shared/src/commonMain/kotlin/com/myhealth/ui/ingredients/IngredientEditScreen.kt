@@ -55,7 +55,12 @@ fun IngredientEditScreen(
     onBack: () -> Unit,
     onScan: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenCopy: (com.myhealth.domain.share.ShareRef) -> Unit = {},
 ) {
+    val share = com.myhealth.ui.share.rememberShareCard(
+        if (id > 0) com.myhealth.domain.share.ShareRef(com.myhealth.domain.share.ShareKind.INGREDIENT, id.toString()) else null,
+    )
+    val readOnly = share?.state?.collectAsStateWithLifecycle()?.value?.readOnly == true
     val vm = rememberVm { graph ->
         IngredientEditViewModel(
             id = id,
@@ -99,6 +104,8 @@ fun IngredientEditScreen(
             onScan = onScan,
             onLookUp = vm::lookUpBarcode,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
+            readOnly = readOnly,
+            header = { com.myhealth.ui.share.ShareCard(share, onOpenCopy) },
         )
     }
 
@@ -121,6 +128,8 @@ private fun IngredientEditBody(
     onScan: () -> Unit,
     onLookUp: () -> Unit,
     modifier: Modifier = Modifier,
+    readOnly: Boolean = false,
+    header: @Composable () -> Unit = {},
 ) {
     if (state.isLoading) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -138,6 +147,7 @@ private fun IngredientEditBody(
             contentPadding = PaddingValues(SCREEN_PADDING),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            item { header() }
             val banners = (state.scanWarnings + state.warnings).distinctBy { it.message }
             if (draft.archived) {
                 // POLISH-57: an archived ingredient said nowhere that it is archived, and could
@@ -181,7 +191,7 @@ private fun IngredientEditBody(
             }
         }
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.End) {
-            Button(onClick = onSave, enabled = !state.isSaving) { Text(stringResource(Res.string.action_save)) }
+            if (!readOnly) Button(onClick = onSave, enabled = !state.isSaving) { Text(stringResource(Res.string.action_save)) }
         }
     }
 }

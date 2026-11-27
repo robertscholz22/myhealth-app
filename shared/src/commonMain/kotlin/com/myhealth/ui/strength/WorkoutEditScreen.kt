@@ -71,7 +71,13 @@ fun WorkoutEditScreen(
     onCreatedConsumed: () -> Unit = {},
     /** P26.4: "Check exercises again" on a video workout. */
     onRecheckVideo: (Long) -> Unit = {},
+    /** P27.5: "Make my copy" made one; open it. */
+    onOpenCopy: (com.myhealth.domain.share.ShareRef) -> Unit = {},
 ) {
+    val share = com.myhealth.ui.share.rememberShareCard(
+        if (id > 0) com.myhealth.domain.share.ShareRef(com.myhealth.domain.share.ShareKind.WORKOUT, id.toString()) else null,
+    )
+    val readOnly = share?.state?.collectAsStateWithLifecycle()?.value?.readOnly == true
     val vm = rememberVm { graph ->
         WorkoutEditViewModel(id, graph.strengthRepo, graph.profileRepo, graph.currentBodyWeightKg, graph.clock, graph.videoSessions)
     }
@@ -113,6 +119,8 @@ fun WorkoutEditScreen(
             onRecheckVideo = { onRecheckVideo(state.draft.id) },
             onDoneToday = vm::doneToday,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
+            readOnly = readOnly,
+            header = { com.myhealth.ui.share.ShareCard(share, onOpenCopy) },
         )
     }
 
@@ -144,6 +152,8 @@ internal fun WorkoutEditContent(
     modifier: Modifier = Modifier,
     onRecheckVideo: () -> Unit = {},
     onDoneToday: (Int, VideoEffort) -> Unit = { _, _ -> },
+    readOnly: Boolean = false,
+    header: @Composable () -> Unit = {},
 ) {
     val draft = state.draft
     LazyColumn(
@@ -151,6 +161,7 @@ internal fun WorkoutEditContent(
         contentPadding = PaddingValues(SCREEN_PADDING),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        item { header() }
         item {
             SectionCard(title = stringResource(Res.string.workout_edit_section_details)) {
                 OutlinedTextField(
@@ -229,7 +240,7 @@ internal fun WorkoutEditContent(
         item {
             state.saveError?.let { Text(text = it.resolve(), color = MaterialTheme.colorScheme.error) }
             state.loadError?.let { Text(text = it.resolve(), color = MaterialTheme.colorScheme.error) }
-            Button(
+            if (!readOnly) Button(
                 onClick = onSave,
                 enabled = !state.isSaving && state.loadError == null,
                 modifier = Modifier.fillMaxWidth(),
