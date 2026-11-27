@@ -1313,5 +1313,8 @@ with `tools/share-seed.py --code` over the production endpoints. Project id, key
   branch; tag v0.12.0, GitHub release with MyHealth-0.12.0.apk (signer 1e4276d0…, the installed app's).
 - Run 46011311926 (main, `testflight=true`, `share_extension=false`): simulator 6/6 UI tests incl.
   `testSharedFamilyLibraryJoinAndImport`; build 212 uploaded to TestFlight. PASS
-- Owner's phone: open (not connected at release time).
+- Owner's phone: JSON backup before the install (schema 12, 3825 rows), release asset equal to the
+  build (sha256 6d460343…) and signed like the installed app, `install -r` → 0.12.0 (212), app opens
+  on Today, More lists Family sharing, no crash. Backup after the install: schema 13, the same row
+  counts, the share tables present and empty; only `dailyLoad.computedAtMillis` differs. PASS
 
