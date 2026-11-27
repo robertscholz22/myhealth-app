@@ -63,6 +63,8 @@ internal class BackupMerge(private val dao: BackupDao) {
         written += mergeKeyed(
             file.exerciseAlias, existing.exerciseAlias, { it.normalisedName }, dao::insertExerciseAlias,
         )
+        // P27: the device's own library connection wins over the backup's.
+        written += mergeKeyed(file.shareConfig, existing.shareConfig, { it.id }, dao::insertShareConfig)
 
         val ingredients = mergeRoot(
             file.ingredient, existing.ingredient, { it.id },
@@ -223,7 +225,42 @@ internal class BackupMerge(private val dao: BackupDao) {
             },
             dao::insertMealLogItem,
         )
+        written += mergeShareLinks(file, existing, ingredients, templates, workouts)
         return written
+    }
+
+    /**
+     * P27: a link follows its row. Numeric rows are only linked when this merge created them (an
+     * existing row keeps its own link, or none); exercises keep their random id. A link whose share
+     * id the device already uses is dropped, so one shared item never maps to two local rows.
+     */
+    private suspend fun mergeShareLinks(
+        file: BackupFile,
+        existing: BackupFile,
+        ingredients: Remap,
+        templates: Remap,
+        workouts: Remap,
+    ): Int {
+        val haveKeys = existing.shareLink.mapTo(mutableSetOf()) { it.kind to it.localKey }
+        val haveShareIds = existing.shareLink.mapNotNullTo(mutableSetOf()) { it.shareId }
+        val exerciseIds = existing.userExercise.mapTo(mutableSetOf()) { it.id } +
+            file.userExercise.map { it.id }
+        val rows = file.shareLink.mapNotNull { link ->
+            val remap = when (link.kind) {
+                "INGREDIENT" -> ingredients
+                "MEAL" -> templates
+                "WORKOUT" -> workouts
+                else -> null
+            }
+            val localKey = if (remap == null) {
+                link.localKey.takeIf { it in exerciseIds }
+            } else {
+                link.localKey.toLongOrNull()?.takeIf { remap.isNew(it) }?.let { remap.target(it)?.toString() }
+            }
+            localKey?.let { link.copy(localKey = it) }
+        }.filter { (it.kind to it.localKey) !in haveKeys && (it.shareId == null || it.shareId !in haveShareIds) }
+            .distinctBy { it.shareId ?: "${it.kind}|${it.localKey}" }
+        return if (rows.isEmpty()) 0 else dao.insertShareLink(rows).size
     }
 
     /** A table keyed by its own primary key: insert only the keys the device does not have. */

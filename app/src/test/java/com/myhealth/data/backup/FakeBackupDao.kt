@@ -27,6 +27,8 @@ import com.myhealth.data.db.entity.SleepSessionEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.ShareConfigEntity
+import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.StrengthSetLogEntity
 import com.myhealth.data.db.entity.StrengthWorkoutEntity
 import com.myhealth.data.db.entity.StrengthWorkoutExerciseEntity
@@ -361,4 +363,21 @@ internal class FakeBackupDao : BackupDao {
         keyed(exerciseAlias, rows) { it.normalisedName }
 
     override suspend fun deleteExerciseAlias() = exerciseAlias.clear()
+
+    val shareLink: MutableList<ShareLinkEntity> = mutableListOf()
+
+    override suspend fun allShareLink(): List<ShareLinkEntity> = shareLink.toList()
+
+    override suspend fun insertShareLink(rows: List<ShareLinkEntity>) =
+        keyed(shareLink, rows) { it.kind to it.localKey }
+
+    override suspend fun deleteShareLink() = shareLink.clear()
+
+    val shareConfig: MutableList<ShareConfigEntity> = mutableListOf()
+
+    override suspend fun allShareConfig(): List<ShareConfigEntity> = shareConfig.toList()
+
+    override suspend fun insertShareConfig(rows: List<ShareConfigEntity>) = keyed(shareConfig, rows) { it.id }
+
+    override suspend fun deleteShareConfig() = shareConfig.clear()
 }

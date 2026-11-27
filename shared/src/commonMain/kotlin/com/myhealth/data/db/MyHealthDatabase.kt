@@ -60,8 +60,11 @@ import com.myhealth.data.db.entity.SyncStateEntity
 import com.myhealth.data.db.entity.TrainingPlanEntity
 import com.myhealth.data.db.entity.WaterLogEntity
 import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.ShareConfigEntity
+import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.dao.UserExerciseDao
+import com.myhealth.data.db.dao.ShareDao
 
 /**
  * The single Room database (PLAN §2.2): 26 tables plus the P8.5 `ingredient_fts` index, the
@@ -123,8 +126,11 @@ import com.myhealth.data.db.dao.UserExerciseDao
         // §P26 own exercises and learned names
         UserExerciseEntity::class,
         ExerciseAliasEntity::class,
+        // §P27 family sharing
+        ShareLinkEntity::class,
+        ShareConfigEntity::class,
     ],
-    version = 12,
+    version = 13,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -134,6 +140,9 @@ abstract class MyHealthDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
 
     abstract fun userExerciseDao(): UserExerciseDao
+
+    /** `share_link` and `share_config` (P27). */
+    abstract fun shareDao(): ShareDao
 
     abstract fun bodyDao(): BodyDao
 

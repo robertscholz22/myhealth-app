@@ -303,6 +303,26 @@ object Migrations {
         db.execSQL("ALTER TABLE `strength_workout_exercise` ADD COLUMN `sourceLine` TEXT")
     }
 
+    /** P27: family sharing — the per-row share links and the single library connection row. */
+    private val MIGRATION_12_13 = MigrationStep(12, 13) { db ->
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `share_link` (" +
+                "`kind` TEXT NOT NULL, `localKey` TEXT NOT NULL, `shareId` TEXT, `authorId` TEXT, " +
+                "`authorName` TEXT, `version` INTEGER, `sharedAtMillis` INTEGER, " +
+                "`remoteGone` INTEGER NOT NULL, `basedOnShareId` TEXT, `basedOnName` TEXT, " +
+                "`basedOnAuthor` TEXT, PRIMARY KEY(`kind`, `localKey`))",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `uq_share_link_share_id` ON `share_link` (`shareId`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `share_config` (" +
+                "`id` INTEGER NOT NULL, `projectId` TEXT NOT NULL, `apiKey` TEXT NOT NULL, " +
+                "`joinCode` TEXT NOT NULL, `uid` TEXT NOT NULL, `refreshToken` TEXT NOT NULL, " +
+                "`displayName` TEXT NOT NULL, `joinedAtMillis` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+    }
+
     /**
      * Every migration, oldest first. `.addMigrations(*ALL)` is the only call site, in each
      * platform's database builder, so adding a migration never changes it.
@@ -324,6 +344,7 @@ object Migrations {
             MIGRATION_9_10,
             MIGRATION_10_11,
             MIGRATION_11_12,
+            MIGRATION_12_13,
         )
 }
 

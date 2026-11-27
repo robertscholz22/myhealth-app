@@ -14,6 +14,8 @@ import com.myhealth.data.db.entity.RunningBestEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.ShareConfigEntity
+import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.StrengthSetLogEntity
 import com.myhealth.data.db.entity.StrengthWorkoutEntity
 import com.myhealth.data.db.entity.StrengthWorkoutExerciseEntity
@@ -249,6 +251,28 @@ internal object BackupFixtures {
     fun exerciseAlias(name: String = "band walks", exerciseId: String = "USER_TESTEXERCISE1") =
         ExerciseAliasEntity(normalisedName = name, exerciseId = exerciseId, createdAtMillis = START)
 
+    /** P27: the workout fixture, shared by this device's author. */
+    fun shareLink(localKey: String = "1", shareId: String = "share-workout-1") = ShareLinkEntity(
+        kind = "WORKOUT",
+        localKey = localKey,
+        shareId = shareId,
+        authorId = "uid-me",
+        authorName = "Me",
+        version = 1L,
+        sharedAtMillis = START,
+    )
+
+    /** P27: a fake library connection (never a real project). */
+    fun shareConfig() = ShareConfigEntity(
+        projectId = "demo-family",
+        apiKey = "fake-api-key",
+        joinCode = "fake-join-code",
+        uid = "uid-me",
+        refreshToken = "fake-refresh",
+        displayName = "Me",
+        joinedAtMillis = START,
+    )
+
     fun file(exportedAtMillis: Long = START, appVersion: String = "1.0") = BackupFile(
         exportedAtMillis = exportedAtMillis,
         appVersion = appVersion,
@@ -269,5 +293,7 @@ internal object BackupFixtures {
         exerciseProgress = listOf(exerciseProgress()),
         userExercise = listOf(userExercise()),
         exerciseAlias = listOf(exerciseAlias()),
+        shareLink = listOf(shareLink()),
+        shareConfig = listOf(shareConfig()),
     )
 }

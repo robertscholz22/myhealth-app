@@ -45,6 +45,8 @@ class BackupServiceTest {
         dao.exerciseProgress += BackupFixtures.exerciseProgress()
         dao.userExercise += BackupFixtures.userExercise()
         dao.exerciseAlias += BackupFixtures.exerciseAlias()
+        dao.shareLink += BackupFixtures.shareLink()
+        dao.shareConfig += BackupFixtures.shareConfig()
     }
 
     @Test
@@ -53,8 +55,8 @@ class BackupServiceTest {
 
         val summary = (service.export(URI) as Outcome.Ok).value
 
-        assertThat(summary.totalRows).isEqualTo(16)
-        assertThat(summary.rowsWritten).isEqualTo(16)
+        assertThat(summary.totalRows).isEqualTo(18)
+        assertThat(summary.rowsWritten).isEqualTo(18)
         assertThat(summary.appVersion).isEqualTo("1.0")
         assertThat(summary.exportedAtMillis).isEqualTo(clock.millis())
         assertThat(summary.schemaVersion).isEqualTo(BackupFile.CURRENT_SCHEMA_VERSION)
@@ -72,7 +74,7 @@ class BackupServiceTest {
 
         val summary = (service.import(URI, BackupMode.REPLACE) as Outcome.Ok).value
 
-        assertThat(summary.rowsWritten).isEqualTo(16)
+        assertThat(summary.rowsWritten).isEqualTo(18)
         assertThat(dao.activitySession.map { it.id to it.title }).containsExactly(1L to "Spiel")
         assertThat(dao.ingredient.map { it.name }).containsExactly("Haferflocken")
         assertThat(dao.activityStream.single().activityId).isEqualTo(1L)
@@ -86,7 +88,7 @@ class BackupServiceTest {
 
         val summary = (service.import(URI, BackupMode.MERGE) as Outcome.Ok).value
 
-        assertThat(summary.rowsWritten).isEqualTo(16)
+        assertThat(summary.rowsWritten).isEqualTo(18)
         val activityId = dao.activitySession.single().id
         assertThat(activityId).isNotEqualTo(1L)
         assertThat(dao.activityStream.single().activityId).isEqualTo(activityId)
@@ -179,6 +181,36 @@ class BackupServiceTest {
     }
 
     /** The smoke test in code: importing the same file twice must not double anything. */
+    /**
+     * P27: a share link follows its workout onto the id the merge handed out, the connection is
+     * restored, and a second merge neither duplicates the link nor replaces the device's own one.
+     */
+    @Test
+    fun p27_share_links_follow_their_rows_through_a_merge() = runTest {
+        seed()
+        service.export(URI)
+        clearDevice()
+
+        service.import(URI, BackupMode.MERGE)
+
+        val workoutId = dao.strengthWorkout.single().id
+        assertThat(workoutId).isNotEqualTo(1L)
+        val link = dao.shareLink.single()
+        assertThat(link.localKey).isEqualTo(workoutId.toString())
+        assertThat(link.shareId).isEqualTo("share-workout-1")
+        assertThat(dao.shareConfig.single().uid).isEqualTo("uid-me")
+
+        service.import(URI, BackupMode.MERGE)
+        assertThat(dao.shareLink).hasSize(1)
+
+        // A link for a row the device already had is not taken over.
+        clearDevice()
+        seed()
+        dao.shareLink.clear()
+        service.import(URI, BackupMode.MERGE)
+        assertThat(dao.shareLink).isEmpty()
+    }
+
     @Test
     fun merging_the_same_backup_twice_inserts_nothing_the_second_time() = runTest {
         seed()
@@ -269,6 +301,8 @@ class BackupServiceTest {
         dao.exerciseProgress.clear()
         dao.userExercise.clear()
         dao.exerciseAlias.clear()
+        dao.shareLink.clear()
+        dao.shareConfig.clear()
     }
 
     private companion object {

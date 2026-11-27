@@ -116,6 +116,8 @@ class BackupService(
         exerciseProgress = dao.allExerciseProgress(),
         userExercise = dao.allUserExercise(),
         exerciseAlias = dao.allExerciseAlias(),
+        shareLink = dao.allShareLink(),
+        shareConfig = dao.allShareConfig(),
     )
 
     /** Child-first wipe, then parent-first insert with the backup's own ids. */
@@ -128,6 +130,8 @@ class BackupService(
         // P14: the set log hangs off `planned_session` and `activity_session`, the exercise rows
         // off `strength_workout` — all three go before any of their parents.
         dao.deleteExerciseProgress()
+        dao.deleteShareLink()
+        dao.deleteShareConfig()
         dao.deleteExerciseAlias()
         dao.deleteUserExercise()
         dao.deleteStrengthSetLog()
@@ -204,6 +208,9 @@ class BackupService(
         // P26: no foreign keys either — workout rows name exercises by id.
         written += dao.insertUserExercise(file.userExercise).size
         written += dao.insertExerciseAlias(file.exerciseAlias).size
+        // P27: links name their rows by key, not by foreign key; a restore keeps every id.
+        written += dao.insertShareLink(file.shareLink).size
+        written += dao.insertShareConfig(file.shareConfig).size
         return written
     }
 }

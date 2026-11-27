@@ -702,6 +702,65 @@ class MyHealthMigrationTest {
         }
     }
 
+    /**
+     * P27: a v12 workout and own exercise survive untouched, the two share tables start empty,
+     * and a link plus the connection row can be written; the share id stays unique.
+     */
+    @Test
+    fun migration_12_to_13_adds_the_share_tables_and_keeps_content() {
+        migrations.createDatabase(MIGRATION_DB, 12).use { v12 ->
+            v12.execSQL(
+                "INSERT INTO strength_workout (id, name, kind, templateId, isBuiltIn, notes, createdAtMillis, " +
+                    "updatedAtMillis, useInSuggestions, videoUrl, videoTitle, durationMin, sourceText) " +
+                    "VALUES (1, 'Legs', 'LOWER', NULL, 0, NULL, 1, 1, 1, NULL, NULL, NULL, NULL)",
+            )
+            v12.execSQL(
+                "INSERT INTO user_exercise (id, name, primaryMuscles, secondaryMuscles, equipment, pattern, " +
+                    "isTimed, unilateral, notes, archived, createdAtMillis, updatedAtMillis) VALUES " +
+                    "('USER_ABCDEFGHJKLM', 'Band walk', 'GLUTES', '', 'BAND', 'OTHER', 0, 0, NULL, 0, 1, 1)",
+            )
+        }
+
+        migrations.runMigrationsAndValidate(MIGRATION_DB, 13, true, *Migrations.ALL)
+
+        val migrated = Room.databaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            MyHealthDatabase::class.java,
+            MIGRATION_DB,
+        ).addMigrations(*Migrations.ALL).build()
+        try {
+            runTest {
+                assertThat(checkNotNull(migrated.strengthDao().getById(1L)).workout.name).isEqualTo("Legs")
+                assertThat(migrated.userExerciseDao().getAll().single().name).isEqualTo("Band walk")
+                val share = migrated.shareDao()
+                assertThat(share.getLinks()).isEmpty()
+                assertThat(share.getConfig()).isNull()
+                share.upsertLink(
+                    com.myhealth.data.db.entity.ShareLinkEntity(
+                        kind = "WORKOUT", localKey = "1", shareId = "s-1", authorId = "u", authorName = "Me",
+                        version = 1, sharedAtMillis = 2,
+                    ),
+                )
+                share.upsertConfig(
+                    com.myhealth.data.db.entity.ShareConfigEntity(
+                        projectId = "demo", apiKey = "k", joinCode = "j", uid = "u", refreshToken = "r",
+                        displayName = "Me", joinedAtMillis = 2,
+                    ),
+                )
+                assertThat(checkNotNull(share.getLinkByShareId("s-1")).localKey).isEqualTo("1")
+                assertThat(checkNotNull(share.getConfig()).uid).isEqualTo("u")
+                val clash = runCatching {
+                    share.upsertLink(
+                        com.myhealth.data.db.entity.ShareLinkEntity(kind = "EXERCISE", localKey = "USER_ABCDEFGHJKLM", shareId = "s-1"),
+                    )
+                }
+                assertThat(clash.isFailure).isTrue()
+            }
+        } finally {
+            migrated.close()
+        }
+    }
+
     private companion object {
         const val MIGRATION_DB = "migration-test.db"
     }

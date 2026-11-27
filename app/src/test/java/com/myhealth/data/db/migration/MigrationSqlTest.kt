@@ -180,12 +180,27 @@ class MigrationSqlTest {
         assertThat(createSqlOf(v12, "strength_workout_exercise")).contains("`sourceLine` TEXT")
     }
 
+    /** P27: both share tables are created with exactly the SQL Room exported, plus the unique share id. */
     @Test
-    fun the_exported_schema_is_version_twelve_and_the_older_ones_are_untouched() {
-        val latest = Json.parseToJsonElement(schemaFile(12).readText()).jsonObject.getValue("database")
-        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("12")
+    fun migration_12_to_13_creates_the_share_tables() {
+        val v13 = exportedEntities(13)
+        val source = flattenedMigrationSource()
+        listOf("share_link", "share_config").forEach { table ->
+            assertThat(source).contains(createSqlOf(v13, table))
+            assertThat(exportedEntities(12)).doesNotContainKey(table)
+        }
+        assertThat(source).contains(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `uq_share_link_share_id` ON `share_link` (`shareId`)",
+        )
+    }
+
+    @Test
+    fun the_exported_schema_is_version_thirteen_and_the_older_ones_are_untouched() {
+        val latest = Json.parseToJsonElement(schemaFile(13).readText()).jsonObject.getValue("database")
+        assertThat(latest.jsonObject.getValue("version").jsonPrimitive.content).isEqualTo("13")
+        assertThat(schemaFile(12).readText()).doesNotContain("share_link")
         assertThat(schemaFile(11).readText()).doesNotContain("user_exercise")
-        (1..11).forEach { assertThat(schemaFile(it).isFile).isTrue() }
+        (1..12).forEach { assertThat(schemaFile(it).isFile).isTrue() }
         // `strength_*` exists only from v6 on: v5 must not have grown a table retroactively.
         assertThat(schemaFile(5).readText()).doesNotContain("strength_workout")
         // … and `exercise_progress` only from v7 on.
@@ -220,8 +235,8 @@ class MigrationSqlTest {
         entities.getValue(table).indices
 
     @Test
-    fun p20_2_the_steps_chain_1_to_11_and_each_platform_migration_runs_exactly_their_sql() {
-        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..11).map { it to it + 1 })
+    fun p20_2_the_steps_chain_1_to_12_and_each_platform_migration_runs_exactly_their_sql() {
+        assertThat(Migrations.STEPS.map { it.from to it.to }).isEqualTo((1..12).map { it to it + 1 })
         val source = flattenedMigrationSource()
         Migrations.STEPS.flatMap { it.statements }.forEach { assertThat(source).contains(it) }
 

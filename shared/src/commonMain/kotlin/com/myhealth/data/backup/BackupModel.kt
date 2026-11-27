@@ -13,6 +13,8 @@ import com.myhealth.data.db.entity.EventOverrideEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.ShareConfigEntity
+import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.GoalEntity
 import com.myhealth.data.db.entity.ImportRecordEntity
 import com.myhealth.data.db.entity.IngredientEntity
@@ -101,6 +103,9 @@ data class BackupFile(
     // §P26 own exercises and learned names
     val userExercise: List<UserExerciseEntity> = emptyList(),
     val exerciseAlias: List<ExerciseAliasEntity> = emptyList(),
+    // §P27 family sharing
+    val shareLink: List<ShareLinkEntity> = emptyList(),
+    val shareConfig: List<ShareConfigEntity> = emptyList(),
 ) {
 
     /** Rows per SQLite table name, empty tables omitted — what the screen reports after a run. */
@@ -139,6 +144,8 @@ data class BackupFile(
         "exercise_progress" to exerciseProgress.size,
         "user_exercise" to userExercise.size,
         "exercise_alias" to exerciseAlias.size,
+        "share_link" to shareLink.size,
+        "share_config" to shareConfig.size,
     ).filterValues { it > 0 }
 
     val totalRows: Int get() = rowsPerTable().values.sum()
@@ -154,7 +161,8 @@ data class BackupFile(
          * decodes with the entity's default of one serving).
          * P26 raises it to **12** (`user_exercise`, `exercise_alias`, the video columns of
          * `strength_workout` and `strength_workout_exercise`; an older file has none of them).
+         * P27 raises it to **13** (`share_link`, `share_config`; an older file has neither).
          */
-        const val CURRENT_SCHEMA_VERSION: Int = 12
+        const val CURRENT_SCHEMA_VERSION: Int = 13
     }
 }

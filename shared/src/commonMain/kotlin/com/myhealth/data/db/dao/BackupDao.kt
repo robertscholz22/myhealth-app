@@ -17,6 +17,8 @@ import com.myhealth.data.db.entity.EventOverrideEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.ShareConfigEntity
+import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.GoalEntity
 import com.myhealth.data.db.entity.ImportRecordEntity
 import com.myhealth.data.db.entity.IngredientEntity
@@ -360,4 +362,22 @@ interface BackupDao {
 
     @Query("DELETE FROM exercise_alias")
     suspend fun deleteExerciseAlias()
+
+    @Query("SELECT * FROM share_link")
+    suspend fun allShareLink(): List<ShareLinkEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertShareLink(rows: List<ShareLinkEntity>): List<Long>
+
+    @Query("DELETE FROM share_link")
+    suspend fun deleteShareLink()
+
+    @Query("SELECT * FROM share_config")
+    suspend fun allShareConfig(): List<ShareConfigEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertShareConfig(rows: List<ShareConfigEntity>): List<Long>
+
+    @Query("DELETE FROM share_config")
+    suspend fun deleteShareConfig()
 }
