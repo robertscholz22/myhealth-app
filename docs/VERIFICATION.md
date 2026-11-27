@@ -1278,4 +1278,10 @@ clash into an update of nothing). `ShareDao.upsertLink` now checks and refuses; 
 
 ### iOS
 `:shared:compileKotlinIosSimulatorArm64` OK (text share sheet needed the popover import and opt-in).
+- ios.yml now starts the Firebase emulator on the macOS runner and seeds "Anna" with
+  `tools/share-seed.py`. Run 45986942129: `testFamilySharingJoinAndImport` passed (join as Alex →
+  "Members: Anna, Alex" → Recipe → Import → preview "2 ingredients" → "Imported 3", status
+  Imported; screenshots 80–88), but as the alphabetically first test it finished onboarding before
+  `testOnboardingToTodayAndRelaunch`, which then failed. Renamed to
+  `testSharedFamilyLibraryJoinAndImport`; run 45994575430 (50aebdc): 6/6 UI tests. PASS
 
