@@ -1285,3 +1285,23 @@ clash into an update of nothing). `ShareDao.upsertLink` now checks and refuses; 
   `testOnboardingToTodayAndRelaunch`, which then failed. Renamed to
   `testSharedFamilyLibraryJoinAndImport`; run 45994575430 (50aebdc): 6/6 UI tests. PASS
 
+### Real Firebase project (the owner's, Spark plan)
+The owner created the project with the in-app guide (console steps on a computer; the rules from
+the emulator's guide published unchanged). Android emulator (debug build) as "Me", "Anna" scripted
+with `tools/share-seed.py --code` over the production endpoints. Project id, key and code are in
+`docs/private/` only.
+- Create → project ID + web API key → Connect: "Connected as Me", library listed. PASS
+- Anna joins with the connection code and shares 5 items; Refresh → "Members: Me, Anna", all
+  "Import". Recipe → Import (Skyr reuses the emulator's row with the same barcode, Blueberries
+  imported); workout → "Imported 2" (with Side plank reach). PASS
+- My copy "Based on Berry skyr bowl by Anna" → Share with family → "Shared with your library". PASS
+- The published rules: Anna changing or deleting my item → 403, a stranger with project id and key
+  but without the join code cannot read items or members or join → 403 (its account deleted
+  afterwards). PASS
+- Anna updates her recipe → Refresh → "Update available", "Update all (1)" → updated. PASS
+- Anna stops sharing her workout → it leaves the library; on the emulator "By Anna · no longer
+  shared", Make my copy offered. PASS
+- Found and fixed: "Update all" reported "Imported 1, updated 1" for one recipe — the ingredient
+  that reuses my row with the same barcode was counted as imported. Now it counts as neither
+  (`ShareServiceEmulatorTest` adjusted; Firebase emulator suites 4/4 and 5/5).
+

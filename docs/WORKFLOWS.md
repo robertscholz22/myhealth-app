@@ -275,7 +275,7 @@ emulator; "Anna" is a scripted second member).
 | FS10 | Lists and filters | Exercises / Ingredients / Meal templates / Workouts; library chips | "by Anna" / "Shared" on rows; type and creator filters (search from 9 items) | PASS |
 | FS11 | Leave | Leave library → confirm | Back to Create / Join; all content and "based on" credits stay | PASS |
 | FS13 | iPhone join and import | `testSharedFamilyLibraryJoinAndImport` (ios.yml seeds the Firebase emulator with `tools/share-seed.py`) | Joined, Anna listed, recipe imported with its ingredients ("Imported 3") | PASS |
-| FS12 | Real Firebase project | The owner creates one with the guide; share and import between two phones | As FS1–FS8 | open |
+| FS12 | Real Firebase project | The owner creates one with the guide; emulator + scripted second member, then two phones | As FS1–FS9; rules refuse others' writes and strangers | emulator PASS, phones open |
 
 ## 19. Settings
 

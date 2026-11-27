@@ -291,7 +291,11 @@ class ShareService(
             }
             when (result) {
                 is Outcome.Err -> return result
-                is Outcome.Ok -> if (step is ImportStep.Insert) imported++ else updated++
+                // An ingredient that reuses my row with the same barcode is neither imported nor updated.
+                is Outcome.Ok -> when {
+                    step is ImportStep.Update -> updated++
+                    step is ImportStep.Insert && step.reuseLocalKey == null -> imported++
+                }
             }
         }
         return Outcome.Ok(ImportResult(imported, updated, plan.problems))

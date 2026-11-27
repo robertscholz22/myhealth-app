@@ -89,7 +89,7 @@ class ShareServiceEmulatorTest {
         assertThat(snapshot.members.map { it.name }).containsAtLeast("Me", "Anna")
 
         val result = anna.service.import(listOf(mealId, workoutId)).ok()
-        assertThat(result.imported).isEqualTo(5) // milk, recipe, band walk, workout (+ oats reused, counted)
+        assertThat(result.imported).isEqualTo(4) // milk, recipe, band walk, workout; oats reuses my row
         val annasOats = anna.ingredients.rows.values.single { it.barcode == "4000000000017" }
         assertThat(annasOats.name).isEqualTo("Annas oats")
         assertThat(anna.dao.links.value.none { it.kind == "INGREDIENT" && it.localKey == annasOats.id.toString() }).isTrue()
