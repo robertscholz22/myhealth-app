@@ -1247,3 +1247,35 @@ Emulator (emulator-5554), invented list via share → New video workout:
 - Owner's phone: JSON backup before the install, release asset signer equal to the installed app's,
   `install -r` → 0.11.0 (211), app opens, no crash. Backup after the install: schema 12, the two new
   tables present and empty, the same row counts; only `dailyLoad.computedAtMillis` differs. PASS
+
+## Session 37 — 2026-11-27 (emulator + Firebase emulator, 0.12.0 in progress: P27 family sharing)
+
+### P27.1–P27.3 — tables, rules, client
+`tools/verify.sh` green after each task. `tools/firestore-emu.sh test` (Firebase Auth + Firestore
+emulators, project `demo-family`): `FirestoreRulesEmulatorTest` 4/4 — no reading without the join
+code, a member cannot overwrite or delete another member's item, owner change refused.
+
+### P27.4–P27.6 — service, screens, lists
+- `ShareServiceEmulatorTest` 5/5 with two simulated phones ("Me", "Anna") on the emulators: import
+  of a recipe and a workout with dependencies, Anna's own ingredient with the same barcode kept and
+  used, an update keeps her favourite, a copy is left alone by the author's update, Anna's copy shares
+  as hers, stop sharing → gone, leave keeps content, wrong join code → 403 and nothing stored,
+  rejoining keeps the author. PASS
+- Android emulator (debug build) against `tools/firestore-emu.sh serve`, Anna seeded by
+  `ShareWalkthroughSeed`: FS1–FS11 of WORKFLOWS §18b. PASS. Found and fixed: the create guide's fields
+  had no Next key, so the keyboard hid the following field.
+- `ShareUiStateTest`: rows, filters, "Update all" count, creator order. PASS
+- Found and fixed: the creator filter "Me" outlived Leave → Join. The new uid matched nothing, and
+  with only Anna left there were no chips to clear it, so the library looked empty ("Nothing in the
+  library yet"). A creator filter now applies only while that creator is listed (`activeAuthor`),
+  and Leave resets the filters; regression test in `ShareUiStateTest`. Emulator: join the library
+  seeded by `tools/share-seed.py` → Anna's 5 items listed; recipe → Import → "Imported 3". PASS
+
+### Instrumented tests
+`tools/connected.sh emulator-5554`: first run 1 failure in `migration_12_to_13_adds_the_share_tables_and_keeps_content`
+— a second link with the same share id was accepted silently (Room `@Upsert` turned the unique-index
+clash into an update of nothing). `ShareDao.upsertLink` now checks and refuses; rerun 35/35. PASS
+
+### iOS
+`:shared:compileKotlinIosSimulatorArm64` OK (text share sheet needed the popover import and opt-in).
+

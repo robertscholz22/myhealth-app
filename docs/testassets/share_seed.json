@@ -1,0 +1,40 @@
+{
+    "rules": "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function signedIn() {\n      return request.auth != null;\n    }\n    function member() {\n      return signedIn() && exists(/databases/$(database)/documents/members/$(request.auth.uid));\n    }\n    match /members/{uid} {\n      allow read: if member();\n      allow create, update: if signedIn() && request.auth.uid == uid\n        && request.resource.data.joinCode == '__JOIN_CODE__'\n        && request.resource.data.name is string\n        && request.resource.data.name.size() <= 40;\n      allow delete: if signedIn() && request.auth.uid == uid;\n    }\n    match /items/{id} {\n      allow read: if member();\n      allow create: if member()\n        && request.resource.data.ownerUid == request.auth.uid\n        && request.resource.data.payload.size() < 200000;\n      allow update: if member()\n        && resource.data.ownerUid == request.auth.uid\n        && request.resource.data.ownerUid == request.auth.uid\n        && request.resource.data.payload.size() < 200000;\n      allow delete: if member() && resource.data.ownerUid == request.auth.uid;\n    }\n  }\n}\n",
+    "items": [
+        {
+            "id": "f3488901-416d-4335-ba55-4ecec1a36c7d",
+            "type": "EXERCISE",
+            "name": "Side plank reach",
+            "schema": 1,
+            "payload": "{\"id\":\"USER_ANNAPLANK01\",\"name\":\"Side plank reach\",\"primary\":[\"GLUTES\"],\"equipment\":\"BAND\",\"pattern\":\"OTHER\",\"notes\":\"Knees out\"}"
+        },
+        {
+            "id": "c37966c1-5a22-417c-a574-2fb3e8b9f93e",
+            "type": "INGREDIENT",
+            "name": "Blueberries",
+            "schema": 1,
+            "payload": "{\"name\":\"Blueberries\",\"basis\":\"PER_100G\",\"servingGrams\":40.0,\"kcal\":370.0,\"proteinG\":13.0,\"carbsG\":59.0,\"sugarG\":1.0,\"fatG\":7.0,\"satFatG\":1.2,\"fiberG\":10.0,\"saltG\":0.0,\"source\":\"OFF\"}"
+        },
+        {
+            "id": "d786221c-3435-462c-a02d-c292d3230160",
+            "type": "INGREDIENT",
+            "name": "Skyr",
+            "schema": 1,
+            "payload": "{\"name\":\"Skyr\",\"barcode\":\"4000000000024\",\"basis\":\"PER_100G\",\"servingGrams\":40.0,\"kcal\":370.0,\"proteinG\":13.0,\"carbsG\":59.0,\"sugarG\":1.0,\"fatG\":7.0,\"satFatG\":1.2,\"fiberG\":10.0,\"saltG\":0.0,\"source\":\"OFF\"}"
+        },
+        {
+            "id": "bc705bf9-ca65-4302-ba87-a3417ae9e518",
+            "type": "MEAL",
+            "name": "Berry skyr bowl",
+            "schema": 1,
+            "payload": "{\"name\":\"Berry skyr bowl\",\"note\":\"Top with seeds\",\"servings\":2.0,\"items\":[{\"ingredientShareId\":\"d786221c-3435-462c-a02d-c292d3230160\",\"quantity\":50.0,\"unit\":\"G\"},{\"ingredientShareId\":\"c37966c1-5a22-417c-a574-2fb3e8b9f93e\",\"quantity\":51.0,\"unit\":\"G\",\"sortOrder\":1}]}"
+        },
+        {
+            "id": "d83cf1c1-06ba-4c8c-82e9-dbe7cfb8cd14",
+            "type": "WORKOUT",
+            "name": "Core 20",
+            "schema": 1,
+            "payload": "{\"name\":\"Core 20\",\"kind\":\"LOWER\",\"durationMin\":25,\"rows\":[{\"exerciseId\":\"PUSH_UP\",\"sets\":3,\"seconds\":40},{\"exerciseId\":\"USER_ANNAPLANK01\",\"exerciseShareId\":\"f3488901-416d-4335-ba55-4ecec1a36c7d\",\"sets\":3,\"seconds\":40}]}"
+        }
+    ]
+}

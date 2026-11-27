@@ -3163,6 +3163,40 @@ strength activity arrives. Full plan: `~/.claude/plans/fluffy-dreaming-zephyr.md
 - **P26.7 Android share target**, **P26.8 iOS Share Extension** (+ CI signing of the second bundle id),
   **P26.9 catalog extension** with common home-workout moves (pattern-default animation).
 
+## P27 — Family sharing of own content (owner request, 2026-11-27 → release 0.12.0, DB v13)
+
+Family or friends share their own exercises, ingredients, recipes (meal templates) and workouts
+through a free Firebase project that one of them creates. Owner's decisions: Firestore on the free
+Spark plan over REST (no SDK, same code on Android and iPhone); editing someone else's item makes an
+own copy ("based on X by Anna"); pulling is browse and pick with "Update available"; the four kinds
+above. Opt-in, off by default; nothing else leaves the phone. The author lives on in a side table
+(`share_link`), so a pull never writes to a row that is mine.
+
+- **P27.1 Tables (DB v13).** `share_link` (per local row: share id, author id/name, version,
+  payload hash, gone, based-on) and `share_config` (the connection, with the anonymous user's refresh
+  token so a restored phone keeps editing its own items). Backup schema 13; merge remaps local keys of
+  rows the merge created.
+- **P27.2 Rules in `domain/share`.** Connection code (`myhealth-share:1:` + base64url of project id,
+  web API key, join code), generated Firestore rules (members only with the join code; only the
+  owner updates or deletes; payload < 200 kB), versioned JSON payloads (no use counts, favourites,
+  barcode JSON), `SharePlanner` (status, push closure with own dependencies, import order with
+  dependencies, barcode reuse, fork, change detection by payload hash — not `updatedAt`, which "used"
+  and "favourite" bump).
+- **P27.3 Firestore client.** Anonymous sign-up and token refresh, members, items (paged), create with
+  "must not exist", update, delete; `tools/firestore-emu.sh` runs the Firebase Auth + Firestore
+  emulators (`demo-family`) for the rules tests and walkthroughs; debug builds may talk plain HTTP to
+  10.0.2.2 / localhost only.
+- **P27.4 Service and setup.** `ShareService` (one operation at a time, token renewal, one retry on
+  401); More › Family sharing: create guide with the rules and "Share rules…", join with a pasted
+  message, name, members, send the code, leave.
+- **P27.5 On the item screens.** Share with family / Upload changes / Stop sharing; someone else's
+  item read-only with "Make my copy"; copies credited "Based on X by Anna".
+- **P27.6 Library and lists.** Type, creator and search filters, status chips, preview, import (with
+  dependencies), Update all, Upload my changes; "by Anna" / "Shared" in the Exercises, Ingredients,
+  Meal templates and Workouts lists.
+- **P27.7** Docs, instrumented tests (migration 12 → 13), iOS walkthrough; the real Firebase test with
+  the owner and release 0.12.0 when asked.
+
 ## 6. Verification strategy
 
 ### 6.1 After every task (the lead runs this)

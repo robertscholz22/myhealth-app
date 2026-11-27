@@ -27,6 +27,10 @@ import com.myhealth.domain.share.ShareFixtures as F
  * and a workout (one own exercise), and writes the connection code to that file for the app.
  */
 class ShareWalkthroughSeed {
+    private companion object {
+        const val FIXTURE_JOIN_CODE = "FixtureJoinCode234567890"
+    }
+
     @Test
     fun seed_anna() = runBlocking {
         val out = System.getenv("SHARE_WALKTHROUGH_OUT")
@@ -52,6 +56,22 @@ class ShareWalkthroughSeed {
         check(anna.service.share(ShareRef(ShareKind.MEAL, "5")) is Outcome.Ok)
         check(anna.service.share(ShareRef(ShareKind.WORKOUT, "7")) is Outcome.Ok)
         File(out!!).writeText(ShareCode.encode(connection))
+        // The iOS walkthrough (ios.yml) seeds the same items with tools/share-seed.py from this file.
+        System.getenv("SHARE_FIXTURE_OUT")?.let { fixture ->
+            val snapshot = (anna.service.refresh() as Outcome.Ok).value
+            val json = buildJsonObject {
+                put("rules", ShareRules.text(FIXTURE_JOIN_CODE).replace(FIXTURE_JOIN_CODE, "__JOIN_CODE__"))
+                put("items", buildJsonArray {
+                    snapshot.items.filter { it.ownerUid == anna.dao.config.value!!.uid }.sortedBy { it.kind.ordinal }.forEach { item ->
+                        add(buildJsonObject {
+                            put("id", item.shareId); put("type", item.kind.name); put("name", item.name)
+                            put("schema", item.schema); put("payload", item.payload)
+                        })
+                    }
+                })
+            }
+            File(fixture).writeText(kotlinx.serialization.json.Json { prettyPrint = true }.encodeToString(kotlinx.serialization.json.JsonObject.serializer(), json) + "\n")
+        }
         println("seeded: ${anna.dao.links.value.map { it.kind + ":" + it.shareId }}")
     }
 }

@@ -259,6 +259,33 @@ private fun Connected(state: ShareUiState, vm: ShareLibraryViewModel, share: (St
                         )
                     }
                 }
+                val authors = state.authors
+                if (authors.size > 1) {
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = state.activeAuthor == null,
+                            onClick = { vm.setAuthor(null) },
+                            label = { Text(stringResource(Res.string.share_filter_everyone)) },
+                        )
+                        authors.forEach { (uid, name) ->
+                            FilterChip(
+                                selected = state.activeAuthor == uid,
+                                onClick = { vm.setAuthor(if (state.activeAuthor == uid) null else uid) },
+                                label = { Text(if (uid == setup.uid) stringResource(Res.string.share_filter_me) else name) },
+                                modifier = Modifier.testTag("share_author_$name"),
+                            )
+                        }
+                    }
+                }
+                if ((state.library?.items?.size ?: 0) > SEARCH_FROM) {
+                    OutlinedTextField(
+                        value = state.query,
+                        onValueChange = vm::setQuery,
+                        singleLine = true,
+                        label = { Text(stringResource(Res.string.share_search)) },
+                        modifier = Modifier.fillMaxWidth().testTag("share_search"),
+                    )
+                }
             }
         }
         if (state.library != null && state.rows.isEmpty()) {
@@ -374,3 +401,5 @@ fun ShareKind.label(): StringResource = when (this) {
     ShareKind.WORKOUT -> Res.string.share_kind_workout
 }
 
+/** The search field appears once the library is longer than a screen. */
+private const val SEARCH_FROM = 8

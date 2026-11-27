@@ -1416,5 +1416,9 @@
     <string name="share_action_stop">Stop sharing</string>
     <string name="share_action_copy">Make my copy</string>
     <string name="share_theirs_hint">Only %1$s can change this. Make your own copy to change it.</string>
+    <string name="share_filter_everyone">Everyone</string>
+    <string name="share_filter_me">Me</string>
+    <string name="share_search">Search the library</string>
+    <string name="share_badge_shared">Shared</string>
     <string name="share_not_connected_hint">Join a family library under More › Family sharing to share this.</string>
 </resources>

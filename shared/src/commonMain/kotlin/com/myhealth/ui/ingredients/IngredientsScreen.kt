@@ -122,6 +122,7 @@ private fun IngredientsContent(
                 modifier = Modifier.padding(16.dp),
             )
         } else {
+            val badges = com.myhealth.ui.share.shareBadges(com.myhealth.domain.share.ShareKind.INGREDIENT)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 88.dp),
@@ -129,6 +130,7 @@ private fun IngredientsContent(
                 items(state.items, key = { it.id }) { ingredient ->
                     IngredientRow(
                         ingredient = ingredient,
+                        badge = badges[ingredient.id.toString()],
                         onToggleFavorite = { fav -> onToggleFavorite(ingredient.id, fav) },
                         onClick = { onOpenIngredient(ingredient.id) },
                     )
@@ -140,13 +142,16 @@ private fun IngredientsContent(
 }
 
 @Composable
-private fun IngredientRow(ingredient: Ingredient, onToggleFavorite: (Boolean) -> Unit, onClick: () -> Unit) {
+private fun IngredientRow(ingredient: Ingredient, onToggleFavorite: (Boolean) -> Unit, onClick: () -> Unit, badge: String? = null) {
     ListItem(
         headlineContent = { Text(ingredient.name) },
         supportingContent = {
             val brand = ingredient.brand
             val basisLabel = ingredient.basisLabel()
-            Text(if (brand.isNullOrBlank()) basisLabel else stringResource(Res.string.ingredients_brand_basis, brand, basisLabel))
+            Text(
+                (if (brand.isNullOrBlank()) basisLabel else stringResource(Res.string.ingredients_brand_basis, brand, basisLabel)) +
+                    (badge?.let { " · $it" } ?: ""),
+            )
         },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {

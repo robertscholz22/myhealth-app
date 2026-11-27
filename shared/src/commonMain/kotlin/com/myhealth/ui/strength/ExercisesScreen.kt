@@ -162,6 +162,7 @@ internal fun ExercisesContent(
                 modifier = Modifier.padding(SCREEN_PADDING),
             )
         } else {
+            val badges = com.myhealth.ui.share.shareBadges(com.myhealth.domain.share.ShareKind.EXERCISE)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 96.dp),
@@ -169,6 +170,7 @@ internal fun ExercisesContent(
                 items(state.items, key = { it.id }) { exercise ->
                     ExerciseRow(
                         exercise,
+                        badge = badges[exercise.id],
                         archived = state.library.userExercise(exercise.id)?.archived == true,
                         onClick = { onOpenExercise(exercise.id) },
                     )
@@ -246,7 +248,7 @@ private fun EquipmentFilterRow(selected: Equipment?, onSelect: (Equipment?) -> U
 }
 
 @Composable
-private fun ExerciseRow(exercise: Exercise, archived: Boolean, onClick: () -> Unit) {
+private fun ExerciseRow(exercise: Exercise, archived: Boolean, onClick: () -> Unit, badge: String? = null) {
     ListItem(
         headlineContent = {
             Text(
@@ -255,7 +257,7 @@ private fun ExerciseRow(exercise: Exercise, archived: Boolean, onClick: () -> Un
         },
         supportingContent = {
             Text(
-                text = exerciseRowSubtitle(exercise),
+                text = exerciseRowSubtitle(exercise) + (badge?.let { " · $it" } ?: ""),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

@@ -256,6 +256,27 @@ Added after 0.9.6 (schema 10). Results are from VERIFICATION session 32 (emulato
 | CI7 | Untick the calendar | Untick → tick | All its upcoming events are removed → imported again with the stored group settings | PASS |
 | CI8 | Sync without the screen | Entry added in the calendar → restart the app | The event is there after the start-up sync | PASS |
 
+## 18b. Family sharing
+
+Added for 0.12.0 (schema 13). Results are from VERIFICATION session 37 (emulator against the Firebase
+emulator; "Anna" is a scripted second member).
+
+| ID | Workflow | Steps | Expected | Result |
+|---|---|---|---|---|
+| FS1 | Create a library | More → Family sharing → Create a library | Five Firebase steps, the rules with this library's join code, "Share rules…", project ID / API key / name fields (Next moves on) | PASS |
+| FS2 | Wrong rules or code | Connect while the published rules have another join code | "The library refused this …"; nothing stored | PASS |
+| FS3 | Join | Join with a code → paste the message → Connect | "Connected as …", members, the library's items with their status | PASS |
+| FS4 | Import with dependencies | Tap a recipe's / workout's status → Import | The recipe with its ingredients (an ingredient with the same barcode stays mine and is used), the workout with its own exercises | PASS |
+| FS5 | Someone else's item | Open it | "By Anna · read-only", no Save / Edit, "Make my copy" | PASS |
+| FS6 | Make my copy | Make my copy | The copy opens, "Based on X by Anna", editable, shareable as mine | PASS |
+| FS7 | Share and upload changes | Share with family → edit → save | "Shared · changes not uploaded", "Upload changes"; the library shows "Upload my changes (1)" | PASS |
+| FS8 | Author's update | The author changes the item → Refresh → Update all | "Update available" → updated; my copy and my favourite unchanged | PASS |
+| FS9 | Stop sharing | The author stops sharing | The item stays here, "no longer shared" | PASS |
+| FS10 | Lists and filters | Exercises / Ingredients / Meal templates / Workouts; library chips | "by Anna" / "Shared" on rows; type and creator filters (search from 9 items) | PASS |
+| FS11 | Leave | Leave library → confirm | Back to Create / Join; all content and "based on" credits stay | PASS |
+| FS13 | iPhone join and import | `testFamilySharingJoinAndImport` (ios.yml seeds the Firebase emulator with `tools/share-seed.py`) | Joined, Anna listed, recipe imported with its ingredients ("Imported 3") | see session 37 |
+| FS12 | Real Firebase project | The owner creates one with the guide; share and import between two phones | As FS1–FS8 | open |
+
 ## 19. Settings
 
 | ID | Workflow | Steps | Expected | Result |

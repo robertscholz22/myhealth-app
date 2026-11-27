@@ -173,6 +173,7 @@ internal fun WorkoutsContent(
         )
         return
     }
+    val badges = com.myhealth.ui.share.shareBadges(com.myhealth.domain.share.ShareKind.WORKOUT)
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(SCREEN_PADDING),
@@ -181,6 +182,7 @@ internal fun WorkoutsContent(
         items(state.workouts, key = { it.id }) { workout ->
             WorkoutRow(
                 workout = workout,
+                badge = badges[workout.id.toString()],
                 onClick = { onEdit(workout.id) },
                 onDuplicate = { onDuplicate(workout.id) },
                 onDelete = { onRequestDelete(workout.id) },
@@ -199,6 +201,7 @@ private fun WorkoutRow(
     onDelete: () -> Unit,
     onPlanForDay: () -> Unit,
     onUseInSuggestions: (Boolean) -> Unit,
+    badge: String? = null,
 ) {
     SectionCard(
         title = workout.name,
@@ -210,6 +213,7 @@ private fun WorkoutRow(
             Column {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AssistChip(onClick = {}, enabled = false, label = { Text(workout.kind.label()) })
+                    badge?.let { AssistChip(onClick = {}, enabled = false, label = { Text(it) }) }
                     if (workout.isVideo) {
                         AssistChip(
                             onClick = {},

@@ -55,6 +55,9 @@ data class ShareUiState(
     val library: LibrarySnapshot? = null,
     val links: List<ShareLink> = emptyList(),
     val filter: ShareKind? = null,
+    /** Only items by this author uid; null = everyone. */
+    val author: String? = null,
+    val query: String = "",
     val changedCount: Int = 0,
 ) {
     val rules: String get() = if (joinCode.isEmpty()) "" else ShareRules.text(joinCode)
@@ -69,7 +72,24 @@ data class ShareUiState(
                 .map { LibraryRow(it, SharePlanner.status(it, byShare, setup?.uid)) }
         }
 
-    val rows: List<LibraryRow> get() = allRows.filter { filter == null || it.item.kind == filter }
+    /** The creator filter, only while that creator is still listed and there is a choice (chips shown). */
+    val activeAuthor: String?
+        get() = author?.takeIf { uid -> authors.size > 1 && authors.any { it.first == uid } }
+
+    val rows: List<LibraryRow>
+        get() = allRows.filter { row ->
+            val by = activeAuthor
+            (filter == null || row.item.kind == filter) &&
+                (by == null || row.item.ownerUid == by) &&
+                (query.isBlank() || row.item.name.contains(query.trim(), ignoreCase = true))
+        }
+
+    /** Who has items in the library, by name: (uid, name), me first. */
+    val authors: List<Pair<String, String>>
+        get() = library?.items.orEmpty()
+            .groupBy { it.ownerUid }
+            .map { (uid, items) -> uid to items.maxBy { it.updatedAtMillis }.authorName }
+            .sortedWith(compareBy({ it.first != setup?.uid }, { it.second.lowercase() }))
 
     val updatableCount: Int get() = allRows.count { it.status == RemoteStatus.UPDATE_AVAILABLE }
 }
@@ -101,6 +121,8 @@ class ShareLibraryViewModel(private val repo: ShareRepository) : ViewModel() {
     fun setProjectId(v: String) = _state.update { it.copy(projectId = v.trim().lowercase(), message = null) }
     fun setApiKey(v: String) = _state.update { it.copy(apiKey = v.trim(), message = null) }
     fun setFilter(kind: ShareKind?) = _state.update { it.copy(filter = kind) }
+    fun setAuthor(uid: String?) = _state.update { it.copy(author = uid) }
+    fun setQuery(v: String) = _state.update { it.copy(query = v) }
     fun dismissMessage() = _state.update { it.copy(message = null) }
 
     fun join() {
@@ -128,7 +150,9 @@ class ShareLibraryViewModel(private val repo: ShareRepository) : ViewModel() {
 
     fun rename() = run { repo.rename(_state.value.name) }
 
-    fun leave() = run { repo.leave() }
+    fun leave() = run {
+        repo.leave().also { _state.update { it.copy(filter = null, author = null, query = "") } }
+    }
 
     fun refresh() = run { refreshNow() }
 

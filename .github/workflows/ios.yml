@@ -81,11 +81,21 @@ jobs:
             echo "no Files local storage container"
           fi
 
+      # P27: a family library on the Firebase emulator (project demo-family, never the cloud) with
+      # "Anna"'s items, for testFamilySharingJoinAndImport. The simulator reaches it at 127.0.0.1.
+      - name: Firebase emulator with a seeded family library
+        run: |
+          nohup bash tools/firestore-emu.sh serve > "$RUNNER_TEMP/firebase-emu.log" 2>&1 &
+          for _ in $(seq 1 90); do grep -q "All emulators ready" "$RUNNER_TEMP/firebase-emu.log" && break; sleep 2; done
+          tail -5 "$RUNNER_TEMP/firebase-emu.log"
+          echo "SHARE_CODE=$(python3 tools/share-seed.py docs/testassets/share_seed.json)" >> "$GITHUB_ENV"
+
       - name: Build and run the UI tests
         run: |
           set -o pipefail
           mkdir -p "$RUNNER_TEMP/results/screenshots"
           TEST_RUNNER_SCREENSHOT_DIR="$RUNNER_TEMP/results/screenshots" \
+          TEST_RUNNER_SHARE_CODE="$SHARE_CODE" \
           xcodebuild test \
             -project iosApp/MyHealth.xcodeproj \
             -scheme MyHealth \
@@ -101,6 +111,7 @@ jobs:
           xcrun simctl spawn "$SIM" log show --last 60m --style compact \
             --predicate 'process == "MyHealth"' > "$RUNNER_TEMP/results/app.log" 2>&1 || true
           mkdir -p "$RUNNER_TEMP/results/crashes"
+          cp "$RUNNER_TEMP/firebase-emu.log" "$RUNNER_TEMP/results/" 2>/dev/null || true
           cp ~/Library/Logs/DiagnosticReports/MyHealth* "$RUNNER_TEMP/results/crashes/" 2>/dev/null || true
           grep -E "^e: |error:" "$RUNNER_TEMP/results/xcodebuild.log" | head -50 > "$RUNNER_TEMP/results/errors.txt" || true
 

@@ -374,5 +374,57 @@ final class LaunchTests: XCTestCase {
         check.tap()
         expect(label(containing: "matched", in: app), app, "72_video_checked", timeout: 20)
     }
+
+    /// An element by its Compose test tag (the accessibility identifier), whatever its type.
+    private func tagged(_ tag: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any)[tag].firstMatch
+    }
+
+    /// P27: joins the family library that ios.yml seeds on the Firebase emulator
+    /// (tools/share-seed.py: "Anna" with a recipe, two ingredients, an exercise and a workout) and
+    /// imports her recipe, which brings its ingredients along.
+    func testFamilySharingJoinAndImport() throws {
+        guard let code = ProcessInfo.processInfo.environment["SHARE_CODE"], !code.isEmpty else {
+            throw XCTSkip("no seeded family library (SHARE_CODE)")
+        }
+        let app = XCUIApplication()
+        app.launch()
+        if app.staticTexts["Step 1 of 3: About you"].waitForExistence(timeout: 30) {
+            completeOnboarding(app)
+        }
+        expect(label(containing: "kcal left", in: app), app, "80_today", timeout: 60)
+        tab("More", in: app).tap()
+        let join = tagged("share_join", in: app)
+        openEntry("Family sharing", in: app, until: join)
+        expect(join, app, "81_family_sharing")
+        join.tap()
+
+        let name = tagged("share_name_field", in: app)
+        expect(name, app, "82_join_form")
+        name.tap()
+        app.typeText("Alex")
+        tagged("share_code_field", in: app).tap()
+        app.typeText("Here is our library: \(code)")
+        // Close the keyboard so Connect is not covered (no back key on an iPhone).
+        if app.keyboards.firstMatch.exists {
+            label(containing: "Share your own exercises", in: app).tap()
+        }
+        sleep(1)
+        capture(app, "83_code_typed")
+        tagged("share_connect", in: app).tap()
+
+        expect(label(containing: "Members:", in: app), app, "84_connected", timeout: 30)
+        XCTAssertTrue(label(containing: "Anna", in: app).exists, "Anna is not listed as a member")
+        expect(app.staticTexts["Berry skyr bowl"], app, "85_library")
+
+        tagged("share_filter_MEAL", in: app).tap()
+        let importChip = tagged("share_status_NOT_IMPORTED", in: app)
+        expect(importChip, app, "86_recipes")
+        importChip.tap()
+        expect(label(containing: "2 ingredients", in: app), app, "87_preview")
+        tagged("share_import", in: app).tap()
+        expect(label(containing: "Imported 3", in: app), app, "88_imported", timeout: 30)
+        XCTAssertTrue(tagged("share_status_UP_TO_DATE", in: app).waitForExistence(timeout: 10), "the recipe is not marked imported")
+    }
 }
 

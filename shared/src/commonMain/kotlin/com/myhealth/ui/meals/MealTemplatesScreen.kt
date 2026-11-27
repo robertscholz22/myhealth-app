@@ -135,10 +135,12 @@ private fun MealTemplatesContent(
                 modifier = Modifier.padding(16.dp),
             )
         } else {
+            val badges = com.myhealth.ui.share.shareBadges(com.myhealth.domain.share.ShareKind.MEAL)
             LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 88.dp)) {
                 items(state.rows, key = { it.template.id }) { row ->
                     TemplateListRow(
                         row = row,
+                        badge = badges[row.template.id.toString()],
                         onOpen = { actions.onOpen(row.template.id) },
                         onToggleFavorite = { actions.onToggleFavorite(row.template) },
                         onLogNow = { actions.onLogNow(row.template) },
@@ -172,10 +174,11 @@ private fun TemplateListRow(
     onOpen: () -> Unit,
     onToggleFavorite: () -> Unit,
     onLogNow: () -> Unit,
+    badge: String? = null,
 ) {
     ListItem(
         headlineContent = { Text(row.template.name) },
-        supportingContent = { Text(rowSummary(row)) },
+        supportingContent = { Text(rowSummary(row) + (badge?.let { " · $it" } ?: "")) },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onLogNow) { Text(stringResource(Res.string.mealtpl_log_now_button)) }

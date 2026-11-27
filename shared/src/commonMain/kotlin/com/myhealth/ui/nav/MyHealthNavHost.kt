@@ -127,6 +127,7 @@ fun MyHealthNavHost(
                 val contentModifier = Modifier
                     .padding(innerPadding)
                     .consumeWindowInsets(innerPadding)
+                androidx.compose.runtime.CompositionLocalProvider(com.myhealth.ui.share.LocalShareBadgesEnabled provides true) {
                 NavHost(
                     navController = navController,
                     startDestination = if (current.hasProfile) TodayRoute else OnboardingRoute,
@@ -433,6 +434,7 @@ fun MyHealthNavHost(
                             PlaceholderScreen(title = stringResource(Res.string.nav_garmin_direct_title))
                         }
                     }
+                }
                 }
             }
         }
