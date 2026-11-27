@@ -1305,3 +1305,13 @@ with `tools/share-seed.py --code` over the production endpoints. Project id, key
   that reuses my row with the same barcode was counted as imported. Now it counts as neither
   (`ShareServiceEmulatorTest` adjusted; Firebase emulator suites 4/4 and 5/5).
 
+### Release 0.12.0 (versionCode 212)
+- Test content removed from the owner's library before the release: Anna's items, my shared recipe,
+  both members and all test accounts; a temporary member found 0 items and no other members, then
+  removed itself.
+- `tools/verify.sh` OK; `tools/connected.sh emulator-5554` 35/35. main fast-forwarded to the P27
+  branch; tag v0.12.0, GitHub release with MyHealth-0.12.0.apk (signer 1e4276d0…, the installed app's).
+- Run 46011311926 (main, `testflight=true`, `share_extension=false`): simulator 6/6 UI tests incl.
+  `testSharedFamilyLibraryJoinAndImport`; build 212 uploaded to TestFlight. PASS
+- Owner's phone: open (not connected at release time).
+
