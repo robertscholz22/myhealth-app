@@ -41,6 +41,9 @@ internal class FakeShareDao : ShareDao {
     override suspend fun getLinks(): List<ShareLinkEntity> = links.value
     override suspend fun getLink(kind: String, localKey: String) = links.value.firstOrNull { it.kind == kind && it.localKey == localKey }
     override suspend fun getLinkByShareId(shareId: String) = links.value.firstOrNull { it.shareId == shareId }
+    override suspend fun replaceLink(row: ShareLinkEntity) {
+        links.value = links.value.filterNot { it.kind == row.kind && it.localKey == row.localKey } + row
+    }
     override suspend fun upsertLink(row: ShareLinkEntity) {
         val clash = links.value.any { it.shareId != null && it.shareId == row.shareId && (it.kind != row.kind || it.localKey != row.localKey) }
         check(!clash) { "UNIQUE constraint failed: share_link.shareId" }

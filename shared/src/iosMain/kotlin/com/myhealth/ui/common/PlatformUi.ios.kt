@@ -18,6 +18,7 @@ import org.jetbrains.skia.Rect
 import org.jetbrains.skia.Surface
 import platform.Foundation.NSURL
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
+import platform.UIKit.popoverPresentationController
 
 /** The Files picker; the picked document arrives as a `file://` copy inside the sandbox (P22.2). */
 @Composable
@@ -70,6 +71,7 @@ actual val platformHealth: com.myhealth.di.HealthPlatform = com.myhealth.di.Heal
 actual val platformHasBackKey: Boolean = false
 
 /** UIActivityViewController: Copy, Messages, Mail, WhatsApp… On iPad it anchors to the screen centre. */
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 @Composable
 actual fun rememberTextSharer(): (text: String) -> Unit = remember {
     { text ->
