@@ -87,3 +87,18 @@ actual suspend fun loadHalfSizeImage(path: String): ImageBitmap? = withContext(D
 actual val platformHealth: com.myhealth.di.HealthPlatform = com.myhealth.di.HealthPlatform.HEALTH_CONNECT
 
 actual val platformHasBackKey: Boolean = true
+
+@Composable
+actual fun rememberTextSharer(): (text: String) -> Unit {
+    val context = LocalContext.current
+    return remember(context) {
+        { text ->
+            val send = android.content.Intent(android.content.Intent.ACTION_SEND)
+                .setType("text/plain")
+                .putExtra(android.content.Intent.EXTRA_TEXT, text)
+            context.startActivity(
+                android.content.Intent.createChooser(send, null).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+    }
+}

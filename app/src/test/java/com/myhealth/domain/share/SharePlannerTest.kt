@@ -47,24 +47,24 @@ class SharePlannerTest {
 
     @Test
     fun sp06_local_states() {
-        assertEquals(LocalShareState.Private, SharePlanner.localState(null, F.T, F.ME))
-        assertEquals(LocalShareState.Shared(false), SharePlanner.localState(F.mine(ShareKind.MEAL, "5", "m"), F.T, F.ME))
-        assertEquals(LocalShareState.Shared(true), SharePlanner.localState(F.mine(ShareKind.MEAL, "5", "m"), F.T + 1, F.ME))
-        assertEquals(LocalShareState.Theirs("Anna", false), SharePlanner.localState(F.theirs(ShareKind.MEAL, "5", "m"), F.T, F.ME))
+        assertEquals(LocalShareState.Private, SharePlanner.localState(null, "h1", F.ME))
+        assertEquals(LocalShareState.Shared(false), SharePlanner.localState(F.mine(ShareKind.MEAL, "5", "m"), "h1", F.ME))
+        assertEquals(LocalShareState.Shared(true), SharePlanner.localState(F.mine(ShareKind.MEAL, "5", "m"), "h2", F.ME))
+        assertEquals(LocalShareState.Theirs("Anna", false), SharePlanner.localState(F.theirs(ShareKind.MEAL, "5", "m"), "h2", F.ME))
         assertEquals(
             LocalShareState.Theirs("Anna", true),
-            SharePlanner.localState(F.theirs(ShareKind.MEAL, "5", "m").copy(remoteGone = true), F.T, F.ME),
+            SharePlanner.localState(F.theirs(ShareKind.MEAL, "5", "m").copy(remoteGone = true), "h2", F.ME),
         )
     }
 
     @Test
     fun sp07_fork_state_credits_the_original_and_may_be_shared_again() {
         val fork = SharePlanner.forkLink(F.theirs(ShareKind.MEAL, "5", "m"), "Overnight oats", "9")
-        assertEquals(LocalShareState.Fork("Overnight oats", "Anna", null), SharePlanner.localState(fork, F.T, F.ME))
-        val shared = SharePlanner.pushedLink(fork, fork.ref, "m2", F.ME, "Me", 1, F.T)
+        assertEquals(LocalShareState.Fork("Overnight oats", "Anna", null), SharePlanner.localState(fork, "h", F.ME))
+        val shared = SharePlanner.pushedLink(fork, fork.ref, "m2", F.ME, "Me", 1, F.T, payload = "{}")
         assertEquals(
             LocalShareState.Fork("Overnight oats", "Anna", LocalShareState.Shared(false)),
-            SharePlanner.localState(shared, F.T, F.ME),
+            SharePlanner.localState(shared, SharePlanner.payloadHash("{}"), F.ME),
         )
     }
 
@@ -80,7 +80,7 @@ class SharePlannerTest {
     fun sp09_two_authors_with_the_same_name_are_told_apart_by_id() {
         val other = F.theirs(ShareKind.MEAL, "5", "m", author = "Me", authorId = "uid-other-me")
         assertTrue(other.isTheirs(F.ME))
-        assertEquals(LocalShareState.Theirs("Me", false), SharePlanner.localState(other, F.T, F.ME))
+        assertEquals(LocalShareState.Theirs("Me", false), SharePlanner.localState(other, null, F.ME))
     }
 
     // --- push ---------------------------------------------------------------------------------
@@ -117,15 +117,22 @@ class SharePlannerTest {
     }
 
     @Test
-    fun sp14_changed_mine_lists_only_my_shared_rows_edited_since_upload() {
+    fun sp14_changed_mine_lists_only_my_shared_rows_whose_content_changed() {
         val links = listOf(
-            F.mine(ShareKind.MEAL, "5", "m", sharedAt = F.T),
-            F.mine(ShareKind.MEAL, "6", "n", sharedAt = F.T),
+            F.mine(ShareKind.MEAL, "5", "m", hash = "h1"),
+            F.mine(ShareKind.MEAL, "6", "n", hash = "h1"),
             F.theirs(ShareKind.MEAL, "7", "o"),
             ShareLink(ShareKind.MEAL, "8", basedOnShareId = "o", basedOnName = "x", basedOnAuthor = "Anna"),
         )
-        val updated = mapOf("5" to F.T + 5, "6" to F.T, "7" to F.T + 5, "8" to F.T + 5)
-        assertEquals(listOf(ShareRef(ShareKind.MEAL, "5")), SharePlanner.changedMine(links, { updated[it.localKey] }, F.ME))
+        val now = mapOf("5" to "h2", "6" to "h1", "7" to "h2", "8" to "h2")
+        assertEquals(listOf(ShareRef(ShareKind.MEAL, "5")), SharePlanner.changedMine(links, { now[it.localKey] }, F.ME))
+    }
+
+    @Test
+    fun sp28_payload_hash_is_stable_and_sensitive() {
+        assertEquals(SharePlanner.payloadHash("{\"a\":1}"), SharePlanner.payloadHash("{\"a\":1}"))
+        assertFalse(SharePlanner.payloadHash("{\"a\":1}") == SharePlanner.payloadHash("{\"a\":2}"))
+        assertEquals("cbf29ce484222325", SharePlanner.payloadHash(""))
     }
 
     // --- import -------------------------------------------------------------------------------

@@ -79,6 +79,6 @@ internal object ShareFixtures {
     fun theirs(kind: ShareKind, localKey: String, shareId: String, version: Long = 1L, author: String = "Anna", authorId: String = ANNA) =
         ShareLink(kind, localKey, shareId, authorId, author, version, T)
 
-    fun mine(kind: ShareKind, localKey: String, shareId: String, version: Long = 1L, sharedAt: Long = T) =
-        ShareLink(kind, localKey, shareId, ME, "Me", version, sharedAt)
+    fun mine(kind: ShareKind, localKey: String, shareId: String, version: Long = 1L, hash: String = "h1") =
+        ShareLink(kind, localKey, shareId, ME, "Me", version, T, payloadHash = hash)
 }

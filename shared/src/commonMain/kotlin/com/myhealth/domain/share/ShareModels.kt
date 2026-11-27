@@ -18,6 +18,7 @@ data class ShareLink(
     val authorName: String? = null,
     val version: Long? = null,
     val sharedAtMillis: Long? = null,
+    val payloadHash: String? = null,
     val remoteGone: Boolean = false,
     val basedOnShareId: String? = null,
     val basedOnName: String? = null,

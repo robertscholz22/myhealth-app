@@ -31,8 +31,10 @@ data class ShareLinkEntity(
     val authorName: String? = null,
     /** The remote version last pushed (mine) or applied (theirs). */
     val version: Long? = null,
-    /** When this device last pushed or pulled the row; mine is "changed" once `updatedAt` passes it. */
+    /** When this device last pushed or pulled the row. */
     val sharedAtMillis: Long? = null,
+    /** Hash of the payload last pushed or applied: mine is "changed" when today's payload differs. */
+    val payloadHash: String? = null,
     /** The author stopped sharing: the local copy stays, marked "No longer shared". */
     val remoteGone: Boolean = false,
     val basedOnShareId: String? = null,

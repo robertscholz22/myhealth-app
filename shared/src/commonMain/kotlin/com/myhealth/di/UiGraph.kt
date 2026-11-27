@@ -52,6 +52,9 @@ interface UiGraph {
     /** P26: the owner's own exercises and learned names. */
     val userExerciseRepo: com.myhealth.domain.repository.UserExerciseRepository
 
+    /** P27: the family library (share own content). */
+    val shareRepo: com.myhealth.domain.repository.ShareRepository
+
     /** P26.4: one oEmbed title lookup per video link. */
     val videoTitleSource: com.myhealth.domain.repository.VideoTitleSource
 

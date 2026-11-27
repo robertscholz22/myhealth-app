@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 13,
-    "identityHash": "047d1a94ec6c103a39b2274373aaf677",
+    "identityHash": "ea0d1310bba475ba46c22b8bed764a48",
     "entities": [
       {
         "tableName": "profile",
@@ -3530,7 +3530,7 @@
       },
       {
         "tableName": "share_link",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`kind` TEXT NOT NULL, `localKey` TEXT NOT NULL, `shareId` TEXT, `authorId` TEXT, `authorName` TEXT, `version` INTEGER, `sharedAtMillis` INTEGER, `remoteGone` INTEGER NOT NULL, `basedOnShareId` TEXT, `basedOnName` TEXT, `basedOnAuthor` TEXT, PRIMARY KEY(`kind`, `localKey`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`kind` TEXT NOT NULL, `localKey` TEXT NOT NULL, `shareId` TEXT, `authorId` TEXT, `authorName` TEXT, `version` INTEGER, `sharedAtMillis` INTEGER, `payloadHash` TEXT, `remoteGone` INTEGER NOT NULL, `basedOnShareId` TEXT, `basedOnName` TEXT, `basedOnAuthor` TEXT, PRIMARY KEY(`kind`, `localKey`))",
         "fields": [
           {
             "fieldPath": "kind",
@@ -3568,6 +3568,11 @@
             "fieldPath": "sharedAtMillis",
             "columnName": "sharedAtMillis",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "payloadHash",
+            "columnName": "payloadHash",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "remoteGone",
@@ -3673,7 +3678,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '047d1a94ec6c103a39b2274373aaf677')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ea0d1310bba475ba46c22b8bed764a48')"
     ]
   }
 }

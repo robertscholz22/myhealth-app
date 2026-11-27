@@ -68,3 +68,19 @@ actual suspend fun loadHalfSizeImage(path: String): ImageBitmap? = withContext(D
 actual val platformHealth: com.myhealth.di.HealthPlatform = com.myhealth.di.HealthPlatform.APPLE_HEALTH
 
 actual val platformHasBackKey: Boolean = false
+
+/** UIActivityViewController: Copy, Messages, Mail, WhatsApp… On iPad it anchors to the screen centre. */
+@Composable
+actual fun rememberTextSharer(): (text: String) -> Unit = remember {
+    { text ->
+        val top = IosDocuments.topViewController()
+        if (top != null) {
+            val sheet = platform.UIKit.UIActivityViewController(activityItems = listOf(text), applicationActivities = null)
+            sheet.popoverPresentationController?.let { popover ->
+                popover.sourceView = top.view
+                popover.sourceRect = top.view.bounds
+            }
+            top.presentViewController(sheet, animated = true, completion = null)
+        }
+    }
+}

@@ -256,6 +256,13 @@ abstract class CoreGraph : UiGraph {
     override val pendingVideoLink =
         kotlinx.coroutines.flow.MutableStateFlow<com.myhealth.domain.engine.strength.video.VideoLink.Shared?>(null)
 
+    /** P27: the family library over Firestore; content goes through the repositories above. */
+    override val shareRepo: com.myhealth.domain.repository.ShareRepository by lazy {
+        com.myhealth.data.share.ShareService(
+            db.shareDao(), userExerciseRepo, ingredientRepo, mealRepo, strengthRepo, clock,
+        )
+    }
+
     /** P26: `user_exercise` + `exercise_alias`; keeps `ExerciseRegistry` current. */
     override val userExerciseRepo: com.myhealth.domain.repository.UserExerciseRepository by lazy {
         com.myhealth.data.repository.RoomUserExerciseRepository(db.userExerciseDao(), clock)

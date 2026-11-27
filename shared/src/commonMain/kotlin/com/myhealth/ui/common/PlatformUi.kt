@@ -68,3 +68,7 @@ expect fun dynamicColorScheme(darkTheme: Boolean): ColorScheme?
 
 /** The picture at [path], decoded at half resolution, or `null` when it cannot be read. */
 expect suspend fun loadHalfSizeImage(path: String): ImageBitmap?
+
+/** P27: remembers the system share sheet for plain text (it offers Copy, messengers, mail…). */
+@Composable
+expect fun rememberTextSharer(): (text: String) -> Unit

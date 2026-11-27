@@ -19,14 +19,17 @@ object SharePlanner {
         return if ((link.version ?: 0L) >= item.version) RemoteStatus.UP_TO_DATE else RemoteStatus.UPDATE_AVAILABLE
     }
 
-    /** How a local row stands; [updatedAtMillis] is the row's own last edit. */
-    fun localState(link: ShareLink?, updatedAtMillis: Long, me: String?): LocalShareState {
+    /**
+     * How a local row stands; [currentHash] is [payloadHash] of the row's payload today, so only a
+     * change to shared content counts (not marking it used or as a favourite).
+     */
+    fun localState(link: ShareLink?, currentHash: String?, me: String?): LocalShareState {
         if (link == null) return LocalShareState.Private
         if (link.isTheirs(me)) {
             return LocalShareState.Theirs(link.authorName.orEmpty(), link.remoteGone)
         }
         val shared = if (link.isMineShared(me)) {
-            LocalShareState.Shared(changed = updatedAtMillis > (link.sharedAtMillis ?: 0L))
+            LocalShareState.Shared(changed = currentHash != null && currentHash != link.payloadHash)
         } else {
             null
         }
@@ -144,11 +147,21 @@ object SharePlanner {
     fun gone(links: Collection<ShareLink>, remoteIds: Set<String>, me: String?): List<ShareLink> =
         links.filter { it.isTheirs(me) && !it.remoteGone && it.shareId !in remoteIds }
 
-    /** My shared rows edited since their last upload: what "Upload my changes" pushes. */
-    fun changedMine(links: Collection<ShareLink>, updatedAt: (ShareRef) -> Long?, me: String?): List<ShareRef> =
+    /** My shared rows whose content changed since their last upload: what "Upload my changes" pushes. */
+    fun changedMine(links: Collection<ShareLink>, currentHash: (ShareRef) -> String?, me: String?): List<ShareRef> =
         links.filter { it.isMineShared(me) }
-            .filter { link -> updatedAt(link.ref)?.let { it > (link.sharedAtMillis ?: 0L) } == true }
+            .filter { link -> currentHash(link.ref)?.let { it != link.payloadHash } == true }
             .map { it.ref }
+
+    /** A short, stable fingerprint of a payload (64-bit FNV-1a, hex). */
+    fun payloadHash(payload: String): String {
+        var h = -0x340d631b7bdddcdbL
+        for (b in payload.encodeToByteArray()) {
+            h = h xor (b.toLong() and 0xff)
+            h *= 0x100000001b3L
+        }
+        return h.toULong().toString(16)
+    }
 
     /** The link for my copy ([newLocalKey]) of the theirs row [original]: credit kept, author cleared. */
     fun forkLink(original: ShareLink, originalName: String, newLocalKey: String): ShareLink = ShareLink(
@@ -160,8 +173,18 @@ object SharePlanner {
     )
 
     /** The link after I uploaded [ref] as [shareId] at [version]. A fork keeps its credit. */
-    fun pushedLink(existing: ShareLink?, ref: ShareRef, shareId: String, me: String, myName: String, version: Long, nowMillis: Long): ShareLink =
+    fun pushedLink(
+        existing: ShareLink?,
+        ref: ShareRef,
+        shareId: String,
+        me: String,
+        myName: String,
+        version: Long,
+        nowMillis: Long,
+        payload: String = "",
+    ): ShareLink =
         (existing ?: ShareLink(ref.kind, ref.localKey)).copy(
+            payloadHash = payloadHash(payload),
             shareId = shareId,
             authorId = me,
             authorName = myName,
@@ -179,5 +202,6 @@ object SharePlanner {
         authorName = item.authorName,
         version = item.version,
         sharedAtMillis = nowMillis,
+        payloadHash = payloadHash(item.payload),
     )
 }

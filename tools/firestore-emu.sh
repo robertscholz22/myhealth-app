@@ -44,10 +44,10 @@ case "${1:-test}" in
     test)
         "$FIREBASE" emulators:exec --only auth,firestore --project demo-family \
             "cd '$ROOT' && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
-             ./gradlew -q :app:testDebugUnitTest --tests 'com.myhealth.data.share.FirestoreRulesEmulatorTest' --rerun"
-        R="$ROOT/app/build/test-results/testDebugUnitTest/TEST-com.myhealth.data.share.FirestoreRulesEmulatorTest.xml"
-        grep -o '<testsuite [^>]*' "$R" | sed 's/ timestamp.*//'
-        if grep -q 'skipped="[1-9]' "$R"; then echo "FAIL: tests were skipped"; exit 1; fi
+             ./gradlew -q :app:testDebugUnitTest --tests 'com.myhealth.data.share.*EmulatorTest' --rerun"
+        R="$ROOT/app/build/test-results/testDebugUnitTest/TEST-com.myhealth.data.share.*EmulatorTest.xml"
+        cat $R | grep -o "<testsuite [^>]*" | sed 's/ timestamp.*//'
+        if cat $R | grep -q "skipped=\"[1-9]"; then echo "FAIL: tests were skipped"; exit 1; fi
         ;;
     serve)
         "$FIREBASE" emulators:start --only auth,firestore --project demo-family

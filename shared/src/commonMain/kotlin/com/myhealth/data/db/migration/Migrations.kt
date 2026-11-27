@@ -308,7 +308,7 @@ object Migrations {
         db.execSQL(
             "CREATE TABLE IF NOT EXISTS `share_link` (" +
                 "`kind` TEXT NOT NULL, `localKey` TEXT NOT NULL, `shareId` TEXT, `authorId` TEXT, " +
-                "`authorName` TEXT, `version` INTEGER, `sharedAtMillis` INTEGER, " +
+                "`authorName` TEXT, `version` INTEGER, `sharedAtMillis` INTEGER, `payloadHash` TEXT, " +
                 "`remoteGone` INTEGER NOT NULL, `basedOnShareId` TEXT, `basedOnName` TEXT, " +
                 "`basedOnAuthor` TEXT, PRIMARY KEY(`kind`, `localKey`))",
         )
