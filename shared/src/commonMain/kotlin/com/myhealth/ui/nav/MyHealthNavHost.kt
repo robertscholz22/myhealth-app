@@ -426,6 +426,7 @@ fun MyHealthNavHost(
                     composable<SettingsRoute> { BackBar(Res.string.settings_title, onBack = { navController.popBackStack() }) { SettingsScreen() } }
                     composable<IntegrationsRoute> { BackBar(Res.string.more_entry_integrations, onBack = { navController.popBackStack() }) { IntegrationsScreen() } }
                     composable<ShareLibraryRoute> { BackBar(Res.string.share_title, onBack = { navController.popBackStack() }) { ShareLibraryScreen() } }
+                    composable<AiPlanningRoute> { BackBar(Res.string.ai_title, onBack = { navController.popBackStack() }) { com.myhealth.ui.ai.AiPlanningScreen() } }
                     composable<CalendarImportRoute> { BackBar(Res.string.calendar_import_title, onBack = { navController.popBackStack() }) { CalendarImportScreen() } }
                     composable<ImportRoute> { BackBar(Res.string.more_entry_import, onBack = { navController.popBackStack() }) { ImportScreen() } }
                     composable<BackupRoute> { BackBar(Res.string.more_entry_backup, onBack = { navController.popBackStack() }) { BackupScreen() } }

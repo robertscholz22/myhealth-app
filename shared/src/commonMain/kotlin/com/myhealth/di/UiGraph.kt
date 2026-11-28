@@ -55,6 +55,9 @@ interface UiGraph {
     /** P27: the family library (share own content). */
     val shareRepo: com.myhealth.domain.repository.ShareRepository
 
+    /** P28: AI planning through the relay (opt-in). */
+    val aiPlanning: com.myhealth.domain.repository.AiPlanningRepository
+
     /** P26.4: one oEmbed title lookup per video link. */
     val videoTitleSource: com.myhealth.domain.repository.VideoTitleSource
 

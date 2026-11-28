@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import com.myhealth.resources.*
 import com.myhealth.ui.common.mathRound
 import com.myhealth.ui.common.stringResource
@@ -86,6 +87,8 @@ fun PlannedSessionCard(
     workoutExercisesLine: String? = null,
     /** P26.5: the workout's video — a "Watch video" button opens it. */
     videoUrl: String? = null,
+    /** P28: the AI planned or last changed this session. */
+    plannedWithAi: Boolean = false,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -118,6 +121,14 @@ fun PlannedSessionCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (plannedWithAi) {
+                Text(
+                    text = stringResource(Res.string.ai_badge),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.testTag("ai_badge"),
+                )
+            }
             TargetZoneChip(session.sessionType, hrZoneModel)
             workoutName?.let {
                 val format = if (isMobilityWorkout) Res.string.session_routine_format else Res.string.session_workout_format

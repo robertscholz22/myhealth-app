@@ -81,6 +81,7 @@ fun WeekDayRow(
         },
     ) {
         row.events.forEach { FixedEventRow(it, onEditEvent) }
+        val aiSessions = com.myhealth.ui.ai.aiSessionIds()
         row.planned.forEach { session ->
             PlannedSessionCard(
                 session = session,
@@ -89,6 +90,7 @@ fun WeekDayRow(
                 isMobilityWorkout = session.workoutId?.let { workouts[it]?.kind?.isMobility } ?: false,
                 workoutExercisesLine = session.workoutId?.let { workouts[it] }?.let { workoutPrescriptionLine(it) },
                 videoUrl = session.workoutId?.let { workouts[it]?.videoUrl },
+                plannedWithAi = session.id in aiSessions,
             )
         }
         row.activities.forEach { CompletedActivityRow(it, onOpenActivity) }

@@ -63,9 +63,21 @@ function providerFor(origin: string): OAuthProvider<Env> {
   return p;
 }
 
+/**
+ * The OAuth metadata needs HTTPS, or http on a loopback host. Under `wrangler dev` the Android
+ * emulator reaches the relay as http://10.0.2.2 — it only uses the app API, so its requests get the
+ * loopback origin's provider; a deployed relay is always HTTPS and keeps its own origin.
+ */
+function metadataOrigin(url: URL): string {
+  if (url.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
+    return `http://localhost${url.port ? ':' + url.port : ''}`;
+  }
+  return url.origin;
+}
+
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    return providerFor(new URL(request.url).origin).fetch(request, env, ctx);
+    return providerFor(metadataOrigin(new URL(request.url))).fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;
 

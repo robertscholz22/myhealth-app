@@ -52,6 +52,8 @@ data class AiSetup(
     val groups: Set<AiDataGroup>,
     val lastSyncAtMillis: Long?,
     val connectedAtMillis: Long,
+    /** Why the last sync failed, in the user's terms; null after a good sync. */
+    val lastError: String? = null,
 )
 
 /** Prefix of ids the AI gives the rows it creates. */

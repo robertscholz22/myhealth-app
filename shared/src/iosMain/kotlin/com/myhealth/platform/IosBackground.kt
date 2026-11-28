@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import com.myhealth.domain.repository.syncIfConnected
 import platform.BackgroundTasks.BGAppRefreshTaskRequest
 import platform.BackgroundTasks.BGTask
 import platform.BackgroundTasks.BGTaskScheduler
@@ -58,6 +59,8 @@ object IosBackground {
         scheduleRefresh()
         val job = scope.launch {
             val ok = runCatching { scheduler.syncAndRecomputeNow() }.getOrDefault(false)
+            // P28: the AI's planned changes, when iOS grants a background refresh.
+            runCatching { IosAppGraph.instance.aiPlanning.syncIfConnected() }
             task.setTaskCompletedWithSuccess(ok)
         }
         task.expirationHandler = {

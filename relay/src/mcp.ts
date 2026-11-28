@@ -323,7 +323,9 @@ function buildServer(space: Space): McpServer {
     () => withView((v) => {
       const s = v.snapshot;
       const off = 'Not shared: the owner turned this group off in the app.';
-      return { load: s.load ?? off, body: s.body ?? off, cycle: s.cycle ?? off };
+      const none = 'Shared, but the app has no data for it yet.';
+      const pick = <T,>(group: string, value: T | undefined | null) => value ?? (s.groups.includes(group) ? none : off);
+      return { load: pick('LOAD', s.load), body: pick('BODY', s.body), cycle: pick('CYCLE', s.cycle) };
     }),
   );
 

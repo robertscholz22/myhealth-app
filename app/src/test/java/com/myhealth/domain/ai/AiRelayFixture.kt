@@ -1,7 +1,7 @@
 package com.myhealth.domain.ai
 
 import com.myhealth.domain.engine.strength.ExerciseCatalog
-import com.myhealth.domain.model.CalendarEvent
+import com.myhealth.domain.model.EventOccurrence
 import com.myhealth.domain.model.CycleConfidence
 import com.myhealth.domain.model.CyclePhase
 import com.myhealth.domain.model.CycleStatus
@@ -64,11 +64,10 @@ class AiRelayFixture {
                     StrengthWorkoutExercise(3, 1, 2, "PLANK", 3, seconds = 40),
                 ),
             )
-            val event = CalendarEvent(
-                id = 5, type = EventType.entries.first(), title = "Team training", startDay = TODAY + 2, startMinuteOfDay = 19 * 60,
-                durationMin = 90, location = null, sportType = SportType.SOCCER_TRAINING, targetDistanceMeters = null, isKeyEvent = false,
-                recurrenceRule = null, recurrenceUntilDay = null, parentEventId = null, linkedActivityId = null, linkMethod = null,
-                notes = null, createdAtMillis = 1L, updatedAtMillis = 1L, intensity = Intensity.MODERATE,
+            val event = EventOccurrence(
+                eventId = 5, occurrenceDay = TODAY + 2, type = EventType.entries.first(), effectiveTitle = "Team training",
+                effectiveStartMinuteOfDay = 19 * 60, effectiveDurationMin = 90, isOverride = false, linkedActivityId = null,
+                sportType = SportType.SOCCER_TRAINING, targetDistanceMeters = null, isKeyEvent = false, intensity = Intensity.MODERATE,
             )
             return AiSnapshotBuilder.build(
                 AiSnapshotInput(

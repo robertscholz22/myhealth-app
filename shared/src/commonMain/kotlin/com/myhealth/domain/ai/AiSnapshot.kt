@@ -2,7 +2,7 @@ package com.myhealth.domain.ai
 
 import com.myhealth.domain.engine.suggest.SessionCatalog
 import com.myhealth.domain.model.ActivitySummary
-import com.myhealth.domain.model.CalendarEvent
+import com.myhealth.domain.model.EventOccurrence
 import com.myhealth.domain.model.CycleStatus
 import com.myhealth.domain.model.DailyLoad
 import com.myhealth.domain.model.Equipment
@@ -243,7 +243,8 @@ data class AiSnapshotInput(
     val workouts: List<StrengthWorkout>,
     val goals: List<Goal>,
     val sessions: List<PlannedSession>,
-    val events: List<CalendarEvent>,
+    /** Calendar events expanded per day (recurrences included). */
+    val events: List<EventOccurrence>,
     val activities: List<ActivitySummary>,
     /** Activity id → load (TRIMP / AU), when computed. */
     val activityLoad: Map<Long, Double>,
@@ -313,12 +314,14 @@ object AiSnapshotBuilder {
                     byAi = (AiKind.SESSION to s.id.toString()) in links,
                 )
             },
-            events = input.events.filter { inWindow(it.startDay) }.sortedWith(compareBy({ it.startDay }, { it.startMinuteOfDay ?: 0 })).map { e ->
-                AiEventDto(
-                    day = iso(e.startDay), start = e.startMinuteOfDay?.let(::hhmm), durationMin = e.durationMin, title = e.title,
-                    type = e.type.name, sport = e.sportType?.name, intensity = e.intensity?.name, key = e.isKeyEvent,
-                )
-            },
+            events = input.events.filter { inWindow(it.occurrenceDay) }
+                .sortedWith(compareBy({ it.occurrenceDay }, { it.effectiveStartMinuteOfDay ?: 0 })).map { e ->
+                    AiEventDto(
+                        day = iso(e.occurrenceDay), start = e.effectiveStartMinuteOfDay?.let(::hhmm), durationMin = e.effectiveDurationMin,
+                        title = e.effectiveTitle, type = e.type.name, sport = e.sportType?.name, intensity = e.intensity?.name,
+                        key = e.isKeyEvent,
+                    )
+                },
             activities = input.activities.filter { it.day in from..input.today }.sortedBy { it.startAtMillis }.map { a ->
                 AiActivityDto(
                     day = iso(a.day), sport = a.sportType.name, durationMin = (a.durationSec + 30) / 60,

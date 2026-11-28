@@ -6,6 +6,7 @@ import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.myhealth.MyHealthApp
+import com.myhealth.domain.repository.syncIfConnected
 import com.myhealth.domain.util.Outcome
 import java.time.LocalDate
 
@@ -30,7 +31,11 @@ class HealthSyncWorker(
         val rereadDays = inputData.getLong(KEY_REREAD_DAYS, NO_BACKFILL).takeIf { it >= 0 }
 
         // The calendar import rides along with every sync; it needs no Health Connect.
-        if (backfillFromDay == null && rereadDays == null) graph.calendarImportService.sync()
+        if (backfillFromDay == null && rereadDays == null) {
+            graph.calendarImportService.sync()
+            // P28: the AI's planned changes, also while the app is closed.
+            graph.aiPlanning.syncIfConnected()
+        }
 
         val outcome: Outcome<*> = if (backfillFromDay != null) {
             val backfill = graph.hcBackfill

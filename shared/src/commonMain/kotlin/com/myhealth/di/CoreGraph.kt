@@ -74,6 +74,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import com.myhealth.domain.repository.syncIfConnected
 
 /**
  * The platform-neutral half of the dependency container (P21): every repository, engine and
@@ -139,6 +140,9 @@ abstract class CoreGraph : UiGraph {
 
         // Calendar import: pick up new, moved and cancelled appointments of the chosen calendars.
         appScope.launch { calendarImportService.sync() }
+
+        // P28: AI planning — apply what the AI planned since the app last ran, refresh the relay's copy.
+        appScope.launch { aiPlanning.syncIfConnected() }
     }
 
     /** The calendar import (v10); also run by the background sync on Android. */
@@ -260,6 +264,19 @@ abstract class CoreGraph : UiGraph {
     override val shareRepo: com.myhealth.domain.repository.ShareRepository by lazy {
         com.myhealth.data.share.ShareService(
             db.shareDao(), userExerciseRepo, ingredientRepo, mealRepo, strengthRepo, clock,
+        )
+    }
+
+    /** P28: AI planning — pulls the AI's changes from the relay and applies them through the repositories. */
+    override val aiPlanning: com.myhealth.domain.repository.AiPlanningRepository by lazy {
+        com.myhealth.data.ai.AiSyncService(
+            db.aiDao(),
+            com.myhealth.data.ai.AiContent(
+                exercises = userExerciseRepo, workouts = strengthRepo, plan = planRepo, profile = profileRepo, goals = goalRepo,
+                calendar = calendarRepo, activities = activityRepo, load = loadRepo, body = bodyRepo, health = healthRepo,
+                cycle = cycleRepo,
+            ),
+            clock,
         )
     }
 

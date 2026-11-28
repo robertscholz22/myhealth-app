@@ -35,6 +35,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object IntegrationsRoute
 @Serializable data object CalendarImportRoute
 @Serializable data object ShareLibraryRoute
+@Serializable data object AiPlanningRoute
 @Serializable data object ImportRoute
 @Serializable data object BackupRoute
 @Serializable data object OnboardingRoute
