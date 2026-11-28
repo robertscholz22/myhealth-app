@@ -1381,4 +1381,6 @@ exercise), relay vitest 18/18. `tools/verify.sh`: 1418 unit tests, VERIFY OK; iO
   build (sha256 b89e2671…) and signed like the installed app, `install -r` → 0.13.0 (213), app opens,
   More lists AI planning (not connected), no crash. Backup after the install: schema 14, the same row
   counts, the AI tables present and empty; only `dailyLoad.computedAtMillis` differs. PASS
+- iOS run 46154408543 (p28 branch, `testflight=true`, `share_extension=false`): simulator UI tests green;
+  build 213 signed and uploaded to TestFlight. PASS
 
