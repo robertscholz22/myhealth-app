@@ -1,0 +1,16 @@
+// MyHealth AI planning relay. Deploy: see README.md. The deployed URL and keys stay out of the repo.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "myhealth-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [{ "name": "SPACE", "class_name": "Space" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Space"] }],
+  // OAuth clients, grants and tokens (hashed), plus the 10-minute pairing codes. No id: `wrangler
+  // deploy` creates the namespace on the first deploy.
+  "kv_namespaces": [{ "binding": "OAUTH_KV" }],
+  "observability": { "enabled": false }
+}

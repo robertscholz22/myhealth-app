@@ -146,6 +146,16 @@ class AiSnapshotBuilderTest {
     }
 
     @Test
+    fun sn07_vocab_lists_what_the_planner_accepts() {
+        val v = AiSnapshotBuilder.build(input(emptySet())).vocab
+        assertTrue("ADDUCTORS" in v.muscles)
+        assertEquals(AiOpPlanner.PLANNABLE.map { it.name }, v.sports.keys.toList())
+        assertEquals("ENDURANCE_RIDE", v.sports.getValue("CYCLING").first { it == "ENDURANCE_RIDE" })
+        assertEquals(listOf("CROSS_TRAINING"), v.sports.getValue("SWIM"))
+        assertEquals(600.0, v.limits.getValue("maxDurationMin"), 0.0)
+    }
+
+    @Test
     fun sn06_changeable_matches_the_planner() {
         val state = AiLocalState(
             today = today, library = com.myhealth.domain.engine.strength.ExerciseLibrary(), workouts = emptyMap(),

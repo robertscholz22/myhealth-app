@@ -49,6 +49,12 @@ class AiConnectionCodeTest {
         assertEquals(setOf(AiDataGroup.BASICS, AiDataGroup.CYCLE), AiDataGroup.parse(listOf("CYCLE", "NOPE")))
     }
 
+    /** The relay's `scripts/connection-code.mjs` output decodes here (fake URL and key). */
+    @Test
+    fun ac07_a_code_printed_by_the_relay_script_decodes() {
+        assertEquals(connection, AiConnectionCode.decode("myhealth-ai:1:eyJ1IjoiaHR0cHM6Ly9yZWxheS5leGFtcGxlLndvcmtlcnMuZGV2IiwiayI6InJlZy1rZXktMDEyMzQ1Njc4OWFiY2RlZiJ9"))
+    }
+
     @Test
     fun ac06_snapshot_ids_round_trip() {
         assertEquals(12L, AiIds.parseWorkout(AiIds.workout(12)))

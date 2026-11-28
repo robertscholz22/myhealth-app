@@ -309,7 +309,7 @@ object AiOpPlanner {
         SportType.MOBILITY, SportType.SWIM, SportType.WALK, SportType.OTHER,
     )
 
-    private val WORKOUT_TYPES = setOf(SessionType.STRENGTH_FULL, SessionType.STRENGTH_UPPER, SessionType.STRENGTH_LOWER, SessionType.MOBILITY)
+    val WORKOUT_TYPES: Set<SessionType> = setOf(SessionType.STRENGTH_FULL, SessionType.STRENGTH_UPPER, SessionType.STRENGTH_LOWER, SessionType.MOBILITY)
 
     // --- helpers -----------------------------------------------------------------------------------
 

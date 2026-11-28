@@ -1,5 +1,6 @@
 package com.myhealth.domain.ai
 
+import com.myhealth.domain.engine.suggest.SessionCatalog
 import com.myhealth.domain.model.ActivitySummary
 import com.myhealth.domain.model.CalendarEvent
 import com.myhealth.domain.model.CycleStatus
@@ -8,6 +9,10 @@ import com.myhealth.domain.model.Equipment
 import com.myhealth.domain.model.Exercise
 import com.myhealth.domain.model.ExerciseProgress
 import com.myhealth.domain.model.Goal
+import com.myhealth.domain.model.Intensity
+import com.myhealth.domain.model.MovementPattern
+import com.myhealth.domain.model.MuscleGroup
+import com.myhealth.domain.model.StrengthWorkoutKind
 import com.myhealth.domain.model.GoalStatus
 import com.myhealth.domain.model.PlannedSession
 import com.myhealth.domain.model.PlannedStatus
@@ -42,6 +47,8 @@ data class AiSnapshot(
     val load: AiLoadDto? = null,
     val body: AiBodyDto? = null,
     val cycle: AiCycleDto? = null,
+    /** The values each field accepts, so the relay checks ops without its own copy of the enums. */
+    val vocab: AiVocab = AiVocab.CURRENT,
 ) {
     fun toJson(): String = JSON.encodeToString(serializer(), this)
 
@@ -53,6 +60,50 @@ data class AiSnapshot(
 
 @Serializable
 data class AiWindow(val from: String, val to: String)
+
+@Serializable
+data class AiVocab(
+    val muscles: List<String>,
+    val equipment: List<String>,
+    val patterns: List<String>,
+    val workoutKinds: List<String>,
+    val intensities: List<String>,
+    /** Plannable sport → the session types it accepts (the first is the default). */
+    val sports: Map<String, List<String>>,
+    /** Session types a workout can be planned as. */
+    val workoutSessionTypes: List<String>,
+    /** The intensity a session type gets when none is given (the catalog's). */
+    val typeIntensity: Map<String, String>,
+    val limits: Map<String, Double>,
+) {
+    companion object {
+        val CURRENT: AiVocab = AiVocab(
+            muscles = MuscleGroup.entries.map { it.name },
+            equipment = Equipment.entries.map { it.name },
+            patterns = MovementPattern.entries.map { it.name },
+            workoutKinds = StrengthWorkoutKind.entries.map { it.name },
+            intensities = Intensity.entries.map { it.name },
+            sports = AiOpPlanner.PLANNABLE.associate { sport -> sport.name to AiOpPlanner.typesFor(sport).map { it.name } },
+            workoutSessionTypes = AiOpPlanner.WORKOUT_TYPES.map { it.name },
+            typeIntensity = SessionCatalog.ALL.associate { it.sessionType.name to it.intensity.name },
+            limits = mapOf(
+                "maxName" to AiOpPlanner.MAX_NAME.toDouble(),
+                "maxRows" to AiOpPlanner.MAX_ROWS.toDouble(),
+                "maxSets" to AiOpPlanner.MAX_SETS.toDouble(),
+                "maxReps" to AiOpPlanner.MAX_REPS.toDouble(),
+                "minSeconds" to AiOpPlanner.MIN_SECONDS.toDouble(),
+                "maxSeconds" to AiOpPlanner.MAX_SECONDS.toDouble(),
+                "maxLoadKg" to AiOpPlanner.MAX_LOAD_KG,
+                "maxRestSec" to AiOpPlanner.MAX_REST_SEC.toDouble(),
+                "maxDurationMin" to AiOpPlanner.MAX_DURATION_MIN.toDouble(),
+                "maxDistanceKm" to AiOpPlanner.MAX_DISTANCE_KM,
+                "minPaceSec" to AiOpPlanner.MIN_PACE_SEC.toDouble(),
+                "maxPaceSec" to AiOpPlanner.MAX_PACE_SEC.toDouble(),
+                "maxDaysAhead" to AiOpPlanner.MAX_DAYS_AHEAD.toDouble(),
+            ),
+        )
+    }
+}
 
 @Serializable
 data class AiExerciseDto(
