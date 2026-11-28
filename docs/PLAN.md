@@ -3197,6 +3197,32 @@ above. Opt-in, off by default; nothing else leaves the phone. The author lives o
 - **P27.7** Docs, instrumented tests (migration 12 → 13), iOS walkthrough; the real Firebase test with
   the owner and release 0.12.0 when asked.
 
+
+## P28 — AI planning through Claude / ChatGPT (owner request, 2026-11-28 → release 0.13.0, DB v14)
+
+Claude or ChatGPT plans training from the app's data — exercises (and new ones), my equipment,
+workouts, the calendar — without exporting. Those apps only reach remote MCP servers, so a small relay
+(Cloudflare Worker, free plan, the owner's account; code in `relay/`) is the MCP server, and the phone
+syncs with it. Owner's decisions: Claude/ChatGPT app via the relay; the phone applies the AI's changes
+automatically with a log and Undo; write scope "add + replace unlocked"; all four data groups, each a
+switch. Opt-in, off by default; Disconnect deletes the relay's copy.
+
+- **P28.1 Rules in `domain/ai`.** Connection code (`myhealth-ai:1:` + base64url of relay URL and
+  registration key), the op vocabulary (`AiOp`), `AiOpPlanner` (the write scope, decided on the
+  phone), `AiSnapshotBuilder` (4 weeks back, 12 ahead, groups, `vocab` so the relay copies no enums). Done.
+- **P28.2 Tables (DB v14).** `ai_config`, `ai_link` (ai id ↔ local row: what the AI may change),
+  `ai_change` (log with what each change replaced). Migration, backup and merge. Done.
+- **P28.3 Relay.** One SQLite Durable Object per phone (snapshot, op queue, daily limit 200);
+  OAuth with a pairing-code page; 17 MCP tools over the snapshot plus queued writes checked by a TS
+  mirror of the planner; `setup.mjs` prints the connection code. 16 vitest tests in workerd. Done.
+- **P28.4 Sync.** `RelayClient` + `AiSyncService`: pull → plan → apply via the repositories → log →
+  ack → push snapshot; lost acks, unknown ops, a wiped space; Undo per batch. Done.
+- **P28.5 Screen.** More › AI planning (connect, data groups, pairing code + connector address,
+  sync now, AI changes with Undo, disconnect); "Planned with AI" on week-board cards; sync on app
+  start, in the Android background sync and the iOS refresh task. Done.
+- **P28.6 End to end.** Emulator against `tools/relay-dev.sh` with `relay/scripts/mcp-client.mjs` as
+  the AI. Done (VERIFICATION session 38); iOS link + simulator run with the release build.
+- **P28.7 Real.** The owner deploys the relay, pairs Claude and plans a week; release 0.13.0. Open.
 ## 6. Verification strategy
 
 ### 6.1 After every task (the lead runs this)

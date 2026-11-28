@@ -277,6 +277,23 @@ emulator; "Anna" is a scripted second member).
 | FS13 | iPhone join and import | `testSharedFamilyLibraryJoinAndImport` (ios.yml seeds the Firebase emulator with `tools/share-seed.py`) | Joined, Anna listed, recipe imported with its ingredients ("Imported 3") | PASS |
 | FS12 | Real Firebase project | The owner creates one with the guide; emulator + scripted second member, then two phones | As FS1–FS9; rules refuse others' writes and strangers | emulator PASS, phones open |
 
+## 18c. AI planning
+
+Added for 0.13.0 (schema 14). Results are from VERIFICATION session 38 (emulator against
+`tools/relay-dev.sh`; `relay/scripts/mcp-client.mjs` plays the AI app).
+
+| ID | Workflow | Steps | Expected | Result |
+|---|---|---|---|---|
+| AI1 | Connect | More → AI planning → paste the connection code → Connect | Connected, "Last sync …", "No AI app paired yet" | PASS |
+| AI2 | Wrong code | Paste text that is not a code | "That is not a connection code …"; nothing stored | PASS (unit) |
+| AI3 | Pair the AI app | Show pairing code → type it on the connector's sign-in page | Code shown as 4 + 4, valid 10 minutes, once; "Paired: <app>" | PASS |
+| AI4 | AI plans a week | The AI creates an exercise, a workout with it and three sessions → Sync now | "Synced: 5 applied"; the log lists them with Undo; the week board shows them with "Planned with AI" and the workout's exercises | PASS |
+| AI5 | Locked meanwhile | The AI changes a session; the owner locks it before the sync | "1 rejected"; the log and the AI's sync status give "… is locked by the owner …" | PASS |
+| AI6 | Data groups | Switch Body and recovery off | The AI's training status: body "Not shared"; a group on without data: "no data yet" | PASS |
+| AI7 | Undo | Undo on the batch | "5 changes undone", rows struck through; sessions, workout and exercise gone; the AI sees none | PASS |
+| AI8 | Disconnect | Disconnect → confirm | Back to Connect; the relay refuses the AI app's token | PASS |
+| AI9 | Real relay and Claude | The owner deploys the relay (`relay/README.md`), adds the connector in Claude, plans a week | As AI1–AI8 | open |
+
 ## 19. Settings
 
 | ID | Workflow | Steps | Expected | Result |

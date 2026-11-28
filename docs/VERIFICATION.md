@@ -1318,3 +1318,27 @@ with `tools/share-seed.py --code` over the production endpoints. Project id, key
   on Today, More lists Family sharing, no crash. Backup after the install: schema 13, the same row
   counts, the share tables present and empty; only `dailyLoad.computedAtMillis` differs. PASS
 
+## Session 38 — 2026-11-28 (emulator + local relay, 0.13.0 in progress: P28 AI planning)
+
+### P28.1–P28.3 — rules, tables, relay
+`tools/verify.sh` green after each task (1411 unit tests at the end). `AiOpPlannerTest` 27,
+`AiSnapshotBuilderTest` 7, `AiConnectionCodeTest` 7 (one decodes a code printed by the relay's
+script), migration 13 → 14 in `MigrationSqlTest` and on the emulator (`tools/connected.sh`).
+Relay: `npx vitest run` 16/16 in workerd — registration key, snapshot limits, OAuth pairing with a
+wrong and a reused code, tool hints, a week planned and queued, scope refusals with reasons,
+applied ops in the view until the next snapshot, space isolation, disconnect, daily limit.
+`wrangler deploy --dry-run`: 305 KB gzipped. The test snapshot is written by the Kotlin builder
+(`AiRelayFixture`), so both sides share one wire format.
+
+### P28.4–P28.6 — sync, screen, end to end
+- `AiSyncServiceTest` 10/10 against a MockEngine relay: apply + links + log, rejections, a lost ack
+  not applied twice, Undo of a whole batch, a session done meanwhile left alone, groups off, a wiped
+  space, disconnect, pairing, a relay error kept as the last error. PASS
+- Android emulator (debug build) against `tools/relay-dev.sh`, the AI played by
+  `relay/scripts/mcp-client.mjs`: AI1, AI3–AI8 of WORKFLOWS §18c. PASS. Found and fixed: the OAuth
+  library refused the emulator's http origin `10.0.2.2` (500 on register) — dev http hosts now use
+  the loopback metadata; the intro showed `AI\'s` (Compose resources need no escape); the AI was told
+  "turned off" for a group that was on but had no data.
+- iOS: `compileKotlinIosSimulatorArm64` on Linux green; linking and the simulator run go with the
+  release build (ios.yml).
+
