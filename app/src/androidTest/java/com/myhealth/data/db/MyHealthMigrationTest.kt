@@ -761,6 +761,63 @@ class MyHealthMigrationTest {
         }
     }
 
+    /**
+     * P28: a v13 workout and its share link survive, the three AI tables start empty, an op id is
+     * logged once (a repeated op is ignored), and one local row has at most one AI link.
+     */
+    @Test
+    fun migration_13_to_14_adds_the_ai_tables_and_keeps_content() {
+        migrations.createDatabase(MIGRATION_DB, 13).use { v13 ->
+            v13.execSQL(
+                "INSERT INTO strength_workout (id, name, kind, templateId, isBuiltIn, notes, createdAtMillis, " +
+                    "updatedAtMillis, useInSuggestions, videoUrl, videoTitle, durationMin, sourceText) " +
+                    "VALUES (1, 'Legs', 'LOWER', NULL, 0, NULL, 1, 1, 1, NULL, NULL, NULL, NULL)",
+            )
+            v13.execSQL(
+                "INSERT INTO share_link (kind, localKey, shareId, authorId, authorName, version, sharedAtMillis, " +
+                    "payloadHash, remoteGone, basedOnShareId, basedOnName, basedOnAuthor) " +
+                    "VALUES ('WORKOUT', '1', 's-1', 'u', 'Me', 1, 2, NULL, 0, NULL, NULL, NULL)",
+            )
+        }
+
+        migrations.runMigrationsAndValidate(MIGRATION_DB, 14, true, *Migrations.ALL)
+
+        val migrated = Room.databaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            MyHealthDatabase::class.java,
+            MIGRATION_DB,
+        ).addMigrations(*Migrations.ALL).build()
+        try {
+            runTest {
+                assertThat(checkNotNull(migrated.strengthDao().getById(1L)).workout.name).isEqualTo("Legs")
+                assertThat(migrated.shareDao().getLinks().single().shareId).isEqualTo("s-1")
+                val ai = migrated.aiDao()
+                assertThat(ai.getConfig()).isNull()
+                assertThat(ai.getLinks()).isEmpty()
+                ai.upsertConfig(
+                    com.myhealth.data.db.entity.AiConfigEntity(
+                        relayUrl = "http://10.0.2.2:8787", spaceId = "sp", spaceToken = "t", groups = "BASICS",
+                        connectedAtMillis = 2,
+                    ),
+                )
+                ai.insertLink(com.myhealth.data.db.entity.AiLinkEntity("ai-w1", "WORKOUT", "1", 2))
+                val change = com.myhealth.data.db.entity.AiChangeEntity(
+                    batchId = "b", opId = "op-1", type = "create_workout", result = "APPLIED", summary = "Created Legs",
+                    appliedAtMillis = 2,
+                )
+                assertThat(ai.insertChange(change)).isGreaterThan(0L)
+                assertThat(ai.insertChange(change.copy(summary = "again"))).isEqualTo(-1L)
+                assertThat(ai.getBatch("b").single().summary).isEqualTo("Created Legs")
+                // REPLACE on the unique (kind, localKey) drops the older link rather than keeping two.
+                ai.insertLink(com.myhealth.data.db.entity.AiLinkEntity("ai-w2", "WORKOUT", "1", 3))
+                assertThat(ai.getLinks().map { it.aiId }).containsExactly("ai-w2")
+                assertThat(checkNotNull(ai.getConfig()).spaceId).isEqualTo("sp")
+            }
+        } finally {
+            migrated.close()
+        }
+    }
+
     private companion object {
         const val MIGRATION_DB = "migration-test.db"
     }

@@ -14,6 +14,9 @@ import com.myhealth.data.db.entity.RunningBestEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.AiChangeEntity
+import com.myhealth.data.db.entity.AiConfigEntity
+import com.myhealth.data.db.entity.AiLinkEntity
 import com.myhealth.data.db.entity.ShareConfigEntity
 import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.StrengthSetLogEntity
@@ -273,6 +276,24 @@ internal object BackupFixtures {
         joinedAtMillis = START,
     )
 
+    /** P28: a fake relay connection (never a real relay). */
+    fun aiConfig() = AiConfigEntity(
+        relayUrl = "https://relay.example.invalid",
+        spaceId = "space-1",
+        spaceToken = "fake-space-token",
+        groups = "BASICS,LOAD",
+        connectedAtMillis = START,
+    )
+
+    /** P28: the workout fixture, created by the AI. */
+    fun aiLink(localKey: String = "1", aiId: String = "ai-w1") =
+        AiLinkEntity(aiId = aiId, kind = "WORKOUT", localKey = localKey, createdAtMillis = START)
+
+    fun aiChange(opId: String = "op-1") = AiChangeEntity(
+        id = 1L, batchId = "b-1", opId = opId, type = "create_workout", result = "APPLIED",
+        summary = "Created workout Home A", kind = "WORKOUT", localKey = "1", appliedAtMillis = START,
+    )
+
     fun file(exportedAtMillis: Long = START, appVersion: String = "1.0") = BackupFile(
         exportedAtMillis = exportedAtMillis,
         appVersion = appVersion,
@@ -295,5 +316,8 @@ internal object BackupFixtures {
         exerciseAlias = listOf(exerciseAlias()),
         shareLink = listOf(shareLink()),
         shareConfig = listOf(shareConfig()),
+        aiConfig = listOf(aiConfig()),
+        aiLink = listOf(aiLink()),
+        aiChange = listOf(aiChange()),
     )
 }

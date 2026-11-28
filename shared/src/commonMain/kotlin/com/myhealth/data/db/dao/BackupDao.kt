@@ -17,6 +17,9 @@ import com.myhealth.data.db.entity.EventOverrideEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.AiChangeEntity
+import com.myhealth.data.db.entity.AiConfigEntity
+import com.myhealth.data.db.entity.AiLinkEntity
 import com.myhealth.data.db.entity.ShareConfigEntity
 import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.GoalEntity
@@ -380,4 +383,31 @@ interface BackupDao {
 
     @Query("DELETE FROM share_config")
     suspend fun deleteShareConfig()
+
+    @Query("SELECT * FROM ai_config")
+    suspend fun allAiConfig(): List<AiConfigEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAiConfig(rows: List<AiConfigEntity>): List<Long>
+
+    @Query("DELETE FROM ai_config")
+    suspend fun deleteAiConfig()
+
+    @Query("SELECT * FROM ai_link")
+    suspend fun allAiLink(): List<AiLinkEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAiLink(rows: List<AiLinkEntity>): List<Long>
+
+    @Query("DELETE FROM ai_link")
+    suspend fun deleteAiLink()
+
+    @Query("SELECT * FROM ai_change")
+    suspend fun allAiChange(): List<AiChangeEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAiChange(rows: List<AiChangeEntity>): List<Long>
+
+    @Query("DELETE FROM ai_change")
+    suspend fun deleteAiChange()
 }

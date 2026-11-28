@@ -13,6 +13,9 @@ import com.myhealth.data.db.entity.EventOverrideEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.AiChangeEntity
+import com.myhealth.data.db.entity.AiConfigEntity
+import com.myhealth.data.db.entity.AiLinkEntity
 import com.myhealth.data.db.entity.ShareConfigEntity
 import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.GoalEntity
@@ -106,6 +109,10 @@ data class BackupFile(
     // §P27 family sharing
     val shareLink: List<ShareLinkEntity> = emptyList(),
     val shareConfig: List<ShareConfigEntity> = emptyList(),
+    // §P28 AI planning
+    val aiConfig: List<AiConfigEntity> = emptyList(),
+    val aiLink: List<AiLinkEntity> = emptyList(),
+    val aiChange: List<AiChangeEntity> = emptyList(),
 ) {
 
     /** Rows per SQLite table name, empty tables omitted — what the screen reports after a run. */
@@ -146,6 +153,9 @@ data class BackupFile(
         "exercise_alias" to exerciseAlias.size,
         "share_link" to shareLink.size,
         "share_config" to shareConfig.size,
+        "ai_config" to aiConfig.size,
+        "ai_link" to aiLink.size,
+        "ai_change" to aiChange.size,
     ).filterValues { it > 0 }
 
     val totalRows: Int get() = rowsPerTable().values.sum()
@@ -162,7 +172,8 @@ data class BackupFile(
          * P26 raises it to **12** (`user_exercise`, `exercise_alias`, the video columns of
          * `strength_workout` and `strength_workout_exercise`; an older file has none of them).
          * P27 raises it to **13** (`share_link`, `share_config`; an older file has neither).
+         * P28 raises it to **14** (`ai_config`, `ai_link`, `ai_change`; an older file has none).
          */
-        const val CURRENT_SCHEMA_VERSION: Int = 13
+        const val CURRENT_SCHEMA_VERSION: Int = 14
     }
 }

@@ -65,6 +65,10 @@ import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.dao.UserExerciseDao
 import com.myhealth.data.db.dao.ShareDao
+import com.myhealth.data.db.dao.AiDao
+import com.myhealth.data.db.entity.AiChangeEntity
+import com.myhealth.data.db.entity.AiConfigEntity
+import com.myhealth.data.db.entity.AiLinkEntity
 
 /**
  * The single Room database (PLAN §2.2): 26 tables plus the P8.5 `ingredient_fts` index, the
@@ -129,8 +133,11 @@ import com.myhealth.data.db.dao.ShareDao
         // §P27 family sharing
         ShareLinkEntity::class,
         ShareConfigEntity::class,
+        AiConfigEntity::class,
+        AiLinkEntity::class,
+        AiChangeEntity::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -143,6 +150,9 @@ abstract class MyHealthDatabase : RoomDatabase() {
 
     /** `share_link` and `share_config` (P27). */
     abstract fun shareDao(): ShareDao
+
+    /** `ai_config`, `ai_link` and `ai_change` (P28). */
+    abstract fun aiDao(): AiDao
 
     abstract fun bodyDao(): BodyDao
 

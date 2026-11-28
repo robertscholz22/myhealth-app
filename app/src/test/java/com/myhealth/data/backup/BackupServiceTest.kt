@@ -47,6 +47,9 @@ class BackupServiceTest {
         dao.exerciseAlias += BackupFixtures.exerciseAlias()
         dao.shareLink += BackupFixtures.shareLink()
         dao.shareConfig += BackupFixtures.shareConfig()
+        dao.aiConfig += BackupFixtures.aiConfig()
+        dao.aiLink += BackupFixtures.aiLink()
+        dao.aiChange += BackupFixtures.aiChange()
     }
 
     @Test
@@ -55,8 +58,8 @@ class BackupServiceTest {
 
         val summary = (service.export(URI) as Outcome.Ok).value
 
-        assertThat(summary.totalRows).isEqualTo(18)
-        assertThat(summary.rowsWritten).isEqualTo(18)
+        assertThat(summary.totalRows).isEqualTo(21)
+        assertThat(summary.rowsWritten).isEqualTo(21)
         assertThat(summary.appVersion).isEqualTo("1.0")
         assertThat(summary.exportedAtMillis).isEqualTo(clock.millis())
         assertThat(summary.schemaVersion).isEqualTo(BackupFile.CURRENT_SCHEMA_VERSION)
@@ -74,7 +77,7 @@ class BackupServiceTest {
 
         val summary = (service.import(URI, BackupMode.REPLACE) as Outcome.Ok).value
 
-        assertThat(summary.rowsWritten).isEqualTo(18)
+        assertThat(summary.rowsWritten).isEqualTo(21)
         assertThat(dao.activitySession.map { it.id to it.title }).containsExactly(1L to "Spiel")
         assertThat(dao.ingredient.map { it.name }).containsExactly("Haferflocken")
         assertThat(dao.activityStream.single().activityId).isEqualTo(1L)
@@ -88,7 +91,7 @@ class BackupServiceTest {
 
         val summary = (service.import(URI, BackupMode.MERGE) as Outcome.Ok).value
 
-        assertThat(summary.rowsWritten).isEqualTo(18)
+        assertThat(summary.rowsWritten).isEqualTo(21)
         val activityId = dao.activitySession.single().id
         assertThat(activityId).isNotEqualTo(1L)
         assertThat(dao.activityStream.single().activityId).isEqualTo(activityId)
@@ -211,6 +214,40 @@ class BackupServiceTest {
         assertThat(dao.shareLink).isEmpty()
     }
 
+    /**
+     * P28: an AI link follows its workout onto the merged id, the relay connection and the changes
+     * log come back, and merging again neither duplicates them nor takes over the device's rows.
+     */
+    @Test
+    fun p28_ai_links_and_changes_follow_through_replace_and_merge() = runTest {
+        seed()
+        service.export(URI)
+        clearDevice()
+
+        service.import(URI, BackupMode.REPLACE)
+        assertThat(dao.aiConfig.single().spaceToken).isEqualTo("fake-space-token")
+        assertThat(dao.aiLink.single().localKey).isEqualTo("1")
+        assertThat(dao.aiChange.single().opId).isEqualTo("op-1")
+
+        clearDevice()
+        service.import(URI, BackupMode.MERGE)
+        val workoutId = dao.strengthWorkout.single().id
+        assertThat(dao.aiLink.single().localKey).isEqualTo(workoutId.toString())
+        assertThat(dao.aiLink.single().aiId).isEqualTo("ai-w1")
+        assertThat(dao.aiConfig.single().spaceId).isEqualTo("space-1")
+        assertThat(dao.aiChange.single().opId).isEqualTo("op-1")
+
+        service.import(URI, BackupMode.MERGE)
+        assertThat(dao.aiLink).hasSize(1)
+        assertThat(dao.aiChange).hasSize(1)
+
+        clearDevice()
+        seed()
+        dao.aiLink.clear()
+        service.import(URI, BackupMode.MERGE)
+        assertThat(dao.aiLink).isEmpty()
+    }
+
     @Test
     fun merging_the_same_backup_twice_inserts_nothing_the_second_time() = runTest {
         seed()
@@ -303,6 +340,9 @@ class BackupServiceTest {
         dao.exerciseAlias.clear()
         dao.shareLink.clear()
         dao.shareConfig.clear()
+        dao.aiConfig.clear()
+        dao.aiLink.clear()
+        dao.aiChange.clear()
     }
 
     private companion object {

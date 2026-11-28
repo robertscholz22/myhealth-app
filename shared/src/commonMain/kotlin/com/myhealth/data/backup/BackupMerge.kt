@@ -65,6 +65,10 @@ internal class BackupMerge(private val dao: BackupDao) {
         )
         // P27: the device's own library connection wins over the backup's.
         written += mergeKeyed(file.shareConfig, existing.shareConfig, { it.id }, dao::insertShareConfig)
+        // P28: the device's own relay connection wins; the changes log merges by op id (its Undo
+        // checks the row is still as it left it, so a merged entry can never undo the wrong row).
+        written += mergeKeyed(file.aiConfig, existing.aiConfig, { it.id }, dao::insertAiConfig)
+        written += mergeKeyed(file.aiChange.map { it.copy(id = 0L) }, existing.aiChange, { it.opId }, dao::insertAiChange)
 
         val ingredients = mergeRoot(
             file.ingredient, existing.ingredient, { it.id },
@@ -226,6 +230,7 @@ internal class BackupMerge(private val dao: BackupDao) {
             dao::insertMealLogItem,
         )
         written += mergeShareLinks(file, existing, ingredients, templates, workouts)
+        written += mergeAiLinks(file, existing, workouts, plannedSessions)
         return written
     }
 
@@ -261,6 +266,25 @@ internal class BackupMerge(private val dao: BackupDao) {
         }.filter { (it.kind to it.localKey) !in haveKeys && (it.shareId == null || it.shareId !in haveShareIds) }
             .distinctBy { it.shareId ?: "${it.kind}|${it.localKey}" }
         return if (rows.isEmpty()) 0 else dao.insertShareLink(rows).size
+    }
+
+    /**
+     * P28: like share links, an AI link follows its row — numeric rows only when this merge created
+     * them, exercises by their random id — and never takes over an `ai-…` id the device already has.
+     */
+    private suspend fun mergeAiLinks(file: BackupFile, existing: BackupFile, workouts: Remap, sessions: Remap): Int {
+        val haveIds = existing.aiLink.mapTo(mutableSetOf()) { it.aiId }
+        val haveKeys = existing.aiLink.mapTo(mutableSetOf()) { it.kind to it.localKey }
+        val exerciseIds = existing.userExercise.mapTo(mutableSetOf()) { it.id } + file.userExercise.map { it.id }
+        val rows = file.aiLink.mapNotNull { link ->
+            val localKey = when (link.kind) {
+                "WORKOUT" -> link.localKey.toLongOrNull()?.takeIf { workouts.isNew(it) }?.let { workouts.target(it)?.toString() }
+                "SESSION" -> link.localKey.toLongOrNull()?.takeIf { sessions.isNew(it) }?.let { sessions.target(it)?.toString() }
+                else -> link.localKey.takeIf { it in exerciseIds }
+            }
+            localKey?.let { link.copy(localKey = it) }
+        }.filter { it.aiId !in haveIds && (it.kind to it.localKey) !in haveKeys }
+        return if (rows.isEmpty()) 0 else dao.insertAiLink(rows).size
     }
 
     /** A table keyed by its own primary key: insert only the keys the device does not have. */

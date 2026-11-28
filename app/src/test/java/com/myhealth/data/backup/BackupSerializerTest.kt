@@ -21,7 +21,7 @@ class BackupSerializerTest {
         assertThat(restored.mealLogItem.single().unit).isEqualTo(original.mealLogItem.single().unit)
         assertThat(restored.rowsPerTable()).isEqualTo(original.rowsPerTable())
         assertThat(restored.rideBest.single().kind).isEqualTo(original.rideBest.single().kind)
-        assertThat(restored.totalRows).isEqualTo(19)
+        assertThat(restored.totalRows).isEqualTo(22)
     }
 
     @Test
@@ -33,7 +33,7 @@ class BackupSerializerTest {
             "ingredient", "meal_log", "meal_log_item", "daily_load", "running_best",
             "ride_best", "cycle_entry", "strength_workout", "strength_workout_exercise",
             "strength_set_log", "exercise_progress", "user_exercise", "exercise_alias",
-            "share_link", "share_config",
+            "share_link", "share_config", "ai_config", "ai_link", "ai_change",
         )
         assertThat(counts["activity_session"]).isEqualTo(1)
         assertThat(counts).doesNotContainKey("sleep_session")

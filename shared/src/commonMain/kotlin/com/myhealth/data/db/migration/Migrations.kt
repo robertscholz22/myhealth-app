@@ -323,6 +323,31 @@ object Migrations {
         )
     }
 
+    /** P28: AI planning — the relay connection, the rows the AI created, and the changes log. */
+    private val MIGRATION_13_14 = MigrationStep(13, 14) { db ->
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `ai_config` (" +
+                "`id` INTEGER NOT NULL, `relayUrl` TEXT NOT NULL, `spaceId` TEXT NOT NULL, " +
+                "`spaceToken` TEXT NOT NULL, `groups` TEXT NOT NULL, `connectedAtMillis` INTEGER NOT NULL, " +
+                "`lastSyncAtMillis` INTEGER, `lastError` TEXT, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `ai_link` (" +
+                "`aiId` TEXT NOT NULL, `kind` TEXT NOT NULL, `localKey` TEXT NOT NULL, " +
+                "`createdAtMillis` INTEGER NOT NULL, PRIMARY KEY(`aiId`))",
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `uq_ai_link_local` ON `ai_link` (`kind`, `localKey`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `ai_change` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `batchId` TEXT NOT NULL, " +
+                "`opId` TEXT NOT NULL, `type` TEXT NOT NULL, `result` TEXT NOT NULL, " +
+                "`summary` TEXT NOT NULL, `reason` TEXT, `kind` TEXT, `localKey` TEXT, " +
+                "`beforeJson` TEXT, `appliedAtMillis` INTEGER NOT NULL)",
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `uq_ai_change_op` ON `ai_change` (`opId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_ai_change_batch` ON `ai_change` (`batchId`)")
+    }
+
     /**
      * Every migration, oldest first. `.addMigrations(*ALL)` is the only call site, in each
      * platform's database builder, so adding a migration never changes it.
@@ -345,6 +370,7 @@ object Migrations {
             MIGRATION_10_11,
             MIGRATION_11_12,
             MIGRATION_12_13,
+            MIGRATION_13_14,
         )
 }
 

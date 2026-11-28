@@ -118,6 +118,9 @@ class BackupService(
         exerciseAlias = dao.allExerciseAlias(),
         shareLink = dao.allShareLink(),
         shareConfig = dao.allShareConfig(),
+        aiConfig = dao.allAiConfig(),
+        aiLink = dao.allAiLink(),
+        aiChange = dao.allAiChange(),
     )
 
     /** Child-first wipe, then parent-first insert with the backup's own ids. */
@@ -132,6 +135,9 @@ class BackupService(
         dao.deleteExerciseProgress()
         dao.deleteShareLink()
         dao.deleteShareConfig()
+        dao.deleteAiConfig()
+        dao.deleteAiLink()
+        dao.deleteAiChange()
         dao.deleteExerciseAlias()
         dao.deleteUserExercise()
         dao.deleteStrengthSetLog()
@@ -211,6 +217,10 @@ class BackupService(
         // P27: links name their rows by key, not by foreign key; a restore keeps every id.
         written += dao.insertShareLink(file.shareLink).size
         written += dao.insertShareConfig(file.shareConfig).size
+        // P28: the same — AI links and the changes log name rows by key.
+        written += dao.insertAiConfig(file.aiConfig).size
+        written += dao.insertAiLink(file.aiLink).size
+        written += dao.insertAiChange(file.aiChange).size
         return written
     }
 }

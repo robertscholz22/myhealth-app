@@ -27,6 +27,9 @@ import com.myhealth.data.db.entity.SleepSessionEntity
 import com.myhealth.data.db.entity.ExerciseProgressEntity
 import com.myhealth.data.db.entity.ExerciseAliasEntity
 import com.myhealth.data.db.entity.UserExerciseEntity
+import com.myhealth.data.db.entity.AiChangeEntity
+import com.myhealth.data.db.entity.AiConfigEntity
+import com.myhealth.data.db.entity.AiLinkEntity
 import com.myhealth.data.db.entity.ShareConfigEntity
 import com.myhealth.data.db.entity.ShareLinkEntity
 import com.myhealth.data.db.entity.StrengthSetLogEntity
@@ -380,4 +383,33 @@ internal class FakeBackupDao : BackupDao {
     override suspend fun insertShareConfig(rows: List<ShareConfigEntity>) = keyed(shareConfig, rows) { it.id }
 
     override suspend fun deleteShareConfig() = shareConfig.clear()
+
+    val aiConfig: MutableList<AiConfigEntity> = mutableListOf()
+
+    override suspend fun allAiConfig(): List<AiConfigEntity> = aiConfig.toList()
+
+    override suspend fun insertAiConfig(rows: List<AiConfigEntity>) = keyed(aiConfig, rows) { it.id }
+
+    override suspend fun deleteAiConfig() = aiConfig.clear()
+
+    val aiLink: MutableList<AiLinkEntity> = mutableListOf()
+
+    override suspend fun allAiLink(): List<AiLinkEntity> = aiLink.toList()
+
+    override suspend fun insertAiLink(rows: List<AiLinkEntity>) = keyed(aiLink, rows) { it.aiId }
+
+    override suspend fun deleteAiLink() = aiLink.clear()
+
+    val aiChange: MutableList<AiChangeEntity> = mutableListOf()
+
+    override suspend fun allAiChange(): List<AiChangeEntity> = aiChange.toList()
+
+    override suspend fun insertAiChange(rows: List<AiChangeEntity>): List<Long> = rows.map { row ->
+        val id = if (row.id == 0L) (aiChange.maxOfOrNull { it.id } ?: 0L) + 1 else row.id
+        aiChange.removeAll { it.id == id }
+        aiChange += row.copy(id = id)
+        id
+    }
+
+    override suspend fun deleteAiChange() = aiChange.clear()
 }
