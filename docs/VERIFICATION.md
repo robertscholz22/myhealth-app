@@ -1369,4 +1369,8 @@ applied ops in the view until the next snapshot, space isolation, disconnect, da
 `AiOpPlannerTest` op33–op34, `AiSyncServiceTest` as12 (snapshot source / byAi / editable / notes, a
 family member's exercise refused, change logged as "Changed exercise: … (muscles)", Undo restores the
 exercise), relay vitest 18/18. `tools/verify.sh`: 1418 unit tests, VERIFY OK; iOS compile green.
+- With Claude on the owner's redeployed relay ("check the muscle groups of the exercises you created"):
+  3 corrections applied at app start, 0 rejected — Deep lunge stretch quads / glutes, adductors;
+  Barbell floor press chest, triceps / front shoulders; Cossack squat glutes, quads, adductors /
+  hamstrings. Only AI-made exercises touched; the log keeps the old values for Undo. PASS (AI11)
 
