@@ -190,6 +190,58 @@ class AiOpPlannerTest {
         assertTrue(d is AiDecision.Apply && d.step is AiStep.RemoveWorkout)
     }
 
+    @Test
+    fun op30_video_workout_keeps_link_title_minutes_and_source_lines() {
+        val s = step(
+            AiOp.CreateWorkout(
+                "o", "ai-v1", "Glutes 20", "LOWER",
+                listOf(row("PUSH_UP").copy(sourceLine = "  0:45 Push-ups x10 ")),
+                videoUrl = "https://youtu.be/dQw4w9WgXcQ?t=30", videoTitle = " 20 min glutes ", videoMinutes = 22,
+                sourceText = "0:45 Push-ups x10\n2:00 Squats",
+            ),
+        ) as AiStep.InsertWorkout
+        val w = s.workout
+        assertEquals("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=30", w.videoUrl)
+        assertEquals("20 min glutes", w.videoTitle)
+        assertEquals(22, w.durationMin)
+        assertEquals(22, w.estimatedMinutes)
+        assertEquals("0:45 Push-ups x10\n2:00 Squats", w.sourceText)
+        assertEquals("0:45 Push-ups x10", w.exercises.single().sourceLine)
+        // Other sites stay as they are.
+        val other = step(AiOp.CreateWorkout("o", "ai-v2", "Yoga", rows = listOf(row("PUSH_UP")), videoUrl = "https://vimeo.com/123")) as AiStep.InsertWorkout
+        assertEquals("https://vimeo.com/123", other.workout.videoUrl)
+    }
+
+    @Test
+    fun op31_video_fields_are_checked() {
+        fun r(url: String? = "https://youtu.be/dQw4w9WgXcQ", title: String? = null, min: Int? = null, src: String? = null) =
+            reason(AiOp.CreateWorkout("o", "ai-v", "V", rows = listOf(row("PUSH_UP")), videoUrl = url, videoTitle = title, videoMinutes = min, sourceText = src))
+        assertTrue(r(url = "http://youtu.be/dQw4w9WgXcQ").contains("https"))
+        assertTrue(r(url = "javascript:alert(1)").contains("https"))
+        assertTrue(r(url = "https://x.y/a b").contains("https"))
+        assertTrue(r(url = null, title = "T").contains("need a videoUrl"))
+        assertTrue(r(min = 0).contains("videoMinutes"))
+        assertTrue(r(title = "x".repeat(201)).contains("videoTitle"))
+        assertTrue(r(src = "x".repeat(5001)).contains("sourceText"))
+    }
+
+    @Test
+    fun op32_update_adds_keeps_and_removes_the_video() {
+        val added = step(AiOp.UpdateWorkout("o", "ai-w2", videoUrl = "https://www.youtube.com/shorts/dQw4w9WgXcQ", videoMinutes = 15)) as AiStep.ReplaceWorkout
+        assertEquals("https://www.youtube.com/watch?v=dQw4w9WgXcQ", added.after.videoUrl)
+        assertEquals(15, added.after.durationMin)
+        val withVideo = state.copy(workouts = state.workouts + (2L to added.after))
+        val renamed = AiOpPlanner.plan(AiOp.UpdateWorkout("o", "ai-w2", name = "New"), withVideo, now) as AiDecision.Apply
+        val kept = (renamed.step as AiStep.ReplaceWorkout).after
+        assertEquals(added.after.videoUrl, kept.videoUrl)
+        assertEquals(15, kept.durationMin)
+        val removed = AiOpPlanner.plan(AiOp.UpdateWorkout("o", "ai-w2", videoUrl = ""), withVideo, now) as AiDecision.Apply
+        val gone = (removed.step as AiStep.ReplaceWorkout).after
+        assertEquals(null, gone.videoUrl)
+        assertEquals(null, gone.durationMin)
+        assertEquals(null, gone.sourceText)
+    }
+
     // --- sessions --------------------------------------------------------------------------------
 
     @Test
@@ -349,6 +401,8 @@ class AiOpPlannerTest {
             AiOp.SetEquipment("2", listOf("BAND")),
             AiOp.CreateWorkout("3", "ai-b", "B", rows = listOf(row("PUSH_UP"))),
             AiOp.UpdateWorkout("4", "ai-b", name = "C"),
+            AiOp.CreateWorkout("9", "ai-v", "V", rows = listOf(row("PUSH_UP").copy(sourceLine = "0:10 x")), videoUrl = "https://youtu.be/dQw4w9WgXcQ", videoTitle = "T", videoMinutes = 12, sourceText = "s"),
+            AiOp.UpdateWorkout("10", "ai-v", videoUrl = ""),
             AiOp.DeleteWorkout("5", "ai-b"),
             AiOp.ScheduleSession("6", "ai-c", AiSessionFields(day = "2026-12-03", sport = "WALK")),
             AiOp.UpdateSession("7", "s1", AiSessionFields(durationMin = 30)),

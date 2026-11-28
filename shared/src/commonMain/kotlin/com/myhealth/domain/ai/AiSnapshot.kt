@@ -100,6 +100,9 @@ data class AiVocab(
                 "minPaceSec" to AiOpPlanner.MIN_PACE_SEC.toDouble(),
                 "maxPaceSec" to AiOpPlanner.MAX_PACE_SEC.toDouble(),
                 "maxDaysAhead" to AiOpPlanner.MAX_DAYS_AHEAD.toDouble(),
+                "maxUrl" to AiOpPlanner.MAX_URL.toDouble(),
+                "maxVideoTitle" to AiOpPlanner.MAX_VIDEO_TITLE.toDouble(),
+                "maxSourceText" to AiOpPlanner.MAX_SOURCE_TEXT.toDouble(),
             ),
         )
     }
@@ -129,6 +132,9 @@ data class AiWorkoutDto(
     val video: Boolean,
     val byAi: Boolean,
     val notes: String? = null,
+    val videoUrl: String? = null,
+    val videoTitle: String? = null,
+    val videoMinutes: Int? = null,
 )
 
 @Serializable
@@ -292,9 +298,10 @@ object AiSnapshotBuilder {
                 AiWorkoutDto(
                     id = AiIds.workout(w.id), name = w.name, kind = w.kind.name, minutes = w.estimatedMinutes,
                     rows = w.exercises.sortedBy { it.orderIndex }.map { r ->
-                        AiWorkoutRow(r.exerciseId, r.sets, r.reps, r.seconds, r.loadKg, r.restSec, r.note)
+                        AiWorkoutRow(r.exerciseId, r.sets, r.reps, r.seconds, r.loadKg, r.restSec, r.note, r.sourceLine)
                     },
                     video = w.videoUrl != null, byAi = (AiKind.WORKOUT to w.id.toString()) in links, notes = w.notes,
+                    videoUrl = w.videoUrl, videoTitle = w.videoTitle, videoMinutes = w.durationMin?.takeIf { w.videoUrl != null },
                 )
             },
             goals = input.goals.filter { it.status == GoalStatus.ACTIVE }.sortedBy { it.priority }.map { g ->

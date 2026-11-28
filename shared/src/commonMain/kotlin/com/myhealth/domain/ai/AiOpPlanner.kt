@@ -2,6 +2,7 @@ package com.myhealth.domain.ai
 
 import com.myhealth.domain.engine.strength.ExerciseLibrary
 import com.myhealth.domain.engine.strength.UserExerciseIds
+import com.myhealth.domain.engine.strength.video.VideoLink
 import com.myhealth.domain.engine.suggest.SessionCatalog
 import com.myhealth.domain.model.Equipment
 import com.myhealth.domain.model.Exercise
@@ -83,6 +84,10 @@ object AiOpPlanner {
     const val MAX_PACE_SEC = 900
     const val MAX_TEXT = 1000
     const val MAX_DAYS_AHEAD = 366L
+    const val MAX_URL = 500
+    const val MAX_VIDEO_TITLE = 200
+    const val MAX_SOURCE_TEXT = 5000
+    const val MAX_SOURCE_LINE = 200
 
     fun plan(op: AiOp, state: AiLocalState, now: Long, random: Random = Random.Default): AiDecision = when (op) {
         is AiOp.CreateExercise -> createExercise(op, state, now, random)
@@ -130,9 +135,12 @@ object AiOpPlanner {
         val name = workoutName(op.name) ?: return reject("The workout needs a name of up to $MAX_NAME characters.")
         val kind = enumOf<StrengthWorkoutKind>(op.kind) ?: return reject("Unknown workout kind ${op.kind}. Use: ${StrengthWorkoutKind.entries.joinToString()}.")
         val rows = rows(op.rows, state, workoutId = 0L).getOrElse { return reject(it.message!!) }
-        val workout = StrengthWorkout(
-            id = 0L, name = name, kind = kind, notes = text(op.notes), exercises = rows,
-            createdAtMillis = now, updatedAtMillis = now, useInSuggestions = false,
+        val video = video(op.videoUrl, op.videoTitle, op.videoMinutes, op.sourceText, base = null).getOrElse { return reject(it.message!!) }
+        val workout = video.applyTo(
+            StrengthWorkout(
+                id = 0L, name = name, kind = kind, notes = text(op.notes), exercises = rows,
+                createdAtMillis = now, updatedAtMillis = now, useInSuggestions = false,
+            ),
         )
         return AiDecision.Apply(AiStep.InsertWorkout(op.aiId, workout))
     }
@@ -142,7 +150,10 @@ object AiOpPlanner {
         val name = op.name?.let { workoutName(it) ?: return reject("The workout needs a name of up to $MAX_NAME characters.") } ?: before.name
         val kind = op.kind?.let { enumOf<StrengthWorkoutKind>(it) ?: return reject("Unknown workout kind $it.") } ?: before.kind
         val rows = op.rows?.let { rows(it, state, before.id).getOrElse { e -> return reject(e.message!!) } } ?: before.exercises
-        val after = before.copy(name = name, kind = kind, exercises = rows, notes = op.notes?.let(::text) ?: before.notes, updatedAtMillis = now)
+        val video = video(op.videoUrl, op.videoTitle, op.videoMinutes, op.sourceText, base = before).getOrElse { return reject(it.message!!) }
+        val after = video.applyTo(
+            before.copy(name = name, kind = kind, exercises = rows, notes = op.notes?.let(::text) ?: before.notes, updatedAtMillis = now),
+        )
         return AiDecision.Apply(AiStep.ReplaceWorkout(before, after))
     }
 
@@ -184,6 +195,7 @@ object AiOpPlanner {
                     reps = row.reps, seconds = row.seconds, loadKg = row.loadKg,
                     isBodyweight = exercise.equipment == Equipment.BODYWEIGHT && row.loadKg == null,
                     restSec = row.restSec, note = text(row.note),
+                    sourceLine = row.sourceLine?.trim()?.take(MAX_SOURCE_LINE)?.takeIf { it.isNotEmpty() },
                 )
             },
         )
@@ -329,6 +341,41 @@ object AiOpPlanner {
     private inline fun <reified E : Enum<E>> enumOf(name: String): E? {
         val key = name.trim().uppercase().replace(' ', '_').replace('-', '_')
         return enumValues<E>().firstOrNull { it.name == key }
+    }
+
+    /** The video fields of a workout after an op; [base] is the workout before (null for a new one). */
+    private data class Video(val url: String?, val title: String?, val minutes: Int?, val sourceText: String?) {
+        fun applyTo(w: StrengthWorkout) = w.copy(videoUrl = url, videoTitle = title, durationMin = minutes, sourceText = sourceText)
+    }
+
+    private fun video(url: String?, title: String?, minutes: Int?, source: String?, base: StrengthWorkout?): Result<Video> {
+        val removing = url != null && url.isBlank()
+        val newUrl = when {
+            url == null -> base?.videoUrl
+            removing -> null
+            else -> {
+                val u = url.trim()
+                if (u.length > MAX_URL || !u.startsWith("https://", ignoreCase = true) || !VideoLink.isWebLink(u)) {
+                    return fail("videoUrl must be an https link to the video, e.g. https://www.youtube.com/watch?v=….")
+                }
+                VideoLink.normalise(u)
+            }
+        }
+        if (newUrl == null) {
+            if (!removing && (title != null || minutes != null || source != null)) return fail("videoTitle, videoMinutes and sourceText need a videoUrl.")
+            return Result.success(Video(null, null, if (base?.videoUrl != null) null else base?.durationMin, null))
+        }
+        if (title != null && title.trim().length > MAX_VIDEO_TITLE) return fail("videoTitle: up to $MAX_VIDEO_TITLE characters.")
+        if (minutes != null && minutes !in 1..MAX_DURATION_MIN) return fail("videoMinutes must be 1–$MAX_DURATION_MIN.")
+        if (source != null && source.length > MAX_SOURCE_TEXT) return fail("sourceText: up to $MAX_SOURCE_TEXT characters; keep the exercise part.")
+        return Result.success(
+            Video(
+                url = newUrl,
+                title = title?.trim()?.takeIf { it.isNotEmpty() } ?: base?.videoTitle,
+                minutes = minutes ?: base?.durationMin,
+                sourceText = source?.trim()?.takeIf { it.isNotEmpty() } ?: base?.sourceText,
+            ),
+        )
     }
 
     private fun workoutName(raw: String): String? = raw.trim().takeIf { it.isNotEmpty() && it.length <= MAX_NAME }

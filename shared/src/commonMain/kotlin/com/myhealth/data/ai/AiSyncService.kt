@@ -266,7 +266,7 @@ class AiSyncService(
                 val saved = content.workouts.getById(id) ?: step.workout.copy(id = id)
                 Applied(
                     linked(step.aiId, AiKind.WORKOUT, id.toString()).copy(workouts = state.workouts + (id to saved)),
-                    "New workout: ${step.workout.name}", AiUndo.Created(AiKind.WORKOUT.name, id.toString()),
+                    (if (step.workout.videoUrl != null) "New video workout: " else "New workout: ") + step.workout.name, AiUndo.Created(AiKind.WORKOUT.name, id.toString()),
                 )
             }
             is AiStep.ReplaceWorkout -> content.workouts.upsertWorkout(step.after).then {

@@ -71,7 +71,9 @@ export function applyOp(view: View, op: Op): void {
       const name = text(op.name, v.limits.maxName, 'The workout needs a name of up to %d characters.');
       const kind = oneOf(op.kind ?? 'CUSTOM', v.workoutKinds, 'workout kind');
       const rows = checkRows(view, op.rows);
-      view.workouts.push({ id: op.aiId, name, kind, minutes: minutes(rows), rows, video: false, byAi: true, notes: op.notes, pending: true });
+      const w: WorkoutDto = { id: op.aiId, name, kind, minutes: minutes(rows), rows, video: false, byAi: true, notes: op.notes, pending: true };
+      applyVideo(view, w, op);
+      view.workouts.push(w);
       view.ids[op.aiId] = op.aiId;
       return;
     }
@@ -81,9 +83,10 @@ export function applyOp(view: View, op: Op): void {
       if (op.kind !== undefined) w.kind = oneOf(op.kind, v.workoutKinds, 'workout kind');
       if (op.rows !== undefined) {
         w.rows = checkRows(view, op.rows);
-        w.minutes = minutes(w.rows);
+        w.minutes = w.videoMinutes ?? minutes(w.rows);
       }
       if (op.notes !== undefined) w.notes = op.notes;
+      applyVideo(view, w, op);
       w.pending = true;
       return;
     }
@@ -169,6 +172,35 @@ function checkRows(view: View, rows: WorkoutRow[]): WorkoutRow[] {
     // Rows keep the id the AI used; the phone resolves `ai-…` ids when it applies the op.
     return { ...r };
   });
+}
+
+interface VideoFields { videoUrl?: string; videoTitle?: string; videoMinutes?: number; sourceText?: string }
+
+/** Mirror of the Kotlin planner's video rules; the phone normalises YouTube links. */
+function applyVideo(view: View, w: WorkoutDto, f: VideoFields): void {
+  const l = view.snapshot.vocab.limits;
+  const removing = f.videoUrl !== undefined && f.videoUrl.trim() === '';
+  if (removing) {
+    w.video = false; w.videoUrl = undefined; w.videoTitle = undefined; w.videoMinutes = undefined;
+    w.minutes = minutes(w.rows);
+    return;
+  }
+  if (f.videoUrl !== undefined) {
+    const u = f.videoUrl.trim();
+    if (u.length > (l.maxUrl ?? 500) || !/^https:\/\/[^\s]+$/i.test(u)) fail('videoUrl must be an https link to the video, e.g. https://www.youtube.com/watch?v=….');
+    w.videoUrl = u; w.video = true;
+  }
+  const any = f.videoTitle !== undefined || f.videoMinutes !== undefined || f.sourceText !== undefined;
+  if (!w.video) {
+    if (any) fail('videoTitle, videoMinutes and sourceText need a videoUrl.');
+    return;
+  }
+  if (f.videoTitle !== undefined && f.videoTitle.trim().length > (l.maxVideoTitle ?? 200)) fail(`videoTitle: up to ${l.maxVideoTitle ?? 200} characters.`);
+  if (f.videoMinutes !== undefined && !int(f.videoMinutes, 1, l.maxDurationMin)) fail(`videoMinutes must be 1–${l.maxDurationMin}.`);
+  if (f.sourceText !== undefined && f.sourceText.length > (l.maxSourceText ?? 5000)) fail(`sourceText: up to ${l.maxSourceText ?? 5000} characters; keep the exercise part.`);
+  if (f.videoTitle?.trim()) w.videoTitle = f.videoTitle.trim();
+  if (f.videoMinutes !== undefined) w.videoMinutes = f.videoMinutes;
+  w.minutes = w.videoMinutes ?? minutes(w.rows);
 }
 
 /** The phone's estimate (Kotlin `StrengthWorkout.estimatedMinutes`): 3 s per rep, 90 s rest, 8 min overhead. */

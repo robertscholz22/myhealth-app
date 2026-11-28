@@ -154,6 +154,34 @@ describe('MCP tools', () => {
     expect(sync.pending).toBe(4);
   });
 
+  it('creates a video workout from a training video and checks its link', async () => {
+    const s = await connected();
+    const w = await tool(s.accessToken, 'create_workout', {
+      name: 'Glutes 20', kind: 'LOWER',
+      rows: [{ exerciseId: 'PLANK', sets: 2, seconds: 40, sourceLine: '3:10 Plank 40s' }],
+      videoUrl: 'https://youtu.be/dQw4w9WgXcQ', videoTitle: '20 min glutes', videoMinutes: 21, sourceText: '3:10 Plank 40s',
+    });
+    expect(w.id).toMatch(/^ai-/);
+    const got = await tool(s.accessToken, 'get_workout', { id: w.id });
+    expect(got).toMatchObject({ video: true, videoUrl: 'https://youtu.be/dQw4w9WgXcQ', videoTitle: '20 min glutes', minutes: 21 });
+    const [op] = await pull(s.spaceToken);
+    expect(op.op).toMatchObject({ type: 'create_workout', videoUrl: 'https://youtu.be/dQw4w9WgXcQ', videoMinutes: 21, sourceText: '3:10 Plank 40s' });
+    expect(op.op.rows[0].sourceLine).toBe('3:10 Plank 40s');
+
+    const removed = await tool(s.accessToken, 'update_workout', { id: w.id, videoUrl: '' });
+    expect(removed.error).toBeUndefined();
+    const after = await tool(s.accessToken, 'get_workout', { id: w.id });
+    expect(after.video).toBe(false);
+    expect(after.minutes).not.toBe(21);
+
+    const rows = [{ exerciseId: 'PLANK', sets: 1, seconds: 30 }];
+    expect((await tool(s.accessToken, 'create_workout', { name: 'X', rows, videoUrl: 'http://youtu.be/dQw4w9WgXcQ' })).error).toContain('https');
+    expect((await tool(s.accessToken, 'create_workout', { name: 'X', rows, videoTitle: 'T' })).error).toContain('need a videoUrl');
+    expect((await tool(s.accessToken, 'create_workout', { name: 'X', rows, videoUrl: 'https://youtu.be/x', videoMinutes: 0 })).error).toContain('videoMinutes');
+    const list = await mcp(s.accessToken, 'tools/list');
+    expect(list.result.tools.find((t: any) => t.name === 'create_workout').description).toContain('videoUrl');
+  });
+
   it('refuses changes outside the AI\'s scope with a reason', async () => {
     const s = await connected();
     expect((await tool(s.accessToken, 'update_session', { id: 's11', durationMin: 60 })).error).toContain('locked');

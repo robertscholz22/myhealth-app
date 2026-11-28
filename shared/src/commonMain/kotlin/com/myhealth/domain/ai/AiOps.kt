@@ -49,6 +49,13 @@ sealed class AiOp {
         val kind: String = "CUSTOM",
         val rows: List<AiWorkoutRow>,
         val notes: String? = null,
+        /** P28: the training video this workout follows (https; YouTube links are normalised). */
+        val videoUrl: String? = null,
+        val videoTitle: String? = null,
+        /** The video's length; the workout then counts that many minutes. */
+        val videoMinutes: Int? = null,
+        /** The text the exercises were taken from (description, chapters, transcript excerpt). */
+        val sourceText: String? = null,
     ) : AiOp()
 
     @Serializable
@@ -60,6 +67,13 @@ sealed class AiOp {
         val kind: String? = null,
         val rows: List<AiWorkoutRow>? = null,
         val notes: String? = null,
+        /** P28: the training video this workout follows (https; YouTube links are normalised); "" removes the video. */
+        val videoUrl: String? = null,
+        val videoTitle: String? = null,
+        /** The video's length; the workout then counts that many minutes. */
+        val videoMinutes: Int? = null,
+        /** The text the exercises were taken from (description, chapters, transcript excerpt). */
+        val sourceText: String? = null,
     ) : AiOp()
 
     @Serializable
@@ -109,6 +123,8 @@ data class AiWorkoutRow(
     val loadKg: Double? = null,
     val restSec: Int? = null,
     val note: String? = null,
+    /** The line of the video's text this row was taken from, e.g. "0:45 Glute bridge x15". */
+    val sourceLine: String? = null,
 )
 
 /**

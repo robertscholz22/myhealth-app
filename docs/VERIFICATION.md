@@ -1342,3 +1342,15 @@ applied ops in the view until the next snapshot, space isolation, disconnect, da
 - iOS: `compileKotlinIosSimulatorArm64` on Linux green; linking and the simulator run go with the
   release build (ios.yml).
 
+### P28.6a — video workouts by the AI
+- `AiOpPlannerTest` op30–op32 (link normalised, title / minutes / source text / source lines kept,
+  http / non-links / stray video fields refused, update adds, keeps and removes the video),
+  `AiSyncServiceTest` as11 (a relay-shaped op becomes a video workout, the snapshot carries its link and
+  minutes, Undo removes it), relay vitest 17/17 (new: video workout created, read back, queued, removed,
+  bad fields refused). `tools/verify.sh`: 1415 unit tests, VERIFY OK.
+- Emulator against `tools/relay-dev.sh`: the stand-in AI searched the library, created "Donkey kick
+  pulse", a video workout with Glute bridge + it (youtu.be link, 20 min) and a session on Monday →
+  opening AI planning applied 3 changes ("New video workout: …"); the week board shows the workout's
+  moves, "Planned with AI", 20 min and "Watch video", which opens the YouTube app at the normalised
+  link; `list_workouts` then shows `https://www.youtube.com/watch?v=…`. PASS (WORKFLOWS AI10)
+

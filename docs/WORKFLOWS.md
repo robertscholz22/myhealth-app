@@ -292,6 +292,7 @@ Added for 0.13.0 (schema 14). Results are from VERIFICATION session 38 (emulator
 | AI6 | Data groups | Switch Body and recovery off | The AI's training status: body "Not shared"; a group on without data: "no data yet" | PASS |
 | AI7 | Undo | Undo on the batch | "5 changes undone", rows struck through; sessions, workout and exercise gone; the AI sees none | PASS |
 | AI8 | Disconnect | Disconnect → confirm | Back to Connect; the relay refuses the AI app's token | PASS |
+| AI10 | Workout from a training video | The AI reads a YouTube video's exercise list, reuses library moves (Glute bridge), creates the missing one, creates the workout with the video link and schedules it → sync | "New video workout: …"; the card shows the workout's moves, "Planned with AI" and "Watch video", which opens YouTube; the AI sees the cleaned-up link | PASS |
 | AI9 | Real relay and Claude | The owner deploys the relay (`relay/README.md`), adds the connector in Claude, plans a week | As AI1–AI8 | open |
 
 ## 19. Settings

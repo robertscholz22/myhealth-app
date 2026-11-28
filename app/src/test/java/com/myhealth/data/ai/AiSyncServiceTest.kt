@@ -269,6 +269,34 @@ class AiSyncServiceTest {
         assertEquals("Snapshot is larger than 1 MB.", dao.config.value!!.lastError)
     }
 
+    @Test
+    fun as11_a_video_workout_from_the_relay_keeps_its_link() = runBlocking {
+        connected()
+        // Exactly what relay/src/mcp.ts queues for create_workout with a video.
+        relay.queue(
+            Json.parseToJsonElement(
+                """{"type":"create_workout","opId":"v1","aiId":"ai-vw0000001","name":"Glutes 20","kind":"LOWER",
+                   "rows":[{"exerciseId":"PLANK","sets":2,"seconds":40,"sourceLine":"3:10 Plank 40s"}],
+                   "videoUrl":"https://youtu.be/dQw4w9WgXcQ","videoTitle":"20 min glutes","videoMinutes":21,
+                   "sourceText":"3:10 Plank 40s"}""",
+            ).jsonObject,
+        )
+        val result = (service.sync() as Outcome.Ok).value
+        assertEquals(1, result.applied)
+        val wo = workouts.stored.value.values.single()
+        assertEquals("https://www.youtube.com/watch?v=dQw4w9WgXcQ", wo.videoUrl)
+        assertEquals("20 min glutes", wo.videoTitle)
+        assertEquals(21, wo.durationMin)
+        assertEquals("3:10 Plank 40s", wo.exercises.single().sourceLine)
+        assertEquals("New video workout: Glutes 20", service.changes.first().single().summary)
+        val dto = relay.snapshots.last()["workouts"]!!.jsonArray.single().jsonObject
+        assertEquals("https://www.youtube.com/watch?v=dQw4w9WgXcQ", dto["videoUrl"]!!.jsonPrimitive.content)
+        assertEquals(21, dto["minutes"]!!.jsonPrimitive.content.toInt())
+        // Undo removes it like any AI workout.
+        assertTrue(service.undo(result.batchId!!) is Outcome.Ok)
+        assertTrue(workouts.stored.value.isEmpty())
+    }
+
     // --- fakes ------------------------------------------------------------------------------------
 
     /** The relay's app API (`relay/src/index.ts`), in memory. */

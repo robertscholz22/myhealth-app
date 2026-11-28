@@ -3222,6 +3222,11 @@ switch. Opt-in, off by default; Disconnect deletes the relay's copy.
   start, in the Android background sync and the iOS refresh task. Done.
 - **P28.6 End to end.** Emulator against `tools/relay-dev.sh` with `relay/scripts/mcp-client.mjs` as
   the AI. Done (VERIFICATION session 38); iOS link + simulator run with the release build.
+- **P28.6a Video workouts by the AI** (owner's wife's request). `create_workout` / `update_workout` take
+  `videoUrl` (https; YouTube normalised like the video import), `videoTitle`, `videoMinutes`, `sourceText`
+  and per row `sourceLine`; `""` removes the video. Tool texts and server instructions tell the AI to take
+  the moves from the video's description / chapters / transcript (or a pasted list), reuse library
+  exercises and create only missing ones. Done.
 - **P28.7 Real.** The owner deploys the relay, pairs Claude and plans a week; release 0.13.0. Open.
 ## 6. Verification strategy
 

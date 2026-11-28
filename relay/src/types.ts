@@ -34,6 +34,7 @@ export interface WorkoutRow {
   loadKg?: number;
   restSec?: number;
   note?: string;
+  sourceLine?: string;
 }
 
 export interface WorkoutDto {
@@ -45,6 +46,9 @@ export interface WorkoutDto {
   video: boolean;
   byAi: boolean;
   notes?: string;
+  videoUrl?: string;
+  videoTitle?: string;
+  videoMinutes?: number;
   pending?: boolean;
 }
 
@@ -107,8 +111,8 @@ export interface Snapshot {
 export type Op =
   | { type: 'create_exercise'; opId: string; aiId: string; name: string; primary: string[]; secondary?: string[]; equipment?: string; pattern?: string; timed?: boolean; oneSided?: boolean; notes?: string }
   | { type: 'set_equipment'; opId: string; equipment: string[] }
-  | { type: 'create_workout'; opId: string; aiId: string; name: string; kind?: string; rows: WorkoutRow[]; notes?: string }
-  | { type: 'update_workout'; opId: string; ref: string; name?: string; kind?: string; rows?: WorkoutRow[]; notes?: string }
+  | { type: 'create_workout'; opId: string; aiId: string; name: string; kind?: string; rows: WorkoutRow[]; notes?: string; videoUrl?: string; videoTitle?: string; videoMinutes?: number; sourceText?: string }
+  | { type: 'update_workout'; opId: string; ref: string; name?: string; kind?: string; rows?: WorkoutRow[]; notes?: string; videoUrl?: string; videoTitle?: string; videoMinutes?: number; sourceText?: string }
   | { type: 'delete_workout'; opId: string; ref: string }
   | { type: 'schedule_session'; opId: string; aiId: string; session: SessionFields }
   | { type: 'update_session'; opId: string; ref: string; session: SessionFields }

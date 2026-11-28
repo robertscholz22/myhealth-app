@@ -18,7 +18,10 @@ const INSTRUCTIONS = `You are planning training in the owner's MyHealth app (And
   marked changeable. Never touch the owner's own exercises or workouts: create new ones instead.
 - Changes are applied on the phone when the app syncs (on open, and in the background); until then they show as
   pending. get_sync_status shows what the phone applied or refused, with the reason.
-- Give each session a short rationale: the owner sees it in the app.`;
+- Give each session a short rationale: the owner sees it in the app.
+- Workouts from a training video (e.g. YouTube): take the moves from its title, description, chapters or transcript
+  (or a list the user pastes), reuse matching exercises from list_exercises, create only the missing ones, and pass
+  videoUrl with create_workout so the app links the video.`;
 
 type Text = { content: { type: 'text'; text: string }[]; isError?: boolean };
 
@@ -47,7 +50,15 @@ const rowSchema = z.object({
   loadKg: z.number().optional(),
   restSec: z.number().int().optional(),
   note: z.string().optional(),
+  sourceLine: z.string().optional().describe('For a video workout: the line of the video text this row came from, e.g. "0:45 Glute bridge x15"'),
 });
+
+const videoShape = {
+  videoUrl: z.string().optional().describe('The training video this workout follows (https, e.g. a YouTube link). The app shows a Watch button on the workout and its sessions.'),
+  videoTitle: z.string().optional().describe('The video\'s title'),
+  videoMinutes: z.number().int().optional().describe('The video\'s length in minutes; the workout then counts this long'),
+  sourceText: z.string().optional().describe('The text you took the exercises from: description, chapter list or transcript excerpt (up to 5000 characters)'),
+};
 
 const sessionShape = {
   day: z.string().optional().describe('YYYY-MM-DD'),
@@ -220,18 +231,21 @@ function buildServer(space: Space): McpServer {
     'create_workout',
     {
       title: 'Create workout',
-      description: 'A new strength or mobility workout from exercises (ids from list_exercises). Plan it on a day with schedule_sessions (workout = the returned id).',
+      description: 'A new strength or mobility workout from exercises (ids from list_exercises). Plan it on a day with schedule_sessions (workout = the returned id). '
+        + 'From a training video (e.g. YouTube): read its title, description, chapters or transcript; match each move to list_exercises (search by name and synonyms) and create_exercise only for moves that are really missing; '
+        + 'then pass videoUrl (and videoTitle, videoMinutes, sourceText, and per row sourceLine) so the workout links the video. If you cannot read the video, ask the user to paste its exercise list.',
       inputSchema: {
         name: z.string(),
         kind: z.string().optional().describe('vocab.workoutKinds: FULL, UPPER, LOWER, CORE, CUSTOM, MOBILITY_…'),
         rows: z.array(rowSchema),
         notes: z.string().optional(),
+        ...videoShape,
       },
       annotations: WRITE,
     },
     (a) => {
       const aiId = newAiId();
-      return submit([{ op: { type: 'create_workout', opId: newOpId(), aiId, name: a.name, kind: a.kind, rows: a.rows as WorkoutRow[], notes: a.notes }, summary: `Create workout ${a.name}` }], { id: aiId });
+      return submit([{ op: { type: 'create_workout', opId: newOpId(), aiId, name: a.name, kind: a.kind, rows: a.rows as WorkoutRow[], notes: a.notes, videoUrl: a.videoUrl, videoTitle: a.videoTitle, videoMinutes: a.videoMinutes, sourceText: a.sourceText }, summary: `Create ${a.videoUrl ? 'video ' : ''}workout ${a.name}` }], { id: aiId });
     },
   );
 
@@ -239,11 +253,11 @@ function buildServer(space: Space): McpServer {
     'update_workout',
     {
       title: 'Update workout',
-      description: 'Changes a workout you created (byAi). Fields left out stay; rows, when given, replace all rows.',
-      inputSchema: { id: z.string(), name: z.string().optional(), kind: z.string().optional(), rows: z.array(rowSchema).optional(), notes: z.string().optional() },
+      description: 'Changes a workout you created (byAi). Fields left out stay; rows, when given, replace all rows. videoUrl "" removes the video link.',
+      inputSchema: { id: z.string(), name: z.string().optional(), kind: z.string().optional(), rows: z.array(rowSchema).optional(), notes: z.string().optional(), ...videoShape },
       annotations: WRITE,
     },
-    (a) => submit([{ op: { type: 'update_workout', opId: newOpId(), ref: a.id, name: a.name, kind: a.kind, rows: a.rows as WorkoutRow[] | undefined, notes: a.notes }, summary: `Update workout ${a.id}` }], { id: a.id }),
+    (a) => submit([{ op: { type: 'update_workout', opId: newOpId(), ref: a.id, name: a.name, kind: a.kind, rows: a.rows as WorkoutRow[] | undefined, notes: a.notes, videoUrl: a.videoUrl, videoTitle: a.videoTitle, videoMinutes: a.videoMinutes, sourceText: a.sourceText }, summary: `Update workout ${a.id}` }], { id: a.id }),
   );
 
   server.registerTool(
