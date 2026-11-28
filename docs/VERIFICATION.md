@@ -1374,3 +1374,11 @@ exercise), relay vitest 18/18. `tools/verify.sh`: 1418 unit tests, VERIFY OK; iO
   Barbell floor press chest, triceps / front shoulders; Cossack squat glutes, quads, adductors /
   hamstrings. Only AI-made exercises touched; the log keeps the old values for Undo. PASS (AI11)
 
+### Release 0.13.0 (213)
+- `tools/verify.sh` on the release commit: 1418 unit tests, VERIFY OK. main fast-forwarded to the P28
+  branch; tag v0.13.0, GitHub release with MyHealth-0.13.0.apk (signer 1e4276d0…, the installed app's).
+- Owner's phone: JSON backup before the install (schema 13, 3853 rows), release asset equal to the
+  build (sha256 b89e2671…) and signed like the installed app, `install -r` → 0.13.0 (213), app opens,
+  More lists AI planning (not connected), no crash. Backup after the install: schema 14, the same row
+  counts, the AI tables present and empty; only `dailyLoad.computedAtMillis` differs. PASS
+
