@@ -15,7 +15,9 @@ const INSTRUCTIONS = `You are planning training in the owner's MyHealth app (And
   fatigue = 7-day (ATL); ACWR = acute:chronic ratio, keep it about 0.8-1.3 and raise weekly load by at most ~10%.
 - Calendar events (matches, team training, imported calendars) and locked or done sessions are fixed: plan around them.
 - You may create exercises, workouts and planned sessions; change or delete workouts you created and planned sessions
-  marked changeable. Never touch the owner's own exercises or workouts: create new ones instead.
+  marked changeable. Never touch the owner's own workouts: create new ones instead.
+- You may correct exercises with update_exercise. byAi: true marks the ones you created; change the owner's own
+  exercises (source "mine") only when the owner asks. Built-in and family-shared exercises stay as they are.
 - Changes are applied on the phone when the app syncs (on open, and in the background); until then they show as
   pending. get_sync_status shows what the phone applied or refused, with the reason.
 - Give each session a short rationale: the owner sees it in the app.
@@ -136,13 +138,13 @@ function buildServer(space: Space): McpServer {
     'list_exercises',
     {
       title: 'List exercises',
-      description: 'Exercises the owner can use: the app catalog, the owner\'s own ("mine") and ones you created ("ai"). Filter by text, muscle, equipment, pattern or source.',
+      description: 'Exercises the owner can use. source: catalog = built into the app; mine = made by the owner; ai = made by you (byAi: true); family = shared by a family member (read-only). editable = update_exercise may change it. Filter by text, muscle, equipment, pattern or source.',
       inputSchema: {
         query: z.string().optional(),
         muscle: z.string().optional(),
         equipment: z.string().optional(),
         pattern: z.string().optional(),
-        source: z.enum(['catalog', 'mine', 'ai']).optional(),
+        source: z.enum(['catalog', 'mine', 'ai', 'family']).optional(),
         onlyMyEquipment: z.boolean().optional().describe('Only exercises the owner\'s equipment allows'),
         limit: z.number().int().optional(),
       },
@@ -190,6 +192,29 @@ function buildServer(space: Space): McpServer {
       const aiId = newAiId();
       return submit([{ op: { type: 'create_exercise', opId: newOpId(), aiId, ...a }, summary: `Create exercise ${a.name}` }], { id: aiId });
     },
+  );
+
+  server.registerTool(
+    'update_exercise',
+    {
+      title: 'Correct exercise',
+      description: 'Corrects an editable exercise (source "ai" or "mine"): name, muscles, equipment, pattern, timed, one side, notes. Fields left out stay; notes "" clears them. '
+        + 'Built-in (catalog) and family exercises cannot be changed. Exercises with byAi: true are the ones you created; change the owner\'s own ("mine") only when the owner asks for it. '
+        + 'The owner can undo every change in the app.',
+      inputSchema: {
+        id: z.string().describe('Exercise id from list_exercises, or the ai-… id you got from create_exercise'),
+        name: z.string().optional(),
+        primary: z.array(z.string()).optional().describe('Replaces the primary muscles (vocab.muscles)'),
+        secondary: z.array(z.string()).optional().describe('Replaces the secondary muscles'),
+        equipment: z.string().optional(),
+        pattern: z.string().optional(),
+        timed: z.boolean().optional().describe('Only while no workout uses the exercise'),
+        oneSided: z.boolean().optional(),
+        notes: z.string().optional(),
+      },
+      annotations: WRITE,
+    },
+    ({ id, ...fields }) => submit([{ op: { type: 'update_exercise', opId: newOpId(), ref: id, ...fields }, summary: `Correct exercise ${id}` }], { id }),
   );
 
   server.registerTool(

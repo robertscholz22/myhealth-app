@@ -3227,6 +3227,12 @@ switch. Opt-in, off by default; Disconnect deletes the relay's copy.
   and per row `sourceLine`; `""` removes the video. Tool texts and server instructions tell the AI to take
   the moves from the video's description / chapters / transcript (or a pasted list), reuse library
   exercises and create only missing ones. Done.
+- **P28.6b Exercise corrections** (owner request after the first real run: Claude set the wrong main muscle
+  on a stretch). `update_exercise` changes name, muscles, equipment, pattern, timed, one side, notes of an
+  own exercise — made by the AI or by the owner (scope widened by the owner). Never catalog or
+  family-shared exercises; `timed` only while no workout uses it. Every exercise carries `source`
+  (catalog / mine / ai / family), `byAi` and `editable`, so the owner can tell the AI to touch only
+  what it made. Undo puts the exercise back. Done.
 - **P28.7 Real.** The owner deploys the relay, pairs Claude and plans a week; release 0.13.0. Open.
 ## 6. Verification strategy
 

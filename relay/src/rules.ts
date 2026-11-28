@@ -55,9 +55,40 @@ export function applyOp(view: View, op: Op): void {
       if (same) fail(`An exercise named "${same.name}" exists already (id ${same.id}); use it instead.`);
       view.exercises.push({
         id: op.aiId, name, primary, secondary, equipment, pattern, timed: !!op.timed, oneSided: !!op.oneSided,
-        source: 'ai', pending: true,
+        source: 'ai', byAi: true, editable: true, notes: op.notes, pending: true,
       });
       view.ids[op.aiId] = op.aiId;
+      return;
+    }
+    case 'update_exercise': {
+      const e = exercise(view, op.ref) ?? fail(`No exercise ${op.ref}; list_exercises shows the ids.`);
+      const editable = e.editable ?? (e.source === 'ai' || e.source === 'mine');
+      if (e.source === 'catalog') fail(`${op.ref} is a built-in exercise and stays as it is; create a new one instead.`);
+      if (e.source === 'family' || !editable) fail(`${e.name} is shared by a family member and read-only; create a new one instead.`);
+      const next = { ...e };
+      if (op.name !== undefined) {
+        next.name = text(op.name, v.limits.maxName, 'The exercise needs a name of up to %d characters.');
+        const same = view.exercises.find((x) => x.id !== e.id && x.name.toLowerCase() === next.name.toLowerCase());
+        if (same) fail(`An exercise named "${same.name}" exists already (id ${same.id}).`);
+      }
+      if (op.primary !== undefined) {
+        if (!op.primary.length) fail('Give at least one primary muscle.');
+        next.primary = op.primary.map((m) => oneOf(m, v.muscles, 'muscle'));
+      }
+      if (op.secondary !== undefined) next.secondary = op.secondary.map((m) => oneOf(m, v.muscles, 'muscle'));
+      next.secondary = next.secondary.filter((m) => !next.primary.includes(m));
+      if (op.equipment !== undefined) next.equipment = oneOf(op.equipment, v.equipment, 'equipment');
+      if (op.pattern !== undefined) next.pattern = oneOf(op.pattern, v.patterns, 'movement pattern');
+      if (op.timed !== undefined && op.timed !== e.timed) {
+        const users = view.workouts.filter((w) => w.rows.some((r) => resolve(view, r.exerciseId) === e.id));
+        if (users.length) fail(`${e.name} is used by ${users.map((w) => `"${w.name}"`).join(', ')} with ${e.timed ? 'seconds' : 'reps'}; timed can only change while no workout uses it.`);
+        next.timed = op.timed;
+      }
+      if (op.oneSided !== undefined) next.oneSided = op.oneSided;
+      if (op.notes !== undefined) next.notes = op.notes.trim() || undefined;
+      const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+      if (same({ ...next, pending: undefined }, { ...e, pending: undefined })) fail(`Nothing to change for ${e.name}.`);
+      Object.assign(e, next, { pending: true });
       return;
     }
     case 'set_equipment': {

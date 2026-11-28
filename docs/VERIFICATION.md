@@ -1354,3 +1354,19 @@ applied ops in the view until the next snapshot, space isolation, disconnect, da
   moves, "Planned with AI", 20 min and "Watch video", which opens the YouTube app at the normalised
   link; `list_workouts` then shows `https://www.youtube.com/watch?v=…`. PASS (WORKFLOWS AI10)
 
+### P28.7 (first part) — the owner's relay and Claude
+- The owner deployed the relay to their Cloudflare account (free plan). `setup.mjs` stopped at its
+  reachability check because the new workers.dev address refused TLS for ~90 s; fixed so the check
+  only warns. Emulator connected with the real code, Claude paired ("Paired: Claude").
+- Claude planned two weeks: 6 exercises, 2 workouts, 4 sessions → 12 applied, 0 rejected; then a
+  workout from a YouTube video (10 more exercises, the video workout, a session tomorrow) → 13 applied,
+  0 rejected. Board shows "Planned with AI", the moves and "Watch video". PASS
+- Muscle check of the 17 exercises Claude made (from the emulator's database): 15 right, 2 near
+  misses for lack of a hip-flexor group (Deep lunge stretch with glutes as primary). No duplicates of
+  catalog exercises. → P28.6b.
+
+### P28.6b — exercise corrections
+`AiOpPlannerTest` op33–op34, `AiSyncServiceTest` as12 (snapshot source / byAi / editable / notes, a
+family member's exercise refused, change logged as "Changed exercise: … (muscles)", Undo restores the
+exercise), relay vitest 18/18. `tools/verify.sh`: 1418 unit tests, VERIFY OK; iOS compile green.
+

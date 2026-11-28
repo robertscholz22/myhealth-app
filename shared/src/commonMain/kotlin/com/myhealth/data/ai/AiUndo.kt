@@ -1,6 +1,11 @@
 package com.myhealth.data.ai
 
+import com.myhealth.domain.model.Equipment
+import com.myhealth.domain.model.Exercise
 import com.myhealth.domain.model.Intensity
+import com.myhealth.domain.model.MovementPattern
+import com.myhealth.domain.model.MuscleGroup
+import com.myhealth.domain.model.UserExercise
 import com.myhealth.domain.model.PlannedSession
 import com.myhealth.domain.model.PlannedStatus
 import com.myhealth.domain.model.SessionType
@@ -22,6 +27,14 @@ sealed class AiUndo {
     @Serializable
     @SerialName("created")
     data class Created(override val kind: String, override val localKey: String) : AiUndo()
+
+    /** One of the owner's exercises as it was before the AI corrected it. */
+    @Serializable
+    @SerialName("exercise")
+    data class ExerciseBefore(val exercise: ExerciseJson) : AiUndo() {
+        override val kind get() = "EXERCISE"
+        override val localKey get() = exercise.id
+    }
 
     /** The equipment set before, as `profile.availableEquipmentJson` (null = everything). */
     @Serializable
@@ -107,5 +120,29 @@ data class WorkoutJson(
             w.exercises.map { Row(it.orderIndex, it.exerciseId, it.sets, it.reps, it.seconds, it.loadKg, it.isBodyweight, it.restSec, it.note, it.sourceLine) },
             w.createdAtMillis, w.updatedAtMillis, w.useInSuggestions, w.videoUrl, w.videoTitle, w.durationMin, w.sourceText,
         )
+    }
+}
+
+@Serializable
+data class ExerciseJson(
+    val id: String, val name: String, val primary: List<String>, val secondary: List<String>, val equipment: String,
+    val pattern: String, val unilateral: Boolean, val timed: Boolean, val cue: String, val notes: String?,
+    val archived: Boolean, val createdAt: Long, val updatedAt: Long,
+) {
+    fun toModel() = UserExercise(
+        Exercise(
+            id = id, name = name, primary = primary.map(MuscleGroup::valueOf).toSet(), secondary = secondary.map(MuscleGroup::valueOf).toSet(),
+            equipment = Equipment.valueOf(equipment), pattern = MovementPattern.valueOf(pattern), unilateral = unilateral, isTimed = timed, cue = cue,
+        ),
+        notes, archived, createdAt, updatedAt,
+    )
+
+    companion object {
+        fun of(u: UserExercise) = u.exercise.let { e ->
+            ExerciseJson(
+                e.id, e.name, e.primary.map { it.name }, e.secondary.map { it.name }, e.equipment.name, e.pattern.name,
+                e.unilateral, e.isTimed, e.cue, u.notes, u.archived, u.createdAtMillis, u.updatedAtMillis,
+            )
+        }
     }
 }

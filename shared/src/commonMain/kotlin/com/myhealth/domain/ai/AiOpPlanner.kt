@@ -29,6 +29,8 @@ data class AiLocalState(
     val sessions: Map<Long, PlannedSession>,
     val links: List<AiLink>,
     val equipment: Set<Equipment>,
+    /** Exercises a family member shares with me: read-only here, so for the AI too. */
+    val sharedIn: Set<String> = emptySet(),
 ) {
     private val byAiId = links.associateBy { it.aiId }
     private val aiKeys = links.mapTo(mutableSetOf()) { it.kind to it.localKey }
@@ -42,6 +44,7 @@ data class AiLocalState(
 /** The one change an op makes, carried out by the sync service; `before` values make Undo possible. */
 sealed interface AiStep {
     data class InsertExercise(val aiId: String, val exercise: UserExercise) : AiStep
+    data class ReplaceExercise(val before: UserExercise, val after: UserExercise) : AiStep
     data class PutEquipment(val before: Set<Equipment>, val after: Set<Equipment>) : AiStep
     /** [workout] has id 0 and rows without ids. */
     data class InsertWorkout(val aiId: String, val workout: StrengthWorkout) : AiStep
@@ -91,6 +94,7 @@ object AiOpPlanner {
 
     fun plan(op: AiOp, state: AiLocalState, now: Long, random: Random = Random.Default): AiDecision = when (op) {
         is AiOp.CreateExercise -> createExercise(op, state, now, random)
+        is AiOp.UpdateExercise -> updateExercise(op, state, now)
         is AiOp.SetEquipment -> setEquipment(op, state)
         is AiOp.CreateWorkout -> createWorkout(op, state, now)
         is AiOp.UpdateWorkout -> updateWorkout(op, state, now)
@@ -120,6 +124,46 @@ object AiOpPlanner {
         )
         val notes = op.notes?.trim()?.take(MAX_TEXT)?.takeIf { it.isNotEmpty() }
         return AiDecision.Apply(AiStep.InsertExercise(op.aiId, UserExercise(exercise, notes, false, now, now)))
+    }
+
+    private fun updateExercise(op: AiOp.UpdateExercise, state: AiLocalState, now: Long): AiDecision {
+        val id = if (AiIds.isAi(op.ref)) state.link(op.ref)?.takeIf { it.kind == AiKind.EXERCISE }?.localKey else op.ref
+        val before = id?.let { state.library.userExercise(it) }
+        if (before == null) {
+            return if (id != null && state.library.byId(id) != null) {
+                reject("${op.ref} is a built-in exercise and stays as it is; create a new one instead.")
+            } else {
+                reject("No exercise ${op.ref}; list_exercises shows the ids.")
+            }
+        }
+        if (before.archived) return reject("${before.exercise.name} is archived; create a new one instead.")
+        if (before.exercise.id in state.sharedIn) return reject("${before.exercise.name} is shared by a family member and read-only; create a new one instead.")
+        val e = before.exercise
+        val name = op.name?.trim()?.also {
+            if (it.isEmpty() || it.length > MAX_NAME) return reject("The exercise needs a name of up to $MAX_NAME characters.")
+            state.library.all.firstOrNull { other -> other.id != e.id && other.name.equals(it, ignoreCase = true) }?.let { other ->
+                return reject("An exercise named \"${other.name}\" exists already (id ${other.id}).")
+            }
+        } ?: e.name
+        val primary = op.primary?.let { muscles(it) ?: return reject("Unknown muscle in $it. Use: ${MuscleGroup.entries.joinToString()}.") } ?: e.primary
+        if (primary.isEmpty()) return reject("Give at least one primary muscle.")
+        val secondary = (op.secondary?.let { muscles(it) ?: return reject("Unknown muscle in $it.") } ?: e.secondary) - primary
+        val equipment = op.equipment?.let { enumOf<Equipment>(it) ?: return reject("Unknown equipment $it. Use: ${Equipment.entries.joinToString()}.") } ?: e.equipment
+        val pattern = op.pattern?.let { enumOf<MovementPattern>(it) ?: return reject("Unknown movement pattern $it.") } ?: e.pattern
+        val timed = op.timed ?: e.isTimed
+        if (timed != e.isTimed) {
+            val users = state.workouts.values.filter { w -> w.exercises.any { it.exerciseId == e.id } }
+            if (users.isNotEmpty()) {
+                return reject("${e.name} is used by ${users.joinToString { "\"${it.name}\"" }} with ${if (e.isTimed) "seconds" else "reps"}; timed can only change while no workout uses it.")
+            }
+        }
+        val after = before.copy(
+            exercise = e.copy(name = name, primary = primary, secondary = secondary, equipment = equipment, pattern = pattern, isTimed = timed, unilateral = op.oneSided ?: e.unilateral),
+            notes = if (op.notes == null) before.notes else op.notes.trim().take(MAX_TEXT).takeIf { it.isNotEmpty() },
+            updatedAtMillis = now,
+        )
+        if (after.copy(updatedAtMillis = before.updatedAtMillis) == before) return reject("Nothing to change for ${e.name}.")
+        return AiDecision.Apply(AiStep.ReplaceExercise(before, after))
     }
 
     private fun setEquipment(op: AiOp.SetEquipment, state: AiLocalState): AiDecision {

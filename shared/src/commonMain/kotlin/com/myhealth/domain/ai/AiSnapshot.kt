@@ -118,8 +118,13 @@ data class AiExerciseDto(
     val pattern: String,
     val timed: Boolean,
     val oneSided: Boolean,
-    /** `catalog`, `mine` (the owner's own), or `ai` (created by the AI). */
+    /** `catalog`, `mine` (made by the owner), `ai` (made by the AI) or `family` (shared by a family member). */
     val source: String,
+    /** The AI created it. */
+    val byAi: Boolean = false,
+    /** update_exercise may change it (`ai` and `mine`). */
+    val editable: Boolean = false,
+    val notes: String? = null,
 )
 
 @Serializable
@@ -244,6 +249,9 @@ data class AiSnapshotInput(
     val exercises: List<Exercise>,
     /** Ids of the owner's own (not archived) exercises; the rest of [exercises] is the catalog. */
     val ownExerciseIds: Set<String>,
+    /** Own exercises that came from a family member's share (read-only). */
+    val sharedInExerciseIds: Set<String> = emptySet(),
+    val exerciseNotes: Map<String, String> = emptyMap(),
     val equipment: Set<Equipment>,
     val sports: List<String>,
     val workouts: List<StrengthWorkout>,
@@ -289,9 +297,13 @@ object AiSnapshotBuilder {
                     equipment = e.equipment.name, pattern = e.pattern.name, timed = e.isTimed, oneSided = e.unilateral,
                     source = when (e.id) {
                         in aiExerciseIds -> "ai"
+                        in input.sharedInExerciseIds -> "family"
                         in input.ownExerciseIds -> "mine"
                         else -> "catalog"
                     },
+                    byAi = e.id in aiExerciseIds,
+                    editable = e.id in input.ownExerciseIds && e.id !in input.sharedInExerciseIds,
+                    notes = input.exerciseNotes[e.id],
                 )
             },
             workouts = input.workouts.map { w ->

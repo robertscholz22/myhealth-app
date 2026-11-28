@@ -274,7 +274,7 @@ abstract class CoreGraph : UiGraph {
             com.myhealth.data.ai.AiContent(
                 exercises = userExerciseRepo, workouts = strengthRepo, plan = planRepo, profile = profileRepo, goals = goalRepo,
                 calendar = calendarRepo, activities = activityRepo, load = loadRepo, body = bodyRepo, health = healthRepo,
-                cycle = cycleRepo,
+                cycle = cycleRepo, share = shareRepo,
             ),
             clock,
         )

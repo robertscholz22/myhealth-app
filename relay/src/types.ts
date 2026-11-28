@@ -22,7 +22,13 @@ export interface ExerciseDto {
   pattern: string;
   timed: boolean;
   oneSided: boolean;
-  source: 'catalog' | 'mine' | 'ai';
+  /** catalog = built into the app; mine = made by the owner; ai = made by you (the AI); family = shared by a family member. */
+  source: 'catalog' | 'mine' | 'ai' | 'family';
+  /** You created it. */
+  byAi?: boolean;
+  /** update_exercise may change it. */
+  editable?: boolean;
+  notes?: string;
   pending?: boolean;
 }
 
@@ -111,6 +117,7 @@ export interface Snapshot {
 export type Op =
   | { type: 'create_exercise'; opId: string; aiId: string; name: string; primary: string[]; secondary?: string[]; equipment?: string; pattern?: string; timed?: boolean; oneSided?: boolean; notes?: string }
   | { type: 'set_equipment'; opId: string; equipment: string[] }
+  | { type: 'update_exercise'; opId: string; ref: string; name?: string; primary?: string[]; secondary?: string[]; equipment?: string; pattern?: string; timed?: boolean; oneSided?: boolean; notes?: string }
   | { type: 'create_workout'; opId: string; aiId: string; name: string; kind?: string; rows: WorkoutRow[]; notes?: string; videoUrl?: string; videoTitle?: string; videoMinutes?: number; sourceText?: string }
   | { type: 'update_workout'; opId: string; ref: string; name?: string; kind?: string; rows?: WorkoutRow[]; notes?: string; videoUrl?: string; videoTitle?: string; videoMinutes?: number; sourceText?: string }
   | { type: 'delete_workout'; opId: string; ref: string }

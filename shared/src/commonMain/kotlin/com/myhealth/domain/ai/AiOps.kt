@@ -33,6 +33,26 @@ sealed class AiOp {
         val notes: String? = null,
     ) : AiOp()
 
+    /**
+     * Corrects one of the owner's exercises (made by the AI or by the owner; never the catalog or an
+     * exercise shared by someone else). Fields left out stay.
+     */
+    @Serializable
+    @SerialName("update_exercise")
+    data class UpdateExercise(
+        override val opId: String,
+        val ref: String,
+        val name: String? = null,
+        val primary: List<String>? = null,
+        val secondary: List<String>? = null,
+        val equipment: String? = null,
+        val pattern: String? = null,
+        val timed: Boolean? = null,
+        val oneSided: Boolean? = null,
+        /** "" clears the notes. */
+        val notes: String? = null,
+    ) : AiOp()
+
     @Serializable
     @SerialName("set_equipment")
     data class SetEquipment(

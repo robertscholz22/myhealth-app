@@ -92,7 +92,7 @@ describe('MCP tools', () => {
     const names = list.result.tools.map((t: any) => t.name);
     expect(names).toEqual(expect.arrayContaining([
       'get_overview', 'list_exercises', 'get_exercise', 'create_exercise', 'get_equipment', 'set_equipment',
-      'list_workouts', 'get_workout', 'create_workout', 'update_workout', 'delete_workout', 'get_calendar',
+      'update_exercise', 'list_workouts', 'get_workout', 'create_workout', 'update_workout', 'delete_workout', 'get_calendar',
       'schedule_sessions', 'update_session', 'delete_session', 'get_training_status', 'get_sync_status',
     ]));
     const hints = Object.fromEntries(list.result.tools.map((t: any) => [t.name, t.annotations]));
@@ -180,6 +180,30 @@ describe('MCP tools', () => {
     expect((await tool(s.accessToken, 'create_workout', { name: 'X', rows, videoUrl: 'https://youtu.be/x', videoMinutes: 0 })).error).toContain('videoMinutes');
     const list = await mcp(s.accessToken, 'tools/list');
     expect(list.result.tools.find((t: any) => t.name === 'create_workout').description).toContain('videoUrl');
+  });
+
+  it('corrects its own and the owner\'s exercises, never built-in ones', async () => {
+    const s = await connected();
+    const towel = (await tool(s.accessToken, 'list_exercises', { source: 'mine' })).exercises[0];
+    expect(towel).toMatchObject({ id: 'USER_TOWELROW01', byAi: false, editable: true });
+    expect((await tool(s.accessToken, 'list_exercises', { query: 'push-up' })).exercises[0].editable).toBe(false);
+
+    const ex = await tool(s.accessToken, 'create_exercise', { name: 'Deep lunge stretch', primary: ['GLUTES', 'QUADS'], pattern: 'MOBILITY', timed: true });
+    const fixed = await tool(s.accessToken, 'update_exercise', { id: ex.id, primary: ['QUADS'], secondary: ['GLUTES'] });
+    expect(fixed.error).toBeUndefined();
+    expect(await tool(s.accessToken, 'get_exercise', { id: ex.id })).toMatchObject({ primary: ['QUADS'], secondary: ['GLUTES'], byAi: true, source: 'ai' });
+    expect((await tool(s.accessToken, 'update_exercise', { id: 'USER_TOWELROW01', notes: 'Door anchor' })).error).toBeUndefined();
+
+    expect((await tool(s.accessToken, 'update_exercise', { id: 'PUSH_UP', name: 'x' })).error).toContain('built-in');
+    expect((await tool(s.accessToken, 'update_exercise', { id: 'USER_TOWELROW01', name: 'Push-up' })).error).toContain('exists already');
+    expect((await tool(s.accessToken, 'update_exercise', { id: ex.id, primary: ['QUADS'] })).error).toContain('Nothing to change');
+    expect((await tool(s.accessToken, 'update_exercise', { id: 'USER_TOWELROW01', timed: true })).error).toBeUndefined();
+    await tool(s.accessToken, 'create_workout', { name: 'Stretch', rows: [{ exerciseId: ex.id, sets: 2, seconds: 45 }] });
+    expect((await tool(s.accessToken, 'update_exercise', { id: ex.id, timed: false })).error).toContain('timed can only change');
+
+    const ops = await pull(s.spaceToken);
+    expect(ops.map((o) => o.op.type)).toEqual(['create_exercise', 'update_exercise', 'update_exercise', 'update_exercise', 'create_workout']);
+    expect(ops[2].op).toMatchObject({ ref: 'USER_TOWELROW01', notes: 'Door anchor' });
   });
 
   it('refuses changes outside the AI\'s scope with a reason', async () => {

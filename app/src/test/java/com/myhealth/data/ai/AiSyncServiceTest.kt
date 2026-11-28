@@ -1,5 +1,12 @@
 package com.myhealth.data.ai
 
+import com.myhealth.domain.model.MovementPattern
+import com.myhealth.domain.model.MuscleGroup
+import com.myhealth.domain.model.Exercise
+import com.myhealth.domain.model.UserExercise
+import com.myhealth.domain.share.ShareKind
+import com.myhealth.domain.share.ShareLink
+import com.myhealth.domain.repository.ShareRepository
 import com.myhealth.data.db.dao.AiDao
 import com.myhealth.data.db.entity.AiChangeEntity
 import com.myhealth.data.db.entity.AiConfigEntity
@@ -77,6 +84,7 @@ class AiSyncServiceTest {
     private val workouts = InMemoryStrengthRepository()
     private val plan = FakePlan()
     private val profile = FakeProfile()
+    private var shareLinks = emptyList<ShareLink>()
 
     private val service = AiSyncService(
         dao,
@@ -89,6 +97,7 @@ class AiSyncServiceTest {
             body = notUsedExcept<BodyRepository>("latestWeight" to { null }),
             health = notUsedExcept<HealthRepository>("observeRange" to { flowOf(emptyList<Any>()) }, "observeSleepRange" to { flowOf(emptyList<Any>()) }),
             cycle = notUsedExcept<CycleRepository>("isTrackingEnabled" to { flowOf(false) }),
+            share = notUsedExcept<ShareRepository>("getSetup" to { flowOf(null) }, "getLinks" to { flowOf(shareLinks) }),
         ),
         clock,
         RelayClient { HttpClient(MockEngine { req -> relay.route(req).let { (b, st, h) -> respond(b, st, h) } }) },
@@ -295,6 +304,46 @@ class AiSyncServiceTest {
         // Undo removes it like any AI workout.
         assertTrue(service.undo(result.batchId!!) is Outcome.Ok)
         assertTrue(workouts.stored.value.isEmpty())
+    }
+
+    @Test
+    fun as12_the_ai_corrects_exercises_and_undo_puts_them_back() = runBlocking {
+        val mine = UserExercise(
+            Exercise("USER_mine0001", "Deep lunge stretch", setOf(MuscleGroup.GLUTES, MuscleGroup.QUADS), setOf(MuscleGroup.HAMSTRINGS), Equipment.BODYWEIGHT, MovementPattern.MOBILITY, true, true, ""),
+            "Tief", false, 1L, 1L,
+        )
+        val annas = UserExercise(
+            Exercise("USER_anna0001", "Anna's row", setOf(MuscleGroup.LATS), emptySet(), Equipment.BAND, MovementPattern.HORIZONTAL_PULL, false, false, ""),
+            null, false, 1L, 1L,
+        )
+        exercises.rows.value = mapOf(mine.exercise.id to mine, annas.exercise.id to annas)
+        shareLinks = listOf(ShareLink(ShareKind.EXERCISE, "USER_anna0001", shareId = "sh1", authorId = "anna", authorName = "Anna"))
+        connected()
+        val dtos = relay.snapshots.last()["exercises"]!!.jsonArray.map { it.jsonObject }.associateBy { it["id"]!!.jsonPrimitive.content }
+        assertEquals("mine", dtos["USER_mine0001"]!!["source"]!!.jsonPrimitive.content)
+        assertEquals("true", dtos["USER_mine0001"]!!["editable"]!!.jsonPrimitive.content)
+        assertEquals("false", dtos["USER_mine0001"]!!["byAi"]!!.jsonPrimitive.content)
+        assertEquals("Tief", dtos["USER_mine0001"]!!["notes"]!!.jsonPrimitive.content)
+        assertEquals("family", dtos["USER_anna0001"]!!["source"]!!.jsonPrimitive.content)
+        assertEquals("false", dtos["USER_anna0001"]!!["editable"]!!.jsonPrimitive.content)
+        assertEquals("false", dtos["PUSH_UP"]!!["editable"]!!.jsonPrimitive.content)
+
+        op(AiOp.UpdateExercise("u1", "USER_mine0001", primary = listOf("QUADS"), secondary = listOf("GLUTES", "ADDUCTORS")))
+        op(AiOp.UpdateExercise("u2", "USER_anna0001", name = "Mine now"))
+        val result = (service.sync() as Outcome.Ok).value
+        assertEquals(1, result.applied)
+        assertEquals(1, result.rejected)
+        val fixed = exercises.rows.value["USER_mine0001"]!!
+        assertEquals(setOf(MuscleGroup.QUADS), fixed.exercise.primary)
+        assertEquals(setOf(MuscleGroup.GLUTES, MuscleGroup.ADDUCTORS), fixed.exercise.secondary)
+        assertEquals("Tief", fixed.notes)
+        assertEquals("Anna's row", exercises.rows.value["USER_anna0001"]!!.exercise.name)
+        val log = service.changes.first()
+        assertTrue(log.any { it.summary == "Changed exercise: Deep lunge stretch (muscles)" && it.result == AiChangeResult.APPLIED })
+        assertTrue(log.any { it.result == AiChangeResult.REJECTED && it.reason!!.contains("family member") })
+
+        assertTrue(service.undo(result.batchId!!) is Outcome.Ok)
+        assertEquals(mine, exercises.rows.value["USER_mine0001"])
     }
 
     // --- fakes ------------------------------------------------------------------------------------

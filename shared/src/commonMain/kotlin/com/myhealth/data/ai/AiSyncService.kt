@@ -1,5 +1,8 @@
 package com.myhealth.data.ai
 
+import com.myhealth.domain.model.UserExercise
+import com.myhealth.domain.share.SharePlanner
+import com.myhealth.domain.share.ShareKind
 import com.myhealth.data.db.dao.AiDao
 import com.myhealth.data.db.entity.AiChangeEntity
 import com.myhealth.data.db.entity.AiConfigEntity
@@ -67,6 +70,8 @@ class AiContent(
     val body: BodyRepository,
     val health: HealthRepository,
     val cycle: CycleRepository,
+    /** P27: exercises a family member shares are read-only for the AI as on the screens. */
+    val share: com.myhealth.domain.repository.ShareRepository? = null,
 )
 
 /**
@@ -249,6 +254,13 @@ class AiSyncService(
                     "New exercise: ${step.exercise.exercise.name}", AiUndo.Created(AiKind.EXERCISE.name, id),
                 )
             }
+            is AiStep.ReplaceExercise -> content.exercises.upsert(step.after).then {
+                Applied(
+                    state.copy(library = ExerciseLibrary(state.library.userExercises.map { if (it.exercise.id == step.after.exercise.id) step.after else it })),
+                    "Changed exercise: ${step.after.exercise.name}" + changes(step.before, step.after),
+                    AiUndo.ExerciseBefore(ExerciseJson.of(step.before)),
+                )
+            }
             is AiStep.PutEquipment -> {
                 val profile = content.profile.getProfile()
                     ?: return Outcome.Err(AppError.Validation("profile", "No profile yet"))
@@ -347,6 +359,11 @@ class AiSyncService(
                 }
             }
         }
+        is AiUndo.ExerciseBefore -> {
+            // Only while it still exists; a deleted exercise stays deleted.
+            content.exercises.getLibrary().userExercise(undo.exercise.id) != null &&
+                content.exercises.upsert(undo.exercise.toModel()) is Outcome.Ok
+        }
         is AiUndo.EquipmentBefore -> {
             val profile = content.profile.getProfile()
             profile != null && content.profile.upsert(profile.copy(availableEquipmentJson = undo.json)) is Outcome.Ok
@@ -372,7 +389,30 @@ class AiSyncService(
             sessions = content.plan.getSessions(today - AiSnapshotBuilder.DAYS_BACK, today + AiOpPlanner.MAX_DAYS_AHEAD).associateBy { it.id },
             links = dao.getLinks().map { it.toLink() },
             equipment = EquipmentSetCodec.decode(profile?.availableEquipmentJson) ?: Equipment.entries.toSet(),
+            sharedIn = sharedInExercises(),
         )
+    }
+
+    private suspend fun sharedInExercises(): Set<String> {
+        val share = content.share ?: return emptySet()
+        val me = share.setup.first()?.uid
+        return share.links.first().filter { it.kind == ShareKind.EXERCISE && SharePlanner.isReadOnly(it, me) }.mapTo(mutableSetOf()) { it.localKey }
+    }
+
+    /** " (muscles, timed)" — which fields an exercise change touched, for the log. */
+    private fun changes(before: UserExercise, after: UserExercise): String {
+        val a = before.exercise
+        val b = after.exercise
+        val fields = listOfNotNull(
+            "name".takeIf { a.name != b.name },
+            "muscles".takeIf { a.primary != b.primary || a.secondary != b.secondary },
+            "equipment".takeIf { a.equipment != b.equipment },
+            "pattern".takeIf { a.pattern != b.pattern },
+            "timed".takeIf { a.isTimed != b.isTimed },
+            "one side".takeIf { a.unilateral != b.unilateral },
+            "notes".takeIf { before.notes != after.notes },
+        )
+        return if (fields.isEmpty()) "" else " (${fields.joinToString()})"
     }
 
     private suspend fun buildSnapshot(config: AiConfigEntity): AiSnapshot {
@@ -395,6 +435,8 @@ class AiSyncService(
                 groups = groups,
                 exercises = library.all,
                 ownExerciseIds = library.custom.mapTo(mutableSetOf()) { it.id },
+                sharedInExerciseIds = sharedInExercises(),
+                exerciseNotes = library.userExercises.mapNotNull { u -> u.notes?.let { u.exercise.id to it } }.toMap(),
                 equipment = EquipmentSetCodec.decode(profile?.availableEquipmentJson) ?: Equipment.entries.toSet(),
                 sports = sports,
                 workouts = content.workouts.observeAll().first(),
@@ -468,6 +510,7 @@ private fun AiLinkEntity.toLink() = AiLink(aiId, AiKind.valueOf(kind), localKey,
 
 private fun AiOp.typeName(): String = when (this) {
     is AiOp.CreateExercise -> "create_exercise"
+    is AiOp.UpdateExercise -> "update_exercise"
     is AiOp.SetEquipment -> "set_equipment"
     is AiOp.CreateWorkout -> "create_workout"
     is AiOp.UpdateWorkout -> "update_workout"
@@ -479,6 +522,7 @@ private fun AiOp.typeName(): String = when (this) {
 
 private fun rejectedSummary(op: AiOp): String = when (op) {
     is AiOp.CreateExercise -> "New exercise: ${op.name}"
+    is AiOp.UpdateExercise -> "Change exercise ${op.ref}"
     is AiOp.SetEquipment -> "My equipment"
     is AiOp.CreateWorkout -> "New workout: ${op.name}"
     is AiOp.UpdateWorkout -> "Change workout ${op.ref}"

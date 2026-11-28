@@ -191,6 +191,40 @@ class AiOpPlannerTest {
     }
 
     @Test
+    fun op33_ai_corrects_its_own_and_the_owners_exercises() {
+        val s = step(AiOp.UpdateExercise("o", "ai-ex1", primary = listOf("QUADS", "GLUTES"), secondary = listOf("GLUTES", "ABS"), notes = " Back flat ")) as AiStep.ReplaceExercise
+        assertEquals(aiExercise, s.before)
+        assertEquals(setOf(MuscleGroup.QUADS, MuscleGroup.GLUTES), s.after.exercise.primary)
+        assertEquals(setOf(MuscleGroup.ABS), s.after.exercise.secondary)
+        assertEquals("Back flat", s.after.notes)
+        assertEquals("Wall sit pulse", s.after.exercise.name)
+        assertEquals(now, s.after.updatedAtMillis)
+        // The owner's own exercise, by its id; notes "" clears them.
+        val mine = step(AiOp.UpdateExercise("o", "USER_mine0001", name = "Towel row (door)", notes = "")) as AiStep.ReplaceExercise
+        assertEquals("Towel row (door)", mine.after.exercise.name)
+        assertEquals(null, mine.after.notes)
+    }
+
+    @Test
+    fun op34_catalog_family_archived_and_conflicting_exercise_changes_are_refused() {
+        assertTrue(reason(AiOp.UpdateExercise("o", "PUSH_UP", name = "x")).contains("built-in"))
+        assertTrue(reason(AiOp.UpdateExercise("o", "NOPE", name = "x")).contains("No exercise"))
+        assertTrue(reason(AiOp.UpdateExercise("o", "USER_old00001", name = "x")).contains("archived"))
+        val family = state.copy(sharedIn = setOf("USER_mine0001"))
+        val d = AiOpPlanner.plan(AiOp.UpdateExercise("o", "USER_mine0001", name = "x"), family, now)
+        assertTrue((d as AiDecision.Reject).reason.contains("family member"))
+        assertTrue(reason(AiOp.UpdateExercise("o", "ai-ex1", name = "Push-up")).contains("exists already"))
+        assertTrue(reason(AiOp.UpdateExercise("o", "ai-ex1", primary = emptyList())).contains("primary"))
+        assertTrue(reason(AiOp.UpdateExercise("o", "ai-ex1", primary = listOf("WINGS"))).contains("Unknown muscle"))
+        assertTrue(reason(AiOp.UpdateExercise("o", "ai-ex1", primary = listOf("QUADS"))).contains("Nothing to change"))
+        // timed only changes while no workout uses the exercise.
+        val used = state.copy(workouts = state.workouts + (3L to workout(3, "Uses mine").let { w -> w.copy(exercises = w.exercises.map { it.copy(exerciseId = "USER_mine0001") }) }))
+        val t = AiOpPlanner.plan(AiOp.UpdateExercise("o", "USER_mine0001", timed = true), used, now)
+        assertTrue((t as AiDecision.Reject).reason.contains("\"Uses mine\""))
+        assertTrue(step(AiOp.UpdateExercise("o", "USER_mine0001", timed = true)) is AiStep.ReplaceExercise)
+    }
+
+    @Test
     fun op30_video_workout_keeps_link_title_minutes_and_source_lines() {
         val s = step(
             AiOp.CreateWorkout(
@@ -399,6 +433,7 @@ class AiOpPlannerTest {
         val ops = listOf(
             AiOp.CreateExercise("1", "ai-a", "A", listOf("CHEST")),
             AiOp.SetEquipment("2", listOf("BAND")),
+            AiOp.UpdateExercise("11", "ai-a", primary = listOf("QUADS"), notes = ""),
             AiOp.CreateWorkout("3", "ai-b", "B", rows = listOf(row("PUSH_UP"))),
             AiOp.UpdateWorkout("4", "ai-b", name = "C"),
             AiOp.CreateWorkout("9", "ai-v", "V", rows = listOf(row("PUSH_UP").copy(sourceLine = "0:10 x")), videoUrl = "https://youtu.be/dQw4w9WgXcQ", videoTitle = "T", videoMinutes = 12, sourceText = "s"),
